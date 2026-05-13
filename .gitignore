@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local data (flat-file JSON storage — not committed)
+/data/*.json
+
+# claude dev config
+/.claude
