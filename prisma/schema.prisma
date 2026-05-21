@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id           String  @id
+  teamName     String
+  department   String
+  members      Json
+  registeredAt String
+  submissionId String?
+}
+
+model Submission {
+  id              String @id
+  teamId          String
+  teamName        String
+  gitRepoUrl      String
+  measuredResults String
+  submittedAt     String
+}
+
+model Assessment {
+  id                     String  @id
+  teamId                 String
+  participantName        String
+  participantEmail       String  @unique
+  q1                     String
+  q2                     String
+  q3                     String
+  q5                     String
+  q4_essay               String
+  q6_essay               String
+  q7_essay               String
+  mcScore                Int
+  mcMax                  Int
+  essayScores            Json?
+  essayTotal             Int?
+  essayMax               Int
+  totalScore             Int?
+  totalMax               Int
+  totalPercent           Float?
+  preliminaryLevel       String?
+  categoryRecommendation String?
+  validation             Json?
+  submittedAt            String
+}

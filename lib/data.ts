@@ -1,53 +1,76 @@
-import fs from 'fs';
-import path from 'path';
+import prisma from '@/lib/prisma';
 import { Team, ProjectSubmission, Assessment } from '@/types';
 
-const dataDir = path.join(process.cwd(), 'data');
+// ── Teams ────────────────────────────────────────────────────────────────────
 
-function readJSON<T>(filename: string): T[] {
-  const file = path.join(dataDir, filename);
-  if (!fs.existsSync(file)) return [];
-  const raw = fs.readFileSync(file, 'utf-8');
-  try { return JSON.parse(raw); } catch { return []; }
+export async function getTeams(): Promise<Team[]> {
+  const rows = await prisma.team.findMany({ orderBy: { registeredAt: 'asc' } });
+  return rows.map(r => ({ ...r, members: r.members as Team['members'] }));
 }
 
-function writeJSON<T>(filename: string, data: T[]): void {
-  const file = path.join(dataDir, filename);
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
+export async function saveTeam(team: Team): Promise<void> {
+  await prisma.team.create({ data: { ...team, members: team.members as object[] } });
 }
 
-// Teams
-export function getTeams(): Team[] { return readJSON<Team>('teams.json'); }
-export function saveTeam(team: Team): void {
-  const teams = getTeams();
-  teams.push(team);
-  writeJSON('teams.json', teams);
-}
-export function updateTeam(id: string, updates: Partial<Team>): void {
-  const teams = getTeams();
-  const idx = teams.findIndex(t => t.id === id);
-  if (idx !== -1) { teams[idx] = { ...teams[idx], ...updates }; writeJSON('teams.json', teams); }
+export async function updateTeam(id: string, updates: Partial<Team>): Promise<void> {
+  const data: Record<string, unknown> = { ...updates };
+  if (updates.members) data.members = updates.members as object[];
+  await prisma.team.update({ where: { id }, data });
 }
 
-// Submissions
-export function getSubmissions(): ProjectSubmission[] { return readJSON<ProjectSubmission>('submissions.json'); }
-export function saveSubmission(sub: ProjectSubmission): void {
-  const subs = getSubmissions();
-  const idx = subs.findIndex(s => s.teamId === sub.teamId);
-  if (idx !== -1) { subs[idx] = sub; } else { subs.push(sub); }
-  writeJSON('submissions.json', subs);
+// ── Submissions ──────────────────────────────────────────────────────────────
+
+export async function getSubmissions(): Promise<ProjectSubmission[]> {
+  const rows = await prisma.submission.findMany({ orderBy: { submittedAt: 'desc' } });
+  return rows as ProjectSubmission[];
 }
 
-// Assessments
-export function getAssessments(): Assessment[] { return readJSON<Assessment>('assessments.json'); }
-export function saveAssessment(assessment: Assessment): void {
-  const assessments = getAssessments();
-  const idx = assessments.findIndex(a => a.participantEmail === assessment.participantEmail);
-  if (idx !== -1) { assessments[idx] = assessment; } else { assessments.push(assessment); }
-  writeJSON('assessments.json', assessments);
+export async function saveSubmission(sub: ProjectSubmission): Promise<void> {
+  await prisma.submission.upsert({
+    where: { id: sub.id },
+    update: {
+      gitRepoUrl:      sub.gitRepoUrl,
+      measuredResults: sub.measuredResults,
+      submittedAt:     sub.submittedAt,
+    },
+    create: {
+      id:              sub.id,
+      teamId:          sub.teamId,
+      teamName:        sub.teamName,
+      gitRepoUrl:      sub.gitRepoUrl,
+      measuredResults: sub.measuredResults,
+      submittedAt:     sub.submittedAt,
+    },
+  });
 }
-export function updateAssessment(id: string, updates: Partial<Assessment>): void {
-  const assessments = getAssessments();
-  const idx = assessments.findIndex(a => a.id === id);
-  if (idx !== -1) { assessments[idx] = { ...assessments[idx], ...updates }; writeJSON('assessments.json', assessments); }
+
+// ── Assessments ──────────────────────────────────────────────────────────────
+
+export async function getAssessments(): Promise<Assessment[]> {
+  const rows = await prisma.assessment.findMany({ orderBy: { submittedAt: 'desc' } });
+  return rows.map(r => ({
+    ...r,
+    essayScores: r.essayScores as Assessment['essayScores'] ?? undefined,
+    validation:  r.validation  as Assessment['validation']  ?? undefined,
+  }));
+}
+
+export async function saveAssessment(assessment: Assessment): Promise<void> {
+  const data = {
+    ...assessment,
+    essayScores: assessment.essayScores ? (assessment.essayScores as object) : undefined,
+    validation:  assessment.validation  ? (assessment.validation  as object) : undefined,
+  };
+  await prisma.assessment.upsert({
+    where:  { participantEmail: assessment.participantEmail },
+    update: data,
+    create: data,
+  });
+}
+
+export async function updateAssessment(id: string, updates: Partial<Assessment>): Promise<void> {
+  const data: Record<string, unknown> = { ...updates };
+  if (updates.essayScores) data.essayScores = updates.essayScores as object;
+  if (updates.validation)  data.validation  = updates.validation  as object;
+  await prisma.assessment.update({ where: { id }, data });
 }

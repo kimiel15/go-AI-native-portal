@@ -2,97 +2,15 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import NavBar from '@/components/NavBar';
-import { FileText, CheckCircle, AlertCircle, Loader2, GitBranch, BarChart2, Sparkles, Users, Zap, FlaskConical } from 'lucide-react';
+import { FileText, CheckCircle, AlertCircle, Loader2, GitBranch, BarChart2, BookOpen, ChevronDown } from 'lucide-react';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 interface TeamOption { id: string; teamName: string; }
 
 interface FormState {
   gitRepoUrl: string;
-  problemStatement: string;
-  solutionDescription: string;
-  productionEvidence: string;
   measuredResults: string;
-  impactMath: string;
-  aiUsage: string;
-  teamContributions: string;
 }
-
-const SECTIONS = [
-  {
-    key: 'gitRepoUrl' as keyof FormState,
-    icon: GitBranch,
-    label: 'Git Repository URL',
-    hint: 'Link to your team\'s Git repo tagged v1.0. README must explain the problem, solution, and how to run it in 3 commands or fewer.',
-    placeholder: 'https://github.com/your-org/your-repo',
-    required: true,
-    rows: 1,
-    type: 'url',
-  },
-  {
-    key: 'problemStatement' as keyof FormState,
-    icon: FlaskConical,
-    label: 'Problem Statement',
-    hint: 'What production problem are you solving? Be specific — what volume, what case type, what pain point.',
-    placeholder: 'Describe the specific production problem your tool addresses...',
-    required: true,
-    rows: 4,
-  },
-  {
-    key: 'solutionDescription' as keyof FormState,
-    icon: Zap,
-    label: 'Solution Description',
-    hint: 'How does your Claude-powered tool address the problem? What does it do and how does it work?',
-    placeholder: 'Describe your tool — what it does, how Claude is used, and how it integrates into your workflow...',
-    required: true,
-    rows: 5,
-  },
-  {
-    key: 'productionEvidence' as keyof FormState,
-    icon: FileText,
-    label: 'Production Deployment Evidence',
-    hint: 'When was the tool deployed? Where (Phones / Chat / Email / Portal)? On how many cases? Authorized by which squad lead?',
-    placeholder: 'e.g., Deployed June 15 on Zean squad chat queue. Ran on 240 cases over 5 days. Authorized by [Squad Lead Name].',
-    required: false,
-    rows: 4,
-  },
-  {
-    key: 'measuredResults' as keyof FormState,
-    icon: BarChart2,
-    label: 'Measured Results',
-    hint: 'Actual numbers from the production run — not projections. Tickets deflected, revenue generated or protected, cases auto-resolved.',
-    placeholder: 'e.g., 87 tickets deflected out of 240 (36% deflection rate). Estimated 14 engineer-hours reclaimed per week.',
-    required: true,
-    rows: 4,
-  },
-  {
-    key: 'impactMath' as keyof FormState,
-    icon: BarChart2,
-    label: 'Impact Math',
-    hint: 'Show your work. Baseline → measured delta → calculation. Judges verify this — make it defensible.',
-    placeholder: 'Baseline: avg 3.5 min to resolve this case type. Tool resolves in 40 sec. 87 cases × 3 min saved = 261 min = 4.35 hrs in 5 days...',
-    required: true,
-    rows: 5,
-  },
-  {
-    key: 'aiUsage' as keyof FormState,
-    icon: Sparkles,
-    label: 'AI Usage (AI-USAGE.md)',
-    hint: 'Where did you use Claude across your workflow? Building, brainstorming, writing, presenting. Manual exceptions should be named honestly.',
-    placeholder: 'Used Claude to: brainstorm the problem framing, generate the initial skill scaffold, write the README, draft this submission. Manual: final code review done by team without AI.',
-    required: true,
-    rows: 5,
-  },
-  {
-    key: 'teamContributions' as keyof FormState,
-    icon: Users,
-    label: 'Team Contributions (CONTRIBUTORS.md)',
-    hint: 'One line per member describing what they built. This is public in the repo — be specific.',
-    placeholder: 'Ana Cruz – Built the Claude skill and prompt chain\nJuan Reyes – Integrated with the ticketing system via MCP\nMaria Santos – Designed the production test plan and captured results\nJose Bautista – Wrote documentation and the impact math',
-    required: false,
-    rows: 5,
-  },
-];
 
 function SubmitForm() {
   const searchParams = useSearchParams();
@@ -100,17 +18,12 @@ function SubmitForm() {
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [form, setForm] = useState<FormState>({
     gitRepoUrl: '',
-    problemStatement: '',
-    solutionDescription: '',
-    productionEvidence: '',
     measuredResults: '',
-    impactMath: '',
-    aiUsage: '',
-    teamContributions: '',
   });
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [submissionId, setSubmissionId] = useState('');
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     fetch('/api/register').then(r => r.json()).then(setTeams).catch(() => {});
@@ -150,7 +63,7 @@ function SubmitForm() {
           <p className="text-slate-500 mb-2">Your team&apos;s submission has been recorded.</p>
           <p className="text-slate-400 text-xs mb-6">Your squad lead will attest to the results at final submission.</p>
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8">
-            <p className="text-red-300 text-xs uppercase tracking-widest mb-1">Submission ID</p>
+            <p className="text-red-600 text-xs uppercase tracking-widest mb-1">Submission ID</p>
             <p className="text-slate-900 font-mono text-sm break-all">{submissionId}</p>
           </div>
           <a href="/" className="block bg-gray-100 hover:bg-gray-200 text-slate-900 font-semibold py-3 rounded-xl transition-all">
@@ -174,8 +87,105 @@ function SubmitForm() {
           </div>
         </div>
         <p className="text-slate-500 text-sm leading-relaxed">
-          Every team&apos;s submission must include a Git repo tagged <code className="text-rose-300 bg-white px-1 rounded">v1.0</code>, production deployment evidence, and actual measured results — not projections.
+          Submit your Git repo link and headline result. Everything else — problem, solution, evidence, impact math, contributors — lives in your <code className="text-rose-600 bg-red-50 px-1 rounded">README.md</code>.
         </p>
+      </div>
+
+      {/* README Guide */}
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-5">
+        <button
+          type="button"
+          onClick={() => setShowGuide(g => !g)}
+          className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            <span className="text-slate-900 font-semibold text-sm">README.md Structure Guide</span>
+            <span className="text-slate-400 text-xs hidden sm:inline">— what judges look for</span>
+          </div>
+          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ${showGuide ? 'rotate-180' : ''}`} />
+        </button>
+        {showGuide && (
+          <div className="border-t border-gray-100 px-6 py-5">
+            <p className="text-slate-500 text-sm mb-4 leading-relaxed">
+              Your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-rose-600 text-xs">[tool-name].md</code> is your full submission — judges score it against the rubric. Each section maps to a judging criterion. Keep a separate <code className="bg-gray-100 px-1.5 py-0.5 rounded text-rose-600 text-xs">CONTRIBUTORS.md</code> for team contributions.
+            </p>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {[
+                { label: 'Problem Clarity',           weight: '25%', color: 'bg-red-50 border-red-200 text-red-700' },
+                { label: 'Business Value',             weight: '30%', color: 'bg-amber-50 border-amber-200 text-amber-700' },
+                { label: 'Solution Effectiveness',     weight: '20%', color: 'bg-rose-50 border-rose-200 text-rose-700' },
+                { label: 'AI Integration & Reusability', weight: '15%', color: 'bg-orange-50 border-orange-200 text-orange-700' },
+              ].map(({ label, weight, color }) => (
+                <div key={label} className={`border rounded-lg px-3 py-2 ${color}`}>
+                  <span className="font-bold text-xs">{weight}</span>
+                  <span className="text-xs ml-1">{label}</span>
+                </div>
+              ))}
+              <div className="col-span-2 border rounded-lg px-3 py-2 bg-slate-50 border-slate-200 text-slate-600">
+                <span className="font-bold text-xs">10%</span>
+                <span className="text-xs ml-1">Production Evidence — when, where, how many cases, authorized by whom</span>
+              </div>
+            </div>
+            <pre className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-slate-700 overflow-x-auto leading-relaxed font-mono whitespace-pre">{`# [tool-name].md
+
+> One-line: what it does and who it helps
+
+## How to run
+\`\`\`bash
+command 1
+command 2
+command 3
+\`\`\`
+
+## Problem
+What business problem are you solving?
+Be specific — what queue, case type, or pain point.
+
+## Solution
+How does your Claude-powered tool address it?
+What does it do, how does it work, what does it output?
+
+## Business value
+Link to revenue growth, retention, or operational efficiency.
+
+Pilot dates: [Jun 15 – 21]
+Cases handled: [number]
+Deployed in: [queue / tool / environment]
+
+| Metric      | Before | After | Delta |
+|-------------|--------|-------|-------|
+| Handle time | X min  | Y min | -Z%   |
+
+Impact math:
+Baseline: [X cases/day × Y min = Z hrs]
+Delta: [reduction × cost = $value saved]
+
+## Claude integration
+How is Claude meaningfully embedded as a core enabler?
+Can another engineer pick this up and reuse it? How?`}</pre>
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
+              <p className="text-amber-700 text-xs font-semibold mb-1">CONTRIBUTORS.md — keep this separate</p>
+              <p className="text-slate-500 text-xs leading-relaxed">One line per member. Example:<br />
+                <span className="font-mono">Ana Cruz – Built the Claude skill and prompt chain</span><br />
+                <span className="font-mono">Juan Reyes – Integrated with the ticketing system via MCP</span>
+              </p>
+            </div>
+            <div className="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <p className="text-slate-700 text-xs font-semibold mb-1">README filename format</p>
+              <p className="text-slate-500 text-xs leading-relaxed mb-2">Name your README file after your tool — lowercase, hyphens only:</p>
+              <code className="block bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-rose-600 font-mono mb-2">[tool-name].md</code>
+              <p className="text-slate-400 text-xs">Examples:<br />
+                <span className="font-mono text-slate-500">ticket-triage.md</span><br />
+                <span className="font-mono text-slate-500">email-classifier.md</span><br />
+                <span className="font-mono text-slate-500">case-summariser.md</span>
+              </p>
+            </div>
+            <p className="text-slate-400 text-xs mt-3">
+              💡 The hardest part is <strong className="text-slate-500">Results</strong> and <strong className="text-slate-500">Impact Math</strong> — start capturing numbers from day one of your production run (Jun 15).
+            </p>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -195,40 +205,51 @@ function SubmitForm() {
           </p>
         </div>
 
-        {/* Submission fields */}
-        {SECTIONS.map(({ key, icon: Icon, label, hint, placeholder, required, rows, type }) => (
-          <div key={key} className="bg-white border border-gray-200 rounded-2xl p-6">
-            <div className="flex items-start gap-2 mb-3">
-              <Icon className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <label className="block text-slate-900 font-semibold text-sm">
-                  {label} {required && <span className="text-red-400">*</span>}
-                  {!required && <span className="text-slate-400 text-xs font-normal ml-1">(optional)</span>}
-                </label>
-                <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{hint}</p>
-              </div>
+        {/* Git Repo URL */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="flex items-start gap-2 mb-3">
+            <GitBranch className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <label className="block text-slate-900 font-semibold text-sm">
+                Git Repository URL <span className="text-red-400">*</span>
+              </label>
+              <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">
+                Link to your repo tagged <code className="bg-gray-100 px-1 rounded text-rose-600">v1.0</code>. Your README.md is the full submission — it must cover problem, solution, production evidence, results, impact math, how Claude was used, and how to run in 3 commands or fewer.
+              </p>
             </div>
-            {rows === 1 ? (
-              <input
-                type={type || 'text'}
-                required={required}
-                value={form[key]}
-                onChange={e => set(key, e.target.value)}
-                placeholder={placeholder}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors font-mono text-sm"
-              />
-            ) : (
-              <textarea
-                required={required}
-                rows={rows}
-                value={form[key]}
-                onChange={e => set(key, e.target.value)}
-                placeholder={placeholder}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors resize-none leading-relaxed text-sm"
-              />
-            )}
           </div>
-        ))}
+          <input
+            type="url"
+            required
+            value={form.gitRepoUrl}
+            onChange={e => set('gitRepoUrl', e.target.value)}
+            placeholder="https://github.com/your-org/your-repo"
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors font-mono text-sm"
+          />
+        </div>
+
+        {/* Measured Results — headline for judge dashboard */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="flex items-start gap-2 mb-3">
+            <BarChart2 className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <label className="block text-slate-900 font-semibold text-sm">
+                Headline Result <span className="text-red-400">*</span>
+              </label>
+              <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">
+                One or two sentences — actual numbers only, no projections. Judges use this to compare teams at a glance without opening GitHub. Full detail lives in your README.
+              </p>
+            </div>
+          </div>
+          <textarea
+            required
+            rows={3}
+            value={form.measuredResults}
+            onChange={e => set('measuredResults', e.target.value)}
+            placeholder="e.g., 87 tickets deflected out of 240 (36% deflection rate) over 5 days — saving ~14 engineer-hours per week."
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors resize-none leading-relaxed text-sm"
+          />
+        </div>
 
         {status === 'error' && (
           <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">

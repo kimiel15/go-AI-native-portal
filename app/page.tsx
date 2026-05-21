@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Zap, Calendar, Target, TrendingUp } from 'lucide-react';
+import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Zap, Calendar } from 'lucide-react';
 
 const steps = [
   {
@@ -31,12 +31,6 @@ const steps = [
   },
 ];
 
-const awards = [
-  { label: 'Volume Reduction Winner', desc: 'Largest measured deflection from production', icon: TrendingUp, color: 'text-emerald-600' },
-  { label: 'Revenue Generation Winner', desc: 'Largest measured revenue or revenue protection', icon: Target, color: 'text-amber-600' },
-  { label: 'Most Ingenious Build', desc: 'Most creative or unexpected use of Claude', icon: Zap, color: 'text-rose-400' },
-  { label: "People's Choice", desc: 'Live audience vote on June 27', icon: Users, color: 'text-orange-400' },
-];
 
 export default function Home() {
   return (
@@ -144,17 +138,28 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Awards */}
+      {/* Judging Criteria */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
         <h2 className="text-center text-slate-400 text-xs font-semibold uppercase tracking-widest mb-10">
-          Four Awards
+          Judging Criteria
         </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {awards.map(({ label, desc, icon: Icon, color }) => (
-            <div key={label} className="bg-white border border-gray-200 rounded-2xl p-5">
-              <Icon className={`w-6 h-6 mb-3 ${color}`} />
-              <p className="text-slate-900 font-semibold text-sm mb-1">{label}</p>
-              <p className="text-slate-400 text-xs leading-relaxed">{desc}</p>
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-12 bg-red-600 px-6 py-3">
+            <p className="col-span-4 text-white text-xs font-semibold uppercase tracking-wide">Criteria</p>
+            <p className="col-span-6 text-white text-xs font-semibold uppercase tracking-wide">Description</p>
+            <p className="col-span-2 text-white text-xs font-semibold uppercase tracking-wide text-right">Weight</p>
+          </div>
+          {[
+            { criteria: 'Business Value',               desc: 'Is there a clear link to revenue growth, retention, or operational efficiency?',                                  weight: '30%', top: true  },
+            { criteria: 'Problem Clarity',              desc: 'Is the business problem clearly defined and well-understood?',                                                    weight: '25%', top: false },
+            { criteria: 'Solution Effectiveness',       desc: 'Does the solution directly address the problem and produce accurate, useful, and consistent outputs?',           weight: '20%', top: false },
+            { criteria: 'AI Integration & Reusability', desc: 'Is Claude meaningfully embedded as a core enabler, and can the solution be easily adopted by other engineers?',  weight: '15%', top: false },
+            { criteria: 'Production Evidence',           desc: 'Was the tool deployed and run on real production cases? Evidence must show when, where, how many cases, and who authorized the run.',  weight: '10%', top: false },
+          ].map(({ criteria, desc, weight, top }, i, arr) => (
+            <div key={criteria} className={`grid grid-cols-12 px-6 py-4 items-start ${i < arr.length - 1 ? 'border-b border-gray-100' : ''} ${top ? 'bg-red-50' : ''}`}>
+              <p className={`col-span-4 text-sm font-semibold ${top ? 'text-red-700' : 'text-slate-900'}`}>{criteria}</p>
+              <p className="col-span-6 text-slate-500 text-sm leading-relaxed">{desc}</p>
+              <p className={`col-span-2 text-right text-sm font-bold ${top ? 'text-red-600' : 'text-slate-700'}`}>{weight}</p>
             </div>
           ))}
         </div>
