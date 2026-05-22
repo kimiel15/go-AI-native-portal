@@ -74,7 +74,7 @@ ${q7}`;
 export async function scoreEssays(q4: string, q6: string, q7: string): Promise<ClaudeScoring> {
   const endpoint = process.env.AI_ENDPOINT_URL;
   const apiKey   = process.env.ANTHROPIC_API_KEY;
-  const model    = process.env.AI_MODEL ?? 'claude-opus-4-5';
+  const model    = process.env.AI_MODEL ?? 'claude-4.6-opus';
 
   if (!endpoint || !apiKey) throw new Error('AI_ENDPOINT_URL or ANTHROPIC_API_KEY is not configured.');
 
