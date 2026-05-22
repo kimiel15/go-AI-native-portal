@@ -3,14 +3,6 @@ import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Zap, Calendar } fr
 
 const menuItems = [
   {
-    icon: Brain,
-    label: 'AI Proficiency Assessment',
-    desc: 'Take the individual assessment',
-    href: '/assessment',
-    color: 'from-orange-500 to-red-500',
-    badge: 'Individual',
-  },
-  {
     icon: Users,
     label: 'Team Registration',
     desc: 'Register your team of 3–4',
@@ -25,6 +17,14 @@ const menuItems = [
     href: '/submissions',
     color: 'from-rose-500 to-pink-600',
     badge: 'Submit',
+  },
+  {
+    icon: Brain,
+    label: 'AI Proficiency Assessment',
+    desc: 'Take the individual assessment',
+    href: '/assessment',
+    color: 'from-orange-500 to-red-500',
+    badge: 'Individual',
   },
 ];
 
@@ -101,7 +101,7 @@ export default function Home() {
         </p>
 
         <div className="flex flex-wrap gap-4 justify-center">
-          <Link href="/assessment"
+          <Link href="/register"
             className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-red-500/25 hover:shadow-red-500/40">
             Get Started <ArrowRight className="w-4 h-4" />
           </Link>
