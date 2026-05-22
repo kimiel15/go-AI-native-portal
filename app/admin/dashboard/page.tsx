@@ -696,7 +696,7 @@ interface ImportResult { created: number; updated: number; skipped: number; erro
 
 function downloadTemplate() {
   const ws = XLSX.utils.aoa_to_sheet([
-    ['Name', 'Email', 'Team Name'],
+    ['Name', 'Email Address', 'Squad'],
     ['Ana Cruz', 'ana.cruz@trendmicro.com', 'Alpha Squad'],
     ['Juan Reyes', 'juan.reyes@trendmicro.com', 'Alpha Squad'],
   ]);
@@ -729,12 +729,12 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
           const norm: Record<string, string> = {};
           Object.keys(r).forEach(k => { norm[k.trim().toLowerCase()] = String(r[k]).trim(); });
           return {
-            name:     norm['name']      || norm['full name'] || norm['fullname'] || '',
-            email:    norm['email']     || norm['email address'] || '',
-            teamName: norm['team name'] || norm['team']       || norm['teamname'] || '',
+            name:     norm['name']          || norm['full name'] || norm['fullname'] || '',
+            email:    norm['email address'] || norm['email']     || '',
+            teamName: norm['squad']         || norm['team name'] || norm['team']    || norm['teamname'] || '',
           };
         }).filter(r => r.name || r.email);
-        if (parsed.length === 0) { setParseError('No data rows found. Make sure row 1 has headers: Name, Email, Team Name.'); return; }
+        if (parsed.length === 0) { setParseError('No data rows found. Make sure row 1 has headers: Name, Email Address, Squad.'); return; }
         setRows(parsed);
       } catch {
         setParseError('Could not read the file. Please use the provided template.');
@@ -772,7 +772,7 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between gap-4">
             <div>
               <p className="text-blue-800 font-semibold text-sm">Step 1 — Download the template</p>
-              <p className="text-blue-600 text-xs mt-0.5">Fill in Name, Email, and Team Name columns. Team Name must match exactly.</p>
+              <p className="text-blue-600 text-xs mt-0.5">Fill in Name, Email Address, and Squad columns. Squad name must match exactly.</p>
             </div>
             <button onClick={downloadTemplate}
               className="flex-shrink-0 flex items-center gap-1.5 bg-white border border-blue-200 hover:bg-blue-50 text-blue-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors">
@@ -819,8 +819,8 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
                     <tr>
                       <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">#</th>
                       <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Name</th>
-                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Email</th>
-                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Team</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Email Address</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Squad</th>
                     </tr>
                   </thead>
                   <tbody>
