@@ -1,12 +1,10 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
 import { Brain, CheckCircle, AlertCircle, Loader2, ChevronRight, Sparkles, Trophy, UserCheck } from 'lucide-react';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
-interface TeamOption { id: string; teamName: string; }
 
 const LEVEL_COLORS: Record<string, { bg: string; border: string; text: string; badge: string; sublabel: string }> = {
   'Level 1': { bg: 'bg-slate-50',  border: 'border-slate-200', text: 'text-slate-600', badge: 'bg-slate-100 text-slate-700 border border-slate-200',  sublabel: 'Can create prompts — self-help' },
@@ -76,12 +74,7 @@ function RadioOption({ name, value, label, points, selected, onChange }: {
 }
 
 function AssessmentForm() {
-  const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const [teamId, setTeamId] = useState(searchParams.get('teamId') || '');
-  const [teams, setTeams] = useState<TeamOption[]>([]);
-  const [rosterTeamName, setRosterTeamName] = useState<string | null>(null); // pre-assigned team name from roster
-  const [rosterLoaded, setRosterLoaded] = useState(false);
 
   // Name + email come from Microsoft session — read-only
   const participantName  = session?.user?.name  ?? '';
@@ -102,25 +95,6 @@ function AssessmentForm() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<SubmitResult | null>(null);
 
-  useEffect(() => {
-    fetch('/api/register').then(r => r.json()).then(setTeams).catch(() => {});
-  }, []);
-
-  // Look up participant roster once we have the email from the session
-  useEffect(() => {
-    if (!participantEmail) return;
-    fetch(`/api/participants?email=${encodeURIComponent(participantEmail)}`)
-      .then(r => r.json())
-      .then((p: { teamId?: string; teamName?: string } | null) => {
-        if (p?.teamId) {
-          setTeamId(p.teamId);
-          setRosterTeamName(p.teamName ?? null);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setRosterLoaded(true));
-  }, [participantEmail]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
@@ -129,7 +103,7 @@ function AssessmentForm() {
       const res = await fetch('/api/assessment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId, participantName, participantEmail, q1, q2, q3, q5, q4_essay: q4, q6_essay: q6, q7_essay: q7 }),
+        body: JSON.stringify({ participantName, participantEmail, q1, q2, q3, q5, q4_essay: q4, q6_essay: q6, q7_essay: q7 }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
@@ -266,43 +240,6 @@ function AssessmentForm() {
             </div>
           </div>
 
-          {/* Team — pre-assigned from roster or manual fallback */}
-          <div>
-            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5">
-              Team <span className="text-red-400">*</span>
-            </p>
-            {rosterTeamName ? (
-              /* Pre-assigned — show as locked field */
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                <span className="text-slate-900 text-sm font-medium flex-1">{rosterTeamName}</span>
-                <span className="text-xs text-emerald-600 font-medium flex-shrink-0">Pre-assigned</span>
-              </div>
-            ) : (
-              /* Not in roster — allow manual selection */
-              <>
-                {!rosterLoaded ? (
-                  <div className="flex items-center gap-2 text-slate-400 text-sm py-3">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Checking roster…
-                  </div>
-                ) : (
-                  <>
-                    <select
-                      required
-                      value={teamId}
-                      onChange={e => setTeamId(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-orange-500 transition-colors"
-                    >
-                      <option value="">-- Select your team --</option>
-                      {teams.map(t => <option key={t.id} value={t.id}>{t.teamName}</option>)}
-                    </select>
-                    <p className="text-slate-400 text-xs mt-1.5">
-                      Your email wasn&apos;t found in the participant roster — please select your team manually.
-                    </p>
-                  </>
-                )}
-              </>
-            )}
-          </div>
         </div>
 
         {/* Section 1 */}

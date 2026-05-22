@@ -66,7 +66,7 @@ export interface SquadLeadValidation {
 
 export interface Assessment {
   id: string;
-  teamId: string;
+  teamId?: string;
   participantName: string;
   participantEmail: string;
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTeams, saveAssessment } from '@/lib/data';
+import { saveAssessment } from '@/lib/data';
 import { scoreEssays } from '@/lib/claude';
 import { Assessment, MC_POINTS, SKILL_LEVELS } from '@/types';
 import { randomUUID } from 'crypto';
@@ -17,15 +17,10 @@ function mapToLevel(percent: number): { label: string; category: string } {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { teamId, participantName, participantEmail, q1, q2, q3, q5, q4_essay, q6_essay, q7_essay } = body;
+    const { participantName, participantEmail, q1, q2, q3, q5, q4_essay, q6_essay, q7_essay } = body;
 
-    if (!teamId || !participantName || !participantEmail || !q1 || !q2 || !q3 || !q5 || !q4_essay || !q6_essay || !q7_essay) {
+    if (!participantName || !participantEmail || !q1 || !q2 || !q3 || !q5 || !q4_essay || !q6_essay || !q7_essay) {
       return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
-    }
-
-    const teams = await getTeams();
-    if (!teams.find(t => t.id === teamId)) {
-      return NextResponse.json({ error: 'Team not found.' }, { status: 404 });
     }
 
     const mcScore = calcMcScore(q1, q2, q3, q5);
@@ -52,7 +47,6 @@ export async function POST(req: NextRequest) {
 
     const assessment: Assessment = {
       id: randomUUID(),
-      teamId,
       participantName,
       participantEmail,
       q1, q2, q3, q5,
