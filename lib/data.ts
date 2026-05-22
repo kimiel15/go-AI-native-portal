@@ -95,6 +95,7 @@ export async function getAssessments(): Promise<Assessment[]> {
   return rows.map(r => ({
     ...r,
     // Prisma nullable (null) → TypeScript optional (undefined)
+    teamId:                 r.teamId                 ?? undefined,
     essayScores:            r.essayScores            as unknown as Assessment['essayScores'] ?? undefined,
     validation:             r.validation             as unknown as Assessment['validation']  ?? undefined,
     essayTotal:             r.essayTotal             ?? undefined,
