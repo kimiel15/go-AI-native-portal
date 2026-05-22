@@ -50,8 +50,8 @@ function buildUserPrompt(q4: string, q6: string, q7: string): string {
 SECTION 2 — Prompting Ability (Question 4)
 Rubric:
 - Level 1 (1–3pts): Vague or generic prompt with little structure or explanation. Reflects self-help use only — no indication of reusable or shareable prompts.
-- Level 2 (4–6pts): Clear, structured prompt with context and defined output. Explanation shows understanding of prompt design. Could benefit others on their squad.
-- Level 3 (7–8pts): Detailed, multi-part prompt with constraints, formatting, and advanced technique. Explanation is sophisticated. Prompt could serve as a production-ready template across the org.
+- Level 2 (4–5pts): Clear, structured prompt with context and defined output. Explanation shows understanding of prompt design. Could benefit others on their squad.
+- Level 3 (6–8pts): Detailed, multi-part prompt with constraints, formatting, and advanced technique. Explanation is sophisticated. Prompt could serve as a production-ready template across the org.
 
 Engineer's answer:
 ${q4}
@@ -60,8 +60,8 @@ ${q4}
 SECTION 3 — Workflow & Tool Building (Question 6)
 Rubric:
 - Level 1 (1–3pts): Identifies a personal task or pain point but no concrete AI solution. Use case is self-contained — helps only themselves.
-- Level 2 (4–6pts): Describes a clear problem and a practical AI-powered solution that would benefit their squad or team. Shows understanding of how Claude can be applied in a shared workflow.
-- Level 3 (7–8pts): Presents a specific, production-ready tool or workflow — already built or fully thought through — with demonstrated or projected org-wide impact. Includes real business outcomes.
+- Level 2 (4–5pts): Describes a clear problem and a practical AI-powered solution that would benefit their squad or team. Shows understanding of how Claude can be applied in a shared workflow.
+- Level 3 (6–8pts): Presents a specific, production-ready tool or workflow — already built or fully thought through — with demonstrated or projected org-wide impact. Includes real business outcomes.
 
 Engineer's answer:
 ${q6}
@@ -70,8 +70,8 @@ ${q6}
 SECTION 4 — AI Mindset (Question 7)
 Rubric:
 - Level 1 (1–3pts): Acknowledges AI but reflection is surface level or personal only. No clear sense of how they are adapting or building for others.
-- Level 2 (4–6pts): Thoughtful response showing genuine commitment to growing AI skills. Shows awareness of how AI changes team workflows, not just individual tasks.
-- Level 3 (7–8pts): Forward-thinking, action-oriented response with clear examples of leading AI adoption at scale. Demonstrates an AI-first mindset already shaping org-wide practices.
+- Level 2 (4–5pts): Thoughtful response showing genuine commitment to growing AI skills. Shows awareness of how AI changes team workflows, not just individual tasks.
+- Level 3 (6–8pts): Forward-thinking, action-oriented response with clear examples of leading AI adoption at scale. Demonstrates an AI-first mindset already shaping org-wide practices.
 
 Engineer's answer:
 ${q7}`;

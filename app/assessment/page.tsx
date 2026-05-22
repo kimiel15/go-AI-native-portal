@@ -1,8 +1,8 @@
 'use client';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
-import { Brain, CheckCircle, AlertCircle, Loader2, ChevronRight, Sparkles, Trophy, UserCheck } from 'lucide-react';
+import { Brain, CheckCircle, AlertCircle, Loader2, ChevronRight, Sparkles, Trophy, UserCheck, Lock } from 'lucide-react';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -91,9 +91,20 @@ function AssessmentForm() {
   const [q6, setQ6] = useState('');
   const [q7, setQ7] = useState('');
 
+  const [alreadySubmitted, setAlreadySubmitted] = useState<boolean | null>(null);
+
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<SubmitResult | null>(null);
+
+  // Check on mount (once email is available) whether this participant already submitted
+  useEffect(() => {
+    if (!participantEmail) return;
+    fetch(`/api/assessment?email=${encodeURIComponent(participantEmail)}`)
+      .then(r => r.json())
+      .then(d => setAlreadySubmitted(!!d.submitted))
+      .catch(() => setAlreadySubmitted(false));
+  }, [participantEmail]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,6 +125,38 @@ function AssessmentForm() {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     }
   };
+
+  // ── Checking submission status ──────────────────────────────────────────────
+  if (alreadySubmitted === null && participantEmail) {
+    return (
+      <div className="max-w-2xl mx-auto px-6 py-24 flex flex-col items-center gap-3">
+        <Loader2 className="w-7 h-7 text-slate-400 animate-spin" />
+        <p className="text-slate-400 text-sm">Checking your assessment status…</p>
+      </div>
+    );
+  }
+
+  // ── Already-submitted screen ────────────────────────────────────────────────
+  if (alreadySubmitted === true && status !== 'success') {
+    return (
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-10 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto">
+            <Lock className="w-7 h-7 text-slate-400" />
+          </div>
+          <h2 className="text-slate-900 font-bold text-xl">Assessment Already Submitted</h2>
+          <p className="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">
+            You have already completed this assessment. Only one submission is allowed per participant.
+            If you need to retake it, ask your squad lead or admin to reset your attempt.
+          </p>
+          <a href="/"
+            className="inline-block mt-2 bg-gray-100 hover:bg-gray-200 text-slate-800 font-semibold px-6 py-2.5 rounded-xl transition-all text-sm">
+            Back to Home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   // ── Success screen ──────────────────────────────────────────────────────────
   if (status === 'success' && result) {
