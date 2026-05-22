@@ -408,33 +408,62 @@ function SubmissionCard({ sub }: { sub: ProjectSubmission }) {
 
 // ─── Assessment Read Card ─────────────────────────────────────────────────────
 
-function AssessmentReadCard({ assessment }: { assessment: Assessment }) {
+function AssessmentReadCard({ assessment, onReset }: { assessment: Assessment; onReset: () => void }) {
   const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const handleReset = async () => {
+    setResetting(true);
+    await fetch(`/api/admin/assessments/${assessment.id}`, { method: 'DELETE' });
+    setResetting(false);
+    setConfirming(false);
+    onReset();
+  };
   const e = assessment.essayScores;
   const validated = assessment.validation;
   const displayLevel = validated?.finalLevel ?? assessment.preliminaryLevel ?? '—';
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <button onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white transition-colors text-left">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-sm">
+      <div className="flex items-center px-5 py-4 gap-3">
+        <button onClick={() => setOpen(o => !o)} className="flex items-center gap-3 flex-1 text-left min-w-0">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             {assessment.participantName.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <p className="text-slate-900 font-semibold text-sm">{assessment.participantName}</p>
+          <div className="min-w-0">
+            <p className="text-slate-900 font-semibold text-sm truncate">{assessment.participantName}</p>
             <p className="text-slate-400 text-xs flex items-center gap-1"><Mail className="w-3 h-3" />{assessment.participantEmail}</p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
+        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
           {displayLevel && (
             <span className={`text-xs border px-2.5 py-1 rounded-full ${levelBadge(displayLevel)}`}>{displayLevel}</span>
           )}
           {validated && <ShieldCheck className="w-4 h-4 text-emerald-600" />}
-          {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+          {confirming ? (
+            <>
+              <span className="text-slate-500 text-xs">Reset?</span>
+              <button onClick={handleReset} disabled={resetting}
+                className="text-xs bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg font-medium transition-colors disabled:opacity-50">
+                {resetting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
+              </button>
+              <button onClick={() => setConfirming(false)}
+                className="text-xs border border-gray-200 text-slate-500 px-2.5 py-1 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                No
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setConfirming(true)} title="Reset assessment"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition-colors">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button onClick={() => setOpen(o => !o)} className="text-slate-400">
+            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
         </div>
-      </button>
+      </div>
 
       {open && (
         <div className="border-t border-gray-200 px-5 py-4 space-y-4">
@@ -1329,7 +1358,7 @@ export default function AdminDashboard() {
           <div className="space-y-3">
             <h2 className="text-slate-900 font-bold text-lg mb-4">Assessment Responses ({assessments.length})</h2>
             {assessments.length === 0 ? <div className="text-center py-16 text-slate-400">No assessments yet.</div>
-              : assessments.map(a => <AssessmentReadCard key={a.id} assessment={a} />)}
+              : assessments.map(a => <AssessmentReadCard key={a.id} assessment={a} onReset={fetchData} />)}
           </div>
         )}
 

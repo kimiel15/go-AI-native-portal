@@ -119,6 +119,10 @@ export async function saveAssessment(assessment: Assessment): Promise<void> {
   });
 }
 
+export async function deleteAssessment(id: string): Promise<void> {
+  await prisma.assessment.delete({ where: { id } });
+}
+
 export async function updateAssessment(id: string, updates: Partial<Assessment>): Promise<void> {
   const data: Record<string, unknown> = { ...updates };
   if (updates.essayScores) data.essayScores = updates.essayScores as object;
