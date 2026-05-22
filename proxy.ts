@@ -15,5 +15,5 @@ export const proxy = auth((req) => {
 export const config = {
   // Protect the three participant-facing pages.
   // Admin uses its own password gate — leave it alone.
-  matcher: ['/assessment/:path*', '/register/:path*', '/submit/:path*'],
+  matcher: ['/assessment/:path*', '/register/:path*', '/submit/:path*', '/submissions/:path*', '/submissions'],
 };

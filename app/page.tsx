@@ -1,52 +1,78 @@
 import Link from 'next/link';
 import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Zap, Calendar } from 'lucide-react';
 
-const steps = [
+const menuItems = [
   {
-    step: '01',
     icon: Brain,
-    title: 'AI Proficiency Assessment',
-    description: 'Each team member completes a short assessment to gauge their AI knowledge level. Done individually before forming your team.',
+    label: 'AI Proficiency Assessment',
+    desc: 'Take the individual assessment',
     href: '/assessment',
-    color: 'from-orange-500 to-red-600',
-    cta: 'Take Assessment',
+    color: 'from-orange-500 to-red-500',
+    badge: 'Individual',
   },
   {
-    step: '02',
     icon: Users,
-    title: 'Register Your Team',
-    description: 'Form a team of 3–4 engineers within or across squads and register your entry. Mandatory for all teams.',
+    label: 'Team Registration',
+    desc: 'Register your team of 3–4',
     href: '/register',
     color: 'from-red-500 to-rose-600',
-    cta: 'Register Team',
+    badge: 'Team',
   },
   {
-    step: '03',
     icon: FileText,
-    title: 'Submit Your Project',
-    description: 'Submit your Claude-powered tool with Git repo, production deployment evidence, and measured results.',
-    href: '/submit',
+    label: 'Project Submission',
+    desc: 'View and submit projects',
+    href: '/submissions',
     color: 'from-rose-500 to-pink-600',
-    cta: 'Submit Project',
+    badge: 'Submit',
   },
 ];
-
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
       {/* Nav */}
-      <nav className="border-b border-red-100 bg-white shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <nav className="border-b border-red-100 bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-400 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="text-slate-900 font-bold text-lg tracking-tight">Go AI-Native</span>
+            <span className="text-slate-900 font-bold text-base tracking-tight">Go AI-Native</span>
           </div>
-          <Link href="/admin" className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors">
-            <LayoutDashboard className="w-4 h-4" />Admin
+
+          {/* Primary menu */}
+          <div className="hidden md:flex items-center gap-1 flex-1 justify-center">
+            {menuItems.map(({ icon: Icon, label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-red-50 transition-all"
+              >
+                <Icon className="w-4 h-4 text-red-400 flex-shrink-0" />
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          <Link href="/admin" className="flex-shrink-0 flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-700 transition-colors">
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="hidden sm:inline">Admin</span>
           </Link>
+        </div>
+
+        {/* Mobile menu */}
+        <div className="md:hidden border-t border-red-50 px-4 py-2 flex gap-2 overflow-x-auto">
+          {menuItems.map(({ icon: Icon, label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-red-50 border border-gray-200 transition-all"
+            >
+              <Icon className="w-3.5 h-3.5 text-red-400" />
+              {label}
+            </Link>
+          ))}
         </div>
       </nav>
 
@@ -84,32 +110,37 @@ export default function Home() {
             className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-red-500/25 hover:shadow-red-500/40">
             Get Started <ArrowRight className="w-4 h-4" />
           </Link>
-          <Link href="/admin"
+          <Link href="/submissions"
             className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-slate-900 font-semibold px-8 py-3.5 rounded-xl transition-all border border-gray-200">
-            <LayoutDashboard className="w-4 h-4" /> Admin Dashboard
+            <FileText className="w-4 h-4" /> View Submissions
           </Link>
         </div>
       </section>
 
-      {/* Steps */}
+      {/* Menu Cards */}
       <section className="max-w-6xl mx-auto px-6 pb-16">
         <h2 className="text-center text-slate-400 text-xs font-semibold uppercase tracking-widest mb-10">
-          Three Steps to Submit
+          Participant Portal
         </h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {steps.map(({ step, icon: Icon, title, description, href, color, cta }) => (
-            <Link key={step} href={href} className="group block card-hover">
-              <div className="bg-white border border-gray-200 rounded-2xl p-8 h-full hover:border-gray-300 transition-all">
+          {menuItems.map(({ icon: Icon, label, desc, href, color, badge }, i) => (
+            <Link key={href} href={href} className="group block">
+              <div className="bg-white border border-gray-200 rounded-2xl p-8 h-full hover:border-gray-300 hover:shadow-md transition-all">
                 <div className="flex items-start justify-between mb-6">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-4xl font-black text-slate-200 group-hover:text-slate-300 transition-colors">{step}</span>
+                  <span className="text-4xl font-black text-slate-100 group-hover:text-slate-200 transition-colors">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
                 </div>
-                <h3 className="text-slate-900 font-bold text-lg mb-3">{title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed mb-6">{description}</p>
+                <div className="mb-1">
+                  <span className="inline-block text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">{badge}</span>
+                  <h3 className="text-slate-900 font-bold text-lg leading-snug">{label}</h3>
+                </div>
+                <p className="text-slate-500 text-sm leading-relaxed mb-6">{desc}</p>
                 <div className="flex items-center gap-2 text-red-400 text-sm font-semibold group-hover:gap-3 transition-all">
-                  {cta} <ArrowRight className="w-4 h-4" />
+                  Open <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
             </Link>
