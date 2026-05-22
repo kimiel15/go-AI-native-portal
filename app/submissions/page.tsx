@@ -6,7 +6,9 @@ import { FileText, GitBranch, ArrowRight, ExternalLink, Clock, Plus } from 'luci
 export const dynamic = 'force-dynamic';
 
 export default async function SubmissionsPage() {
-  const submissions = await getSubmissions();
+  const all = await getSubmissions();
+  // Gallery only shows finalised submissions — drafts are private to the team
+  const submissions = all.filter(s => s.status === 'submitted');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">

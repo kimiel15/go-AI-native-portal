@@ -30,15 +30,21 @@ export async function deleteTeam(id: string): Promise<void> {
 
 export async function getSubmissions(): Promise<ProjectSubmission[]> {
   const rows = await prisma.submission.findMany({ orderBy: { submittedAt: 'desc' } });
-  return rows as ProjectSubmission[];
+  return rows as unknown as ProjectSubmission[];
+}
+
+export async function getSubmissionByTeamId(teamId: string): Promise<ProjectSubmission | null> {
+  const row = await prisma.submission.findUnique({ where: { teamId } });
+  return row as unknown as ProjectSubmission | null;
 }
 
 export async function saveSubmission(sub: ProjectSubmission): Promise<void> {
   await prisma.submission.upsert({
-    where: { id: sub.id },
+    where: { teamId: sub.teamId },
     update: {
       gitRepoUrl:      sub.gitRepoUrl,
       measuredResults: sub.measuredResults,
+      status:          sub.status,
       submittedAt:     sub.submittedAt,
     },
     create: {
@@ -47,6 +53,7 @@ export async function saveSubmission(sub: ProjectSubmission): Promise<void> {
       teamName:        sub.teamName,
       gitRepoUrl:      sub.gitRepoUrl,
       measuredResults: sub.measuredResults,
+      status:          sub.status,
       submittedAt:     sub.submittedAt,
     },
   });
