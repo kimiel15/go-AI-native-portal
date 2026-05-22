@@ -41,11 +41,15 @@ export async function GET() {
       responseBody: body,
     });
   } catch (err) {
+    const cause = (err as { cause?: unknown })?.cause;
     return NextResponse.json({
       ok: false,
       endpoint,
       model,
       error: err instanceof Error ? err.message : String(err),
+      cause: cause instanceof Error
+        ? { message: cause.message, code: (cause as NodeJS.ErrnoException).code }
+        : String(cause ?? ''),
     });
   }
 }
