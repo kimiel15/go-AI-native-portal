@@ -15,7 +15,6 @@ export default function RegisterPage() {
   const [squad, setSquad] = useState('');
   const [squadLocked, setSquadLocked] = useState(false);   // true when pre-assigned from roster
   const [rosterLoaded, setRosterLoaded] = useState(false);
-  const [crossSquad, setCrossSquad] = useState(false);
   const [members, setMembers] = useState<Member[]>([emptyMember(), emptyMember(), emptyMember()]);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
@@ -73,7 +72,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamName, department: squad, members: validMembers, crossSquad }),
+        body: JSON.stringify({ teamName, department: squad, members: validMembers }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed.');
@@ -179,11 +178,6 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={crossSquad} onChange={e => setCrossSquad(e.target.checked)}
-                className="w-4 h-4 accent-red-500 rounded" />
-              <span className="text-slate-500 text-sm">This is a cross-squad team</span>
-            </label>
           </div>
 
           {/* Team Members */}
