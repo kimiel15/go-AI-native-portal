@@ -746,7 +746,7 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
   const handleImport = async () => {
     setImporting(true);
     try {
-      const res = await fetch('/api/participants/import', {
+      const res = await fetch('/api/admin/participants/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rows }),
@@ -912,7 +912,7 @@ function ParticipantFormModal({
     setSaving(true); setError('');
     const selectedTeam = teams.find(t => t.id === teamId);
     try {
-      const url    = isEdit ? `/api/participants/${initial!.id}` : '/api/participants';
+      const url    = isEdit ? `/api/admin/participants/${initial!.id}` : '/api/admin/participants';
       const method = isEdit ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method,
@@ -1004,7 +1004,7 @@ export default function AdminDashboard() {
         fetch('/api/admin/teams').then(r => r.json()),
         fetch('/api/admin/submissions').then(r => r.json()),
         fetch('/api/admin/assessments').then(r => r.json()),
-        fetch('/api/participants').then(r => r.json()),
+        fetch('/api/admin/participants').then(r => r.json()),
       ]);
       setTeams(t); setSubmissions(s); setAssessments(a); setParticipants(p);
     } finally { setLoading(false); }
@@ -1089,7 +1089,7 @@ export default function AdminDashboard() {
                 Cancel
               </button>
               <button onClick={async () => {
-                await fetch(`/api/participants/${deletingParticipantId}`, { method: 'DELETE' });
+                await fetch(`/api/admin/participants/${deletingParticipantId}`, { method: 'DELETE' });
                 setDeletingParticipantId(null);
                 fetchData();
               }} className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold py-2.5 rounded-xl">
