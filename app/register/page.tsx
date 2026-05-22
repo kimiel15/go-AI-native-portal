@@ -207,7 +207,7 @@ export default function RegisterPage() {
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-red-400 text-xs uppercase tracking-widest">Step 02</p>
+              <p className="text-red-400 text-xs uppercase tracking-widest">Step 01</p>
               <h1 className="text-2xl font-bold text-slate-900">Team Registration</h1>
             </div>
           </div>

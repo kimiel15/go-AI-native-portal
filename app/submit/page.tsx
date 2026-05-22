@@ -239,7 +239,7 @@ function SubmitForm() {
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-rose-400 text-xs uppercase tracking-widest">Step 03</p>
+              <p className="text-rose-400 text-xs uppercase tracking-widest">Step 02</p>
               <h1 className="text-2xl font-bold text-slate-900">Project Submission</h1>
             </div>
           </div>

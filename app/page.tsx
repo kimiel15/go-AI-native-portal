@@ -125,7 +125,7 @@ export default function Home() {
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-4xl font-black text-slate-100 group-hover:text-slate-200 transition-colors">
+                  <span className="text-4xl font-black text-slate-300 group-hover:text-slate-400 transition-colors">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                 </div>

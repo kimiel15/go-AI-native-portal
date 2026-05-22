@@ -262,7 +262,7 @@ function AssessmentForm() {
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="text-orange-400 text-xs uppercase tracking-widest">Step 01 — Individual</p>
+            <p className="text-orange-400 text-xs uppercase tracking-widest">Step 03 — Individual</p>
             <h1 className="text-2xl font-bold text-slate-900">AI Proficiency Assessment</h1>
           </div>
         </div>
