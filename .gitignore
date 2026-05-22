@@ -43,6 +43,10 @@ next-env.d.ts
 # local data (flat-file JSON storage — not committed)
 /data/*.json
 
+# deployment artifacts
+/deploy-stage/
+/portal-deploy.zip
+
 # claude dev config
 /.claude
 

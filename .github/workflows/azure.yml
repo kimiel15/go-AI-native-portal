@@ -30,8 +30,8 @@ jobs:
           AI_ENDPOINT_URL: ${{ secrets.AI_ENDPOINT_URL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
-      - name: Run Prisma migrations
-        run: npx prisma migrate deploy
+      - name: Run Prisma db push (creates tables if they don't exist)
+        run: npx prisma db push
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
