@@ -1,10 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { ClaudeScoring } from '@/types';
-
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-  baseURL: process.env.AI_ENDPOINT_URL,
-});
 
 const SCORING_SYSTEM_PROMPT = `You are an evaluator for the Go AI-Native Hackathon skill assessment. Your job is to score engineer essay answers and assign a preliminary skill level.
 
@@ -78,14 +72,37 @@ ${q7}`;
 }
 
 export async function scoreEssays(q4: string, q6: string, q7: string): Promise<ClaudeScoring> {
-  const message = await client.messages.create({
-    model: process.env.AI_MODEL ?? 'claude-4.6-opus',
-    max_tokens: 1024,
-    system: SCORING_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: buildUserPrompt(q4, q6, q7) }],
+  const endpoint = process.env.AI_ENDPOINT_URL;
+  const apiKey   = process.env.ANTHROPIC_API_KEY;
+  const model    = process.env.AI_MODEL ?? 'claude-opus-4-5';
+
+  if (!endpoint || !apiKey) throw new Error('AI_ENDPOINT_URL or ANTHROPIC_API_KEY is not configured.');
+
+  // Call the Trend Micro AI proxy directly — bypassing the Anthropic SDK so the
+  // URL is used as-is rather than having /v1/messages appended to it.
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1024,
+      system: SCORING_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: buildUserPrompt(q4, q6, q7) }],
+    }),
   });
 
-  const text = message.content[0].type === 'text' ? message.content[0].text : '';
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '(no body)');
+    throw new Error(`AI endpoint ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  const text: string = data?.content?.[0]?.text ?? '';
+  if (!text) throw new Error(`Empty response from AI endpoint. Full response: ${JSON.stringify(data)}`);
 
   // Strip markdown code fences if present
   const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
