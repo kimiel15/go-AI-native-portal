@@ -20,6 +20,19 @@ export default function RegisterPage() {
   const [message, setMessage] = useState('');
   const [teamId, setTeamId] = useState('');
 
+  // Pre-fill member 1 with the logged-in user's name + email
+  useEffect(() => {
+    const name = session?.user?.name;
+    const email = session?.user?.email;
+    if (!name && !email) return;
+    setMembers(m => {
+      if (m[0]?.name || m[0]?.email) return m;
+      const next = [...m];
+      next[0] = { name: name ?? '', email: email ?? '', role: '' };
+      return next;
+    });
+  }, [session?.user?.name, session?.user?.email]);
+
   // Look up the logged-in user's squad from the participant roster
   useEffect(() => {
     const email = session?.user?.email;
@@ -209,6 +222,11 @@ export default function RegisterPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 text-xs font-medium">
                     Member {i + 1} {i < 3 ? <span className="text-red-400">*</span> : <span className="text-slate-400">(optional)</span>}
+                    {i === 0 && session?.user?.email && (
+                      <span className="ml-2 inline-flex items-center gap-1 text-emerald-600">
+                        <UserCheck className="w-3 h-3" />you
+                      </span>
+                    )}
                   </span>
                   {members.length > 3 && i === members.length - 1 && (
                     <button type="button" onClick={() => removeMember(i)}

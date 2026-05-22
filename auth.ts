@@ -1,7 +1,8 @@
 import NextAuth from 'next-auth';
+import type { NextAuthConfig } from 'next-auth';
 import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id';
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const config: NextAuthConfig = {
   trustHost: true,
   providers: [
     MicrosoftEntraID({
@@ -24,6 +25,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: '/signin',
-    error:  '/signin',
+    error: '/signin',
   },
-});
+};
+
+export const { handlers, signIn, signOut, auth } = NextAuth(config);
