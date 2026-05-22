@@ -161,44 +161,54 @@ export async function updateAssessment(id: string, updates: Partial<Assessment>)
 
 // ── AI Usage Verification ───────────────────────────────────────────────────
 
-export async function replaceAIUsage(rows: AIUsageRow[]): Promise<{ inserted: number }> {
-  if (rows.length === 0) return { inserted: 0 };
-  // A fresh upload represents the latest snapshot — wipe and replace.
-  await prisma.$transaction([
-    prisma.aIUsage.deleteMany({}),
-    prisma.aIUsage.createMany({
-      data: rows.map(r => ({
-        id:         r.id,
-        siebelId:   r.siebelId.toLowerCase(),
-        month:      r.month,
-        amountUsd:  r.amountUsd,
-        uploadedAt: r.uploadedAt,
-      })),
+export async function upsertAIUsage(rows: AIUsageRow[]): Promise<{ inserted: number; updated: number }> {
+  if (rows.length === 0) return { inserted: 0, updated: 0 };
+  // Upsert each row by siebelId — existing users are updated, new ones inserted,
+  // and any users not in this batch are left alone. To wipe everything, the
+  // admin uses the "Clear snapshot" button (DELETE /api/admin/ai-usage).
+  let inserted = 0;
+  let updated  = 0;
+  await prisma.$transaction(
+    rows.map(r => {
+      const siebelId = r.siebelId.toLowerCase();
+      return prisma.aIUsage.upsert({
+        where: { siebelId },
+        create: {
+          id:         r.id,
+          siebelId,
+          tokens:     r.tokens,
+          costUsd:    r.costUsd ?? null,
+          uploadedAt: r.uploadedAt,
+        },
+        update: {
+          tokens:     r.tokens,
+          costUsd:    r.costUsd ?? null,
+          uploadedAt: r.uploadedAt,
+        },
+      });
     }),
-  ]);
-  return { inserted: rows.length };
+  );
+  // Prisma's transactional upsert doesn't return create-vs-update counts cheaply,
+  // so we report a simple total via inserted; the API surface only needs the sum.
+  inserted = rows.length;
+  return { inserted, updated };
 }
 
 export async function getUsageSummaryBySiebelId(siebelId: string): Promise<AIUsageSummary | null> {
   const id = siebelId.toLowerCase();
-  const rows = await prisma.aIUsage.findMany({
-    where:   { siebelId: id },
-    orderBy: { month: 'asc' },
-  });
-  if (rows.length === 0) return null;
+  const row = await prisma.aIUsage.findUnique({ where: { siebelId: id } });
+  if (!row) return null;
 
-  const monthly = rows.map(r => ({ month: r.month, amount: r.amountUsd }));
-  const total   = monthly.reduce((s, m) => s + m.amount, 0);
   const tier: AIUsageSummary['tier'] =
-    total >= USAGE_THRESHOLDS.power  ? 'power'  :
-    total >= USAGE_THRESHOLDS.active ? 'active' : 'none';
+    row.tokens >= USAGE_THRESHOLDS.power  ? 'power'  :
+    row.tokens >= USAGE_THRESHOLDS.active ? 'active' : 'none';
 
   return {
     siebelId:    id,
-    total,
-    monthly,
+    tokens:      row.tokens,
+    costUsd:     row.costUsd ?? null,
     tier,
-    lastUpdated: rows[0]?.uploadedAt ?? null,
+    lastUpdated: row.uploadedAt,
   };
 }
 

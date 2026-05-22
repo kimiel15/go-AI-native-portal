@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { replaceAIUsage } from '@/lib/data';
+import { upsertAIUsage } from '@/lib/data';
 import { AIUsageRow } from '@/types';
 import { randomUUID } from 'crypto';
 
-interface IncomingRow { siebelId?: string; month?: string; amountUsd?: number | string; }
+interface IncomingRow { siebelId?: string; tokens?: number | string; costUsd?: number | string | null; }
 
 // POST /api/admin/ai-usage/upload
-// Body: { rows: [{ siebelId, month: "YYYY-MM", amountUsd }, ...] }
+// Body: { rows: [{ siebelId, tokens, costUsd? }, ...] }
 // Wipes existing usage data and replaces with the uploaded snapshot.
 export async function POST(req: NextRequest) {
   try {
@@ -24,32 +24,30 @@ export async function POST(req: NextRequest) {
     for (let i = 0; i < incoming.length; i++) {
       const r = incoming[i];
       const siebelId = (r.siebelId ?? '').toString().trim().toLowerCase();
-      const month    = (r.month    ?? '').toString().trim();
-      const amount   = typeof r.amountUsd === 'number' ? r.amountUsd : Number(r.amountUsd);
+      const tokens   = typeof r.tokens  === 'number' ? r.tokens  : Number(r.tokens);
+      const costRaw  = r.costUsd;
+      const costUsd  = costRaw == null || costRaw === '' ? undefined
+                     : typeof costRaw === 'number' ? costRaw : Number(costRaw);
 
       if (!siebelId) {
         errors.push({ row: i + 1, siebelId: '(empty)', reason: 'Missing siebelId' });
         continue;
       }
-      if (!/^\d{4}-\d{2}$/.test(month)) {
-        errors.push({ row: i + 1, siebelId, reason: `Invalid month "${month}" (expected YYYY-MM)` });
-        continue;
-      }
-      if (!Number.isFinite(amount) || amount < 0) {
-        errors.push({ row: i + 1, siebelId, reason: `Invalid amount "${r.amountUsd}"` });
+      if (!Number.isFinite(tokens) || tokens < 0) {
+        errors.push({ row: i + 1, siebelId, reason: `Invalid token count "${r.tokens}"` });
         continue;
       }
 
       cleaned.push({
         id:         randomUUID(),
         siebelId,
-        month,
-        amountUsd:  amount,
+        tokens,
+        costUsd:    costUsd !== undefined && Number.isFinite(costUsd) ? costUsd : undefined,
         uploadedAt: now,
       });
     }
 
-    const { inserted } = await replaceAIUsage(cleaned);
+    const { inserted } = await upsertAIUsage(cleaned);
     const distinctUsers = new Set(cleaned.map(r => r.siebelId)).size;
 
     return NextResponse.json({

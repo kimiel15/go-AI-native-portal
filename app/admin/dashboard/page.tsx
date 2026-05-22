@@ -578,10 +578,18 @@ function AssessmentReadCard({ assessment, onReset }: { assessment: Assessment; o
 
 interface UsageSummary {
   siebelId: string;
-  total: number;
-  monthly: { month: string; amount: number }[];
+  tokens: number;
+  costUsd: number | null;
   tier: 'power' | 'active' | 'none';
   lastUpdated: string | null;
+}
+
+// Format a token count as "1.6B" / "245M" / "850K" / "750".
+function formatTokens(n: number): string {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '')}B`;
+  if (n >= 1_000_000)     return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (n >= 1_000)         return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+  return n.toLocaleString('en-US');
 }
 
 function levelIndex(level?: string): 0 | 1 | 2 | -1 {
@@ -667,8 +675,7 @@ function VerifiedUsagePanel({
   }
   // no-data → treat as "No Usage" (red) per agreed design.
   const tier: 'power' | 'active' | 'none' = summary?.tier ?? 'none';
-  const total = summary?.total ?? 0;
-  const monthly = summary?.monthly ?? [];
+  const tokens  = summary?.tokens  ?? 0;
 
   const tierStyle: Record<typeof tier, { bg: string; border: string; text: string; dot: string; label: string }> = {
     power:  { bg: 'bg-emerald-50',  border: 'border-emerald-200', text: 'text-emerald-700', dot: 'bg-emerald-500', label: 'Power User' },
@@ -685,13 +692,6 @@ function VerifiedUsagePanel({
     info: 'bg-blue-50 border-blue-200 text-blue-700',
   };
 
-  // Sparkline: simple SVG. Width scales by number of months.
-  const maxAmt = Math.max(1, ...monthly.map(m => m.amount));
-  const barW   = 8;
-  const gap    = 3;
-  const h      = 28;
-  const svgW   = monthly.length * (barW + gap);
-
   return (
     <div className={`${t.bg} ${t.border} border rounded-xl p-4 space-y-3`}>
       <div className="flex items-start justify-between gap-3">
@@ -699,10 +699,10 @@ function VerifiedUsagePanel({
           <p className="text-slate-500 text-xs font-semibold uppercase tracking-widest flex items-center gap-1.5">
             <Activity className="w-3 h-3" />Verified AI Usage
           </p>
-          <p className="text-slate-900 font-bold text-2xl mt-0.5">${total.toLocaleString('en-US', { maximumFractionDigits: 2 })}</p>
+          <p className="text-slate-900 font-bold text-2xl mt-0.5">{formatTokens(tokens)} <span className="text-slate-500 text-sm font-medium">tokens</span></p>
           {summary && (
             <p className="text-slate-400 text-xs mt-0.5">
-              {monthly.length} month{monthly.length !== 1 ? 's' : ''} · siebelId: <span className="font-mono">{summary.siebelId}</span>
+              {tokens.toLocaleString('en-US')} total · siebelId: <span className="font-mono">{summary.siebelId}</span>
             </p>
           )}
         </div>
@@ -710,33 +710,6 @@ function VerifiedUsagePanel({
           <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />{t.label}
         </span>
       </div>
-
-      {monthly.length > 0 && (
-        <div>
-          <svg width={svgW} height={h} className="block">
-            {monthly.map((m, i) => {
-              const barH = Math.max(1, Math.round((m.amount / maxAmt) * h));
-              return (
-                <rect
-                  key={m.month}
-                  x={i * (barW + gap)}
-                  y={h - barH}
-                  width={barW}
-                  height={barH}
-                  rx={1.5}
-                  className={t.dot}
-                  fill="currentColor"
-                />
-              );
-            })}
-          </svg>
-          <div className="flex gap-[3px] mt-1 text-[9px] text-slate-400 font-mono leading-none">
-            {monthly.map(m => (
-              <span key={m.month} style={{ width: barW }} className="text-center truncate">{m.month.slice(2)}</span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {flag && (
         <div className={`text-xs rounded-lg border px-2.5 py-2 ${flagStyle[flag.kind]}`}>
@@ -1274,7 +1247,7 @@ function ParticipantFormModal({
 
 // ─── AI Usage Upload Modal ────────────────────────────────────────────────────
 
-interface UsageRow { siebelId: string; month: string; amountUsd: number; }
+interface UsageRow { siebelId: string; tokens: number; costUsd?: number; }
 interface UsageImportResult {
   inserted: number;
   distinctUsers: number;
@@ -1282,33 +1255,14 @@ interface UsageImportResult {
   uploadedAt: string;
 }
 
-// Convert a column header into "YYYY-MM". Handles all of these formats:
-//   "July 2025"   "Jul 2025"   "Jul-2025"   "Jul-25"   "2025-07"
-const MONTH_NUMS: Record<string, string> = {
-  jan: '01', january:   '01',
-  feb: '02', february:  '02',
-  mar: '03', march:     '03',
-  apr: '04', april:     '04',
-  may: '05',
-  jun: '06', june:      '06',
-  jul: '07', july:      '07',
-  aug: '08', august:    '08',
-  sep: '09', sept: '09', september: '09',
-  oct: '10', october:   '10',
-  nov: '11', november:  '11',
-  dec: '12', december:  '12',
-};
-function headerToMonth(h: string): string | null {
-  const s = h.trim();
-  if (/^\d{4}-\d{2}$/.test(s)) return s;
-  // Match "<MonthName>[ -]<2- or 4-digit year>", with optional whitespace.
-  const m = s.match(/^([A-Za-z]+)[\s-]+(\d{2}|\d{4})$/);
-  if (!m) return null;
-  const mm = MONTH_NUMS[m[1].toLowerCase()];
-  if (!mm) return null;
-  // Two-digit years from Excel: assume 2000+yy (covers 2025, 2026; if you ever need 1995, expand here).
-  const yyyy = m[2].length === 2 ? `20${m[2]}` : m[2];
-  return `${yyyy}-${mm}`;
+// Normalize a number from cells like 1_234_567, "$1,234.56", "1,702,281,647", "".
+function parseNumberCell(cell: string | number | null | undefined): number | null {
+  if (cell == null || cell === '') return null;
+  if (typeof cell === 'number') return Number.isFinite(cell) ? cell : null;
+  const cleaned = String(cell).replace(/[$,\s"]/g, '');
+  if (!cleaned) return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
 }
 
 function AIUsageUploadModal({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
@@ -1319,37 +1273,32 @@ function AIUsageUploadModal({ onClose, onImported }: { onClose: () => void; onIm
   const [importing, setImporting]   = useState(false);
   const [result, setResult]         = useState<UsageImportResult | null>(null);
 
-  // Parse the matrix shape (row 0 = month headers, row 1 = "Cost" sub-header,
-  // row 2+ = data) into our flat UsageRow[] format. Shared between xlsx and CSV.
+  // Parse the flat Power BI export: row 0 = headers (User Name, Cost, Tokens, …),
+  // row 1+ = one row per user. Shared between xlsx and CSV.
   const parseAOA = (aoa: (string | number | null)[][]): { rows: UsageRow[]; error?: string } => {
-    if (aoa.length < 3) return { rows: [], error: 'File has too few rows. Expected the Power BI matrix export (months across the top).' };
-    const monthCols: { col: number; month: string }[] = [];
-    const header = aoa[0];
-    for (let c = 1; c < header.length; c++) {
-      const cell = header[c];
-      if (cell == null) continue;
-      const month = headerToMonth(String(cell));
-      if (month) monthCols.push({ col: c, month });
-    }
-    if (monthCols.length === 0) {
-      return { rows: [], error: 'Could not find month columns (e.g. "July 2025") in the header row.' };
-    }
+    if (aoa.length < 2) return { rows: [], error: 'File has too few rows.' };
+    const header = aoa[0].map(c => String(c ?? '').trim().toLowerCase());
+    const userCol   = header.findIndex(h => h === 'user name' || h === 'username' || h === 'siebel id' || h === 'siebelid');
+    const tokensCol = header.findIndex(h => h === 'tokens'    || h === 'token count' || h === 'total tokens');
+    const costCol   = header.findIndex(h => h === 'cost'      || h === 'total cost'  || h === 'amount');
+    if (userCol < 0)   return { rows: [], error: 'Could not find the User Name / Siebel ID column.' };
+    if (tokensCol < 0) return { rows: [], error: 'Could not find the Tokens column.' };
+
     const out: UsageRow[] = [];
-    for (let r = 2; r < aoa.length; r++) {
+    for (let r = 1; r < aoa.length; r++) {
       const row = aoa[r];
-      const siebel = row?.[0];
+      const siebel = row?.[userCol];
       if (!siebel) continue;
       const siebelId = String(siebel).trim().toLowerCase();
       if (siebelId === 'total' || siebelId === 'user name' || siebelId.startsWith('applied filters')) continue;
-      for (const { col, month } of monthCols) {
-        const cell = row[col];
-        if (cell == null || cell === '') continue;
-        const amount = typeof cell === 'number' ? cell : Number(String(cell).replace(/[$,]/g, ''));
-        if (!Number.isFinite(amount) || amount <= 0) continue;
-        out.push({ siebelId, month, amountUsd: amount });
-      }
+
+      const tokens = parseNumberCell(row[tokensCol]);
+      if (tokens == null || tokens <= 0) continue;
+
+      const costUsd = costCol >= 0 ? parseNumberCell(row[costCol]) ?? undefined : undefined;
+      out.push({ siebelId, tokens, costUsd });
     }
-    if (out.length === 0) return { rows: [], error: 'No usage rows found. Check that the file has the expected matrix layout.' };
+    if (out.length === 0) return { rows: [], error: 'No usage rows found. Check that the file has the User Name + Tokens columns.' };
     return { rows: out };
   };
 
@@ -1414,9 +1363,9 @@ function AIUsageUploadModal({ onClose, onImported }: { onClose: () => void; onIm
     }
   };
 
-  // Quick preview summary: distinct users + total spend.
+  // Quick preview summary: distinct users + total tokens.
   const distinctUsers = new Set(rows.map(r => r.siebelId)).size;
-  const totalSpend    = rows.reduce((s, r) => s + r.amountUsd, 0);
+  const totalTokens   = rows.reduce((s, r) => s + r.tokens, 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -1432,7 +1381,7 @@ function AIUsageUploadModal({ onClose, onImported }: { onClose: () => void; onIm
             <p className="text-blue-700/80 text-xs leading-relaxed">
               Open the AI usage report in Power BI → click the matrix → <strong>Export</strong> → <strong>Data with current layout</strong> → upload here.
               <strong>.xlsx or .csv</strong> both work — if the xlsx has a sensitivity label and won&apos;t parse, open it in Excel and Save As CSV instead.
-              Uploading replaces the previous snapshot entirely.
+              Uploads <strong>merge</strong> by Siebel ID — existing users get updated, new ones added. Use <strong>Clear snapshot</strong> to wipe everything.
             </p>
           </div>
 
@@ -1464,18 +1413,14 @@ function AIUsageUploadModal({ onClose, onImported }: { onClose: () => void; onIm
           {rows.length > 0 && !result && (
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2 text-sm">
               <p className="text-slate-700 font-semibold">Preview</p>
-              <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="grid grid-cols-2 gap-3 text-center">
                 <div>
                   <p className="text-slate-900 font-bold">{distinctUsers}</p>
                   <p className="text-slate-500 text-xs">users</p>
                 </div>
                 <div>
-                  <p className="text-slate-900 font-bold">{rows.length}</p>
-                  <p className="text-slate-500 text-xs">monthly rows</p>
-                </div>
-                <div>
-                  <p className="text-slate-900 font-bold">${totalSpend.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
-                  <p className="text-slate-500 text-xs">total spend</p>
+                  <p className="text-slate-900 font-bold">{formatTokens(totalTokens)}</p>
+                  <p className="text-slate-500 text-xs">total tokens</p>
                 </div>
               </div>
             </div>
@@ -1996,9 +1941,9 @@ export default function AdminDashboard() {
 
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                <p className="text-slate-400 text-xs uppercase tracking-widest">Snapshot rows</p>
+                <p className="text-slate-400 text-xs uppercase tracking-widest">Users in snapshot</p>
                 <p className="text-slate-900 font-bold text-2xl mt-1">{usageMeta.count.toLocaleString()}</p>
-                <p className="text-slate-400 text-xs">monthly user-cost entries</p>
+                <p className="text-slate-400 text-xs">one row per user</p>
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl p-5">
                 <p className="text-slate-400 text-xs uppercase tracking-widest">Last upload</p>
@@ -2014,9 +1959,9 @@ export default function AdminDashboard() {
               <div className="bg-white border border-gray-200 rounded-2xl p-5">
                 <p className="text-slate-400 text-xs uppercase tracking-widest">Tiers</p>
                 <div className="mt-2 space-y-1.5 text-xs font-medium">
-                  <p className="text-emerald-700 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2" />Power User · ≥ $2,000</p>
-                  <p className="text-amber-700 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-2" />Active · $200 – $1,999</p>
-                  <p className="text-slate-600 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-slate-400 mr-2" />No Usage · &lt; $200</p>
+                  <p className="text-emerald-700 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2" />Power User · ≥ 1B tokens</p>
+                  <p className="text-amber-700 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-2" />Active · 100M – 999M tokens</p>
+                  <p className="text-slate-600 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-slate-400 mr-2" />No Usage · &lt; 100M tokens</p>
                 </div>
               </div>
             </div>
@@ -2028,7 +1973,7 @@ export default function AdminDashboard() {
                 <p className="text-blue-700/80 text-xs leading-relaxed mt-0.5">
                   Verification matches by <strong>Siebel ID</strong>. Make sure participants in the roster have their Siebel ID filled in
                   (Participants tab → Edit, or include a &quot;Siebel ID&quot; column in your Excel import).
-                  Each new upload <strong>replaces</strong> the previous snapshot.
+                  Uploads <strong>merge</strong> by Siebel ID — re-upload to update or add users. Use <strong>Clear snapshot</strong> to wipe everything.
                 </p>
               </div>
             </div>

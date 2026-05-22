@@ -10,24 +10,24 @@ export interface Participant {
 export interface AIUsageRow {
   id: string;
   siebelId: string;
-  month: string;       // "YYYY-MM"
-  amountUsd: number;
+  tokens: number;
+  costUsd?: number;
   uploadedAt: string;
 }
 
 export interface AIUsageSummary {
   siebelId: string;
-  total: number;
-  monthly: { month: string; amount: number }[];
+  tokens: number;
+  costUsd: number | null;
   tier: 'power' | 'active' | 'none';
   lastUpdated: string | null;
 }
 
-// Verified-usage thresholds (USD). Total spend across all available months.
+// Verified-usage thresholds (tokens). Total tokens across the snapshot window.
 export const USAGE_THRESHOLDS = {
-  power:  2000,   // ≥ $2,000 supports Level 3 claim
-  active:  200,   // $200–$1,999 supports Level 2
-  // below 200 → 'none'
+  power:  1_000_000_000, // ≥ 1B tokens supports Level 3 claim
+  active:   100_000_000, // 100M – 999M supports Level 2
+  // below 100M → 'none'
 } as const;
 
 export interface TeamMember {

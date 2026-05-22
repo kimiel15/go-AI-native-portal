@@ -36,13 +36,10 @@ model Participant {
 
 model AIUsage {
   id         String @id
-  siebelId   String
-  month      String   // "YYYY-MM" (e.g., "2026-03")
-  amountUsd  Float
+  siebelId   String @unique
+  tokens     Float  // total tokens across the snapshot window
+  costUsd    Float? // optional dollar figure from the same export
   uploadedAt String
-
-  @@unique([siebelId, month])
-  @@index([siebelId])
 }
 
 model Assessment {
