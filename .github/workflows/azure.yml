@@ -44,6 +44,13 @@ jobs:
           cp -r prisma deploy-pkg/prisma
           cp startup.sh deploy-pkg/startup.sh
           chmod +x deploy-pkg/startup.sh
+
+          # The Next.js standalone bundle omits dev-only packages like the
+          # Prisma CLI. Copy it explicitly so startup.sh can run `db push`.
+          mkdir -p deploy-pkg/node_modules
+          cp -r node_modules/prisma deploy-pkg/node_modules/prisma
+          cp -r node_modules/@prisma deploy-pkg/node_modules/@prisma
+
           cd deploy-pkg && zip -r ../deploy.zip . -x "*.map"
 
       - name: Deploy to Azure App Service
