@@ -13,9 +13,30 @@ export async function POST(req: NextRequest) {
     }
 
     const teams = await getTeams();
+
     const duplicate = teams.find(t => t.teamName.toLowerCase() === teamName.toLowerCase());
     if (duplicate) {
       return NextResponse.json({ error: 'A team with this name already exists.' }, { status: 409 });
+    }
+
+    const existingMemberEmails = new Map<string, string>();
+    for (const t of teams) {
+      for (const m of t.members) {
+        if (m.email) existingMemberEmails.set(m.email.toLowerCase(), t.teamName);
+      }
+    }
+
+    type IncomingMember = { name?: string; email?: string };
+    const conflicts = (members as IncomingMember[])
+      .filter(m => m.email && existingMemberEmails.has(m.email.toLowerCase()))
+      .map(m => ({ email: m.email!, teamName: existingMemberEmails.get(m.email!.toLowerCase())! }));
+
+    if (conflicts.length > 0) {
+      const list = conflicts.map(c => `${c.email} (already on "${c.teamName}")`).join(', ');
+      return NextResponse.json(
+        { error: `Cannot register — these members are already on another team: ${list}` },
+        { status: 409 },
+      );
     }
 
     const team: Team = {

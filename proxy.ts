@@ -2,6 +2,14 @@ import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
 import { ELEVATION_COOKIE, verifyElevation } from '@/lib/admin-elevation';
 
+// Dev-only escape hatch for local UI iteration when Microsoft SSO cannot
+// be tested locally (e.g., Entra app registration lacks a localhost redirect URI).
+// Requires BOTH conditions — Azure runs with NODE_ENV=production, so the bypass
+// is inert in deployed environments.
+const DEV_BYPASS =
+  process.env.NODE_ENV === 'development' &&
+  process.env.DEV_BYPASS_ADMIN_AUTH === 'true';
+
 // Next.js 16 proxy convention (replaces middleware.ts).
 // auth() wraps the handler and injects req.auth.
 export const proxy = auth(async (req) => {
@@ -12,6 +20,10 @@ export const proxy = auth(async (req) => {
   const email = req.auth?.user?.email ?? undefined;
 
   if (isAdminArea) {
+    if (DEV_BYPASS) {
+      console.warn(`⚠️  ADMIN AUTH BYPASS ACTIVE — ${req.method} ${path}`);
+      return;
+    }
     if (!email) {
       // Not signed in at all → send to SSO, come back to /admin to finish elevation.
       const signInUrl = new URL('/signin', req.url);

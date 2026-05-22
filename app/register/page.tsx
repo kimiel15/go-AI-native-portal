@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
-import { Users, Plus, Trash2, CheckCircle, AlertCircle, Loader2, Info, UserCheck } from 'lucide-react';
+import { Users, Plus, Trash2, CheckCircle, AlertCircle, Loader2, Info, UserCheck, ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface Member { name: string; email: string; }
 const emptyMember = (): Member => ({ name: '', email: '' });
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
+
+interface ExistingTeam { id: string; teamName: string; department: string; members: Member[]; registeredAt: string; }
 
 export default function RegisterPage() {
   const { data: session } = useSession();
@@ -20,6 +22,18 @@ export default function RegisterPage() {
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [teamId, setTeamId] = useState('');
+  const [existingTeam, setExistingTeam] = useState<ExistingTeam | null>(null);
+  const [existingChecked, setExistingChecked] = useState(false);
+
+  // Check whether the logged-in user is already on a team
+  useEffect(() => {
+    if (!session?.user?.email) return;
+    fetch('/api/my-team')
+      .then(r => r.json())
+      .then((t: ExistingTeam | null) => setExistingTeam(t))
+      .catch(() => {})
+      .finally(() => setExistingChecked(true));
+  }, [session?.user?.email]);
 
   // Auto-fill Member 0 (leader) from the logged-in session
   useEffect(() => {
@@ -122,6 +136,57 @@ export default function RegisterPage() {
                 Next: Submit Project Profile →
               </a>
               <a href="/" className="block bg-gray-100 hover:bg-gray-200 text-slate-900 font-semibold py-3 rounded-xl transition-all">
+                Back to Home
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Logged-in user is already on a team — show summary instead of form
+  if (existingChecked && existingTeam) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+        <NavBar />
+        <div className="max-w-xl mx-auto px-6 py-16">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-emerald-600 text-xs uppercase tracking-widest font-semibold">Already Registered</p>
+                <h1 className="text-xl font-bold text-slate-900">You&apos;re on <span className="text-red-600">{existingTeam.teamName}</span></h1>
+              </div>
+            </div>
+
+            <p className="text-slate-500 text-sm mb-5 leading-relaxed">
+              Each person can only be on one team. You&apos;re already a member of <strong className="text-slate-700">{existingTeam.teamName}</strong> ({existingTeam.department}). If something looks wrong, contact an admin.
+            </p>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
+              <p className="text-slate-400 text-xs uppercase tracking-widest mb-3">Team Members</p>
+              <div className="space-y-2">
+                {existingTeam.members.map((m, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm">
+                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-slate-500 text-xs font-medium flex-shrink-0">
+                      {m.name?.charAt(0) ?? '?'}
+                    </div>
+                    <span className="text-slate-700 font-medium">{m.name}</span>
+                    <span className="text-slate-400 text-xs">{m.email}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <a href={`/submit?teamId=${existingTeam.id}`}
+                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition-all">
+                Submit Project Profile <ArrowRight className="w-4 h-4" />
+              </a>
+              <a href="/" className="block text-center bg-gray-100 hover:bg-gray-200 text-slate-900 font-semibold py-3 rounded-xl transition-all">
                 Back to Home
               </a>
             </div>

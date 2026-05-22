@@ -52,7 +52,16 @@ export async function updateTeam(id: string, updates: Partial<Team>): Promise<vo
 }
 
 export async function deleteTeam(id: string): Promise<void> {
-  await prisma.team.delete({ where: { id } });
+  // Cascade manually — schema has no FKs. Free the participants and remove
+  // any submission so the team can re-register and resubmit cleanly.
+  await prisma.$transaction([
+    prisma.submission.deleteMany({ where: { teamId: id } }),
+    prisma.participant.updateMany({
+      where: { teamId: id },
+      data:  { teamId: null, teamName: null },
+    }),
+    prisma.team.delete({ where: { id } }),
+  ]);
 }
 
 // ── Submissions ──────────────────────────────────────────────────────────────
@@ -65,6 +74,14 @@ export async function getSubmissions(): Promise<ProjectSubmission[]> {
 export async function getSubmissionByTeamId(teamId: string): Promise<ProjectSubmission | null> {
   const row = await prisma.submission.findUnique({ where: { teamId } });
   return row as unknown as ProjectSubmission | null;
+}
+
+export async function deleteSubmission(id: string): Promise<void> {
+  await prisma.submission.delete({ where: { id } });
+}
+
+export async function deleteSubmissionByTeamId(teamId: string): Promise<void> {
+  await prisma.submission.deleteMany({ where: { teamId } });
 }
 
 export async function saveSubmission(sub: ProjectSubmission): Promise<void> {

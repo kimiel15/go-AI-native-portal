@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { Team, TeamMember, ProjectSubmission, Assessment, Participant } from '@/types';
 import {
-  Zap, Users, FileText, Brain, LogOut, RefreshCw,
+  Zap, Users, FileText, Brain, LogOut, RefreshCw, Home,
   ChevronDown, ChevronUp, Mail, Building2, Calendar,
   CheckCircle2, ShieldCheck, AlertTriangle, Sparkles,
   ThumbsUp, ArrowUp, ArrowDown, Loader2, Flag,
@@ -365,8 +366,10 @@ function TeamCard({
 
 // ─── Submission Card ──────────────────────────────────────────────────────────
 
-function SubmissionCard({ sub }: { sub: ProjectSubmission }) {
+function SubmissionCard({ sub, onDeleted }: { sub: ProjectSubmission; onDeleted: () => void }) {
   const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const sections = [
     { label: 'Git Repository', value: sub.gitRepoUrl },
     { label: 'Problem Statement', value: sub.problemStatement },
@@ -377,21 +380,51 @@ function SubmissionCard({ sub }: { sub: ProjectSubmission }) {
     { label: 'AI Usage (AI-USAGE.md)', value: sub.aiUsage },
     { label: 'Team Contributions (CONTRIBUTORS.md)', value: sub.teamContributions },
   ];
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    await fetch(`/api/admin/submissions/${sub.id}`, { method: 'DELETE' });
+    setDeleting(false);
+    setConfirming(false);
+    onDeleted();
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <button onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white transition-colors text-left">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-bold text-sm">
+      <div className="flex items-center px-5 py-4 gap-3">
+        <button onClick={() => setOpen(o => !o)} className="flex items-center gap-3 flex-1 text-left min-w-0">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             {sub.teamName.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <p className="text-slate-900 font-semibold">{sub.teamName}</p>
+          <div className="min-w-0">
+            <p className="text-slate-900 font-semibold truncate">{sub.teamName}</p>
             <p className="text-slate-400 text-xs">{new Date(sub.submittedAt).toLocaleString()}</p>
           </div>
+        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {confirming ? (
+            <>
+              <span className="text-slate-500 text-xs">Delete?</span>
+              <button onClick={handleDelete} disabled={deleting}
+                className="text-xs bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg font-medium transition-colors disabled:opacity-50">
+                {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
+              </button>
+              <button onClick={() => setConfirming(false)}
+                className="text-xs border border-gray-200 text-slate-500 px-2.5 py-1 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                No
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setConfirming(true)} title="Delete submission (team can resubmit)"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition-colors">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button onClick={() => setOpen(o => !o)} className="text-slate-400">
+            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
         </div>
-        {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-      </button>
+      </div>
       {open && (
         <div className="border-t border-gray-200 px-5 py-4 space-y-5">
           {sections.filter(s => s.value).map(({ label, value }) => (
@@ -1136,6 +1169,9 @@ export default function AdminDashboard() {
             <span className="text-slate-900 font-bold text-lg tracking-tight">Go AI-Native Admin</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              <Home className="w-4 h-4" />Home
+            </Link>
             <button onClick={fetchData} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
             </button>
@@ -1351,7 +1387,7 @@ export default function AdminDashboard() {
           <div className="space-y-3">
             <h2 className="text-slate-900 font-bold text-lg mb-4">Project Submissions ({submissions.length})</h2>
             {submissions.length === 0 ? <div className="text-center py-16 text-slate-400">No submissions yet.</div>
-              : submissions.map(s => <SubmissionCard key={s.id} sub={s} />)}
+              : submissions.map(s => <SubmissionCard key={s.id} sub={s} onDeleted={fetchData} />)}
           </div>
         )}
 

@@ -1,14 +1,25 @@
-import { getSubmissions } from '@/lib/data';
+import { getSubmissions, getTeams } from '@/lib/data';
 import NavBar from '@/components/NavBar';
 import Link from 'next/link';
-import { FileText, GitBranch, ArrowRight, ExternalLink, Clock, Plus } from 'lucide-react';
+import { FileText, GitBranch, ArrowRight, ExternalLink, Clock, Plus, CheckCircle2 } from 'lucide-react';
+import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SubmissionsPage() {
-  const all = await getSubmissions();
+  const [all, teams, session] = await Promise.all([getSubmissions(), getTeams(), auth()]);
   // Gallery only shows finalised submissions — drafts are private to the team
   const submissions = all.filter(s => s.status === 'submitted');
+
+  // Figure out whether the current user is on a team and whether that team has already submitted
+  const email = session?.user?.email?.toLowerCase();
+  const myTeam = email
+    ? teams.find(t => t.members.some(m => m.email?.toLowerCase() === email))
+    : null;
+  const mySubmission = myTeam
+    ? all.find(s => s.teamId === myTeam.id && s.status === 'submitted')
+    : null;
+  const canSubmit = !!myTeam && !mySubmission;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
@@ -33,13 +44,27 @@ export default async function SubmissionsPage() {
                 : `${submissions.length} team${submissions.length !== 1 ? 's' : ''} submitted`}
             </p>
           </div>
-          <Link
-            href="/submit"
-            className="flex-shrink-0 flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm shadow-md shadow-rose-500/20"
-          >
-            <Plus className="w-4 h-4" />
-            Submit Project
-          </Link>
+          {mySubmission ? (
+            <div className="flex-shrink-0 flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold px-5 py-2.5 rounded-xl text-sm">
+              <CheckCircle2 className="w-4 h-4" />
+              Your team submitted
+            </div>
+          ) : canSubmit ? (
+            <Link
+              href="/submit"
+              className="flex-shrink-0 flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm shadow-md shadow-rose-500/20"
+            >
+              <Plus className="w-4 h-4" />
+              Submit Project
+            </Link>
+          ) : email ? (
+            <Link
+              href="/register"
+              className="flex-shrink-0 flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-slate-700 font-semibold px-5 py-2.5 rounded-xl transition-all text-sm border border-gray-200"
+            >
+              Register team first
+            </Link>
+          ) : null}
         </div>
 
         {/* Empty state */}
@@ -50,12 +75,14 @@ export default async function SubmissionsPage() {
             </div>
             <p className="text-slate-700 font-semibold mb-1">No projects submitted yet</p>
             <p className="text-slate-400 text-sm mb-8">Teams can submit from June 15 once production runs are complete.</p>
-            <Link
-              href="/submit"
-              className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold px-6 py-3 rounded-xl transition-all text-sm"
-            >
-              Submit Your Project <ArrowRight className="w-4 h-4" />
-            </Link>
+            {canSubmit && (
+              <Link
+                href="/submit"
+                className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold px-6 py-3 rounded-xl transition-all text-sm"
+              >
+                Submit Your Project <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
@@ -107,8 +134,8 @@ export default async function SubmissionsPage() {
           </div>
         )}
 
-        {/* Submit CTA at bottom if there are entries */}
-        {submissions.length > 0 && (
+        {/* Bottom CTA — only show if the user is still allowed to submit */}
+        {submissions.length > 0 && canSubmit && (
           <div className="mt-10 bg-white border border-rose-100 rounded-2xl p-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-slate-900 font-semibold text-sm">Ready to submit your project?</p>
@@ -120,6 +147,21 @@ export default async function SubmissionsPage() {
             >
               Submit Your Project <ArrowRight className="w-4 h-4" />
             </Link>
+          </div>
+        )}
+
+        {/* Confirmation for teams that have already submitted */}
+        {submissions.length > 0 && mySubmission && (
+          <div className="mt-10 bg-emerald-50 border border-emerald-200 rounded-2xl p-6 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <div>
+                <p className="text-emerald-800 font-semibold text-sm">Your team has already submitted</p>
+                <p className="text-emerald-700/80 text-xs mt-0.5">
+                  Submitted {new Date(mySubmission.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — each team can submit only once.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>
