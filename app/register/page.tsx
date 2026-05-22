@@ -1,29 +1,41 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
-import { Users, Plus, Trash2, CheckCircle, AlertCircle, Loader2, Info } from 'lucide-react';
+import { Users, Plus, Trash2, CheckCircle, AlertCircle, Loader2, Info, UserCheck } from 'lucide-react';
 
 interface Member { name: string; email: string; role: string; }
 const emptyMember = (): Member => ({ name: '', email: '', role: '' });
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
-const SQUADS = [
-  'Zean', 'Darlene', 'Bea – PS Phones',
-  'Keren', 'Josh', 'Kimiel – Std Phones',
-  'Marga', 'Judith', 'Cassie',
-  'Chrisa', 'Kimiel – Chat', 'Ariane',
-  'Ruel', 'Ian', 'Bea – SDC', 'Chris',
-];
-
 export default function RegisterPage() {
+  const { data: session } = useSession();
   const [teamName, setTeamName] = useState('');
   const [squad, setSquad] = useState('');
+  const [squadLocked, setSquadLocked] = useState(false);   // true when pre-assigned from roster
+  const [rosterLoaded, setRosterLoaded] = useState(false);
   const [crossSquad, setCrossSquad] = useState(false);
   const [members, setMembers] = useState<Member[]>([emptyMember(), emptyMember(), emptyMember()]);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [teamId, setTeamId] = useState('');
+
+  // Look up the logged-in user's squad from the participant roster
+  useEffect(() => {
+    const email = session?.user?.email;
+    if (!email) return;
+    fetch(`/api/participants?email=${encodeURIComponent(email)}`)
+      .then(r => r.json())
+      .then((p: { teamName?: string } | null) => {
+        if (p?.teamName) {
+          setSquad(p.teamName);
+          setSquadLocked(true);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setRosterLoaded(true));
+  }, [session?.user?.email]);
 
   const addMember = () => {
     if (members.length < 4) setMembers(m => [...m, emptyMember()]);
@@ -38,6 +50,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setStatus('loading');
     setMessage('');
+
+    if (!squad.trim()) {
+      setStatus('error');
+      setMessage('Squad is required.');
+      return;
+    }
 
     const validMembers = members.filter(m => m.name && m.email);
     if (validMembers.length < 3) {
@@ -133,12 +151,32 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-slate-600 text-sm mb-1.5">Squad <span className="text-red-400">*</span></label>
-              <select required value={squad} onChange={e => setSquad(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-red-500 transition-colors">
-                <option value="" className="bg-white">-- Select your squad --</option>
-                {SQUADS.map(s => <option key={s} value={s} className="bg-white">{s}</option>)}
-              </select>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-slate-600 text-sm">Squad <span className="text-red-400">*</span></label>
+                {squadLocked && (
+                  <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium">
+                    <UserCheck className="w-3.5 h-3.5" /> From your profile
+                  </span>
+                )}
+              </div>
+              {!rosterLoaded ? (
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-slate-400 text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Looking up your squad…
+                </div>
+              ) : squadLocked ? (
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                  <span className="text-slate-900 text-sm font-medium flex-1">{squad}</span>
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  required
+                  value={squad}
+                  onChange={e => setSquad(e.target.value)}
+                  placeholder="Enter your squad name"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+                />
+              )}
             </div>
 
             <label className="flex items-center gap-3 cursor-pointer">
