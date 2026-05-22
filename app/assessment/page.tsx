@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
-import { Brain, CheckCircle, AlertCircle, Loader2, ChevronRight, Sparkles, Trophy } from 'lucide-react';
+import { Brain, CheckCircle, AlertCircle, Loader2, ChevronRight, Sparkles, Trophy, UserCheck } from 'lucide-react';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 interface TeamOption { id: string; teamName: string; }
@@ -76,10 +77,15 @@ function RadioOption({ name, value, label, points, selected, onChange }: {
 
 function AssessmentForm() {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [teamId, setTeamId] = useState(searchParams.get('teamId') || '');
   const [teams, setTeams] = useState<TeamOption[]>([]);
-  const [participantName, setParticipantName] = useState('');
-  const [participantEmail, setParticipantEmail] = useState('');
+  const [rosterTeamName, setRosterTeamName] = useState<string | null>(null); // pre-assigned team name from roster
+  const [rosterLoaded, setRosterLoaded] = useState(false);
+
+  // Name + email come from Microsoft session — read-only
+  const participantName  = session?.user?.name  ?? '';
+  const participantEmail = session?.user?.email ?? '';
 
   // MC answers
   const [q1, setQ1] = useState('');
@@ -99,6 +105,21 @@ function AssessmentForm() {
   useEffect(() => {
     fetch('/api/register').then(r => r.json()).then(setTeams).catch(() => {});
   }, []);
+
+  // Look up participant roster once we have the email from the session
+  useEffect(() => {
+    if (!participantEmail) return;
+    fetch(`/api/participants?email=${encodeURIComponent(participantEmail)}`)
+      .then(r => r.json())
+      .then((p: { teamId?: string; teamName?: string } | null) => {
+        if (p?.teamId) {
+          setTeamId(p.teamId);
+          setRosterTeamName(p.teamName ?? null);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setRosterLoaded(true));
+  }, [participantEmail]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,30 +237,71 @@ function AssessmentForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Participant info */}
+        {/* Participant info — auto-filled from Microsoft sign-in + roster */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
-          <h2 className="text-slate-900 font-semibold text-sm uppercase tracking-widest">Your Information</h2>
-          <div>
-            <label className="block text-slate-600 text-sm mb-1.5">Team <span className="text-red-400">*</span></label>
-            <select required value={teamId} onChange={e => setTeamId(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-orange-500 transition-colors">
-              <option value="" className="bg-white">-- Select your team --</option>
-              {teams.map(t => <option key={t.id} value={t.id} className="bg-white">{t.teamName}</option>)}
-            </select>
+          <div className="flex items-center gap-2">
+            <h2 className="text-slate-900 font-semibold text-sm uppercase tracking-widest">Your Information</h2>
+            <span className="ml-auto flex items-center gap-1 text-emerald-600 text-xs font-medium">
+              <UserCheck className="w-3.5 h-3.5" /> Auto-filled from your account
+            </span>
           </div>
+
+          {/* Name + Email — locked from Microsoft session */}
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-slate-600 text-sm mb-1.5">Full Name <span className="text-red-400">*</span></label>
-              <input type="text" required value={participantName} onChange={e => setParticipantName(e.target.value)}
-                placeholder="Your full name"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-500 transition-colors" />
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5">Full Name</p>
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <span className="text-slate-900 text-sm font-medium flex-1 truncate">
+                  {participantName || <span className="text-slate-400 italic">Loading…</span>}
+                </span>
+              </div>
             </div>
             <div>
-              <label className="block text-slate-600 text-sm mb-1.5">Email <span className="text-red-400">*</span></label>
-              <input type="email" required value={participantEmail} onChange={e => setParticipantEmail(e.target.value)}
-                placeholder="your.email@company.com"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-500 transition-colors" />
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5">Email</p>
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <span className="text-slate-900 text-sm flex-1 truncate">
+                  {participantEmail || <span className="text-slate-400 italic">Loading…</span>}
+                </span>
+              </div>
             </div>
+          </div>
+
+          {/* Team — pre-assigned from roster or manual fallback */}
+          <div>
+            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5">
+              Team <span className="text-red-400">*</span>
+            </p>
+            {rosterTeamName ? (
+              /* Pre-assigned — show as locked field */
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <span className="text-slate-900 text-sm font-medium flex-1">{rosterTeamName}</span>
+                <span className="text-xs text-emerald-600 font-medium flex-shrink-0">Pre-assigned</span>
+              </div>
+            ) : (
+              /* Not in roster — allow manual selection */
+              <>
+                {!rosterLoaded ? (
+                  <div className="flex items-center gap-2 text-slate-400 text-sm py-3">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Checking roster…
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      required
+                      value={teamId}
+                      onChange={e => setTeamId(e.target.value)}
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-orange-500 transition-colors"
+                    >
+                      <option value="">-- Select your team --</option>
+                      {teams.map(t => <option key={t.id} value={t.id}>{t.teamName}</option>)}
+                    </select>
+                    <p className="text-slate-400 text-xs mt-1.5">
+                      Your email wasn&apos;t found in the participant roster — please select your team manually.
+                    </p>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
 

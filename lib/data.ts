@@ -1,5 +1,34 @@
 import prisma from '@/lib/prisma';
-import { Team, ProjectSubmission, Assessment } from '@/types';
+import { Team, ProjectSubmission, Assessment, Participant } from '@/types';
+
+// ── Participants ─────────────────────────────────────────────────────────────
+
+export async function getParticipants(): Promise<Participant[]> {
+  const rows = await prisma.participant.findMany({ orderBy: { name: 'asc' } });
+  return rows.map(r => ({
+    ...r,
+    teamId:   r.teamId   ?? undefined,
+    teamName: r.teamName ?? undefined,
+  }));
+}
+
+export async function getParticipantByEmail(email: string): Promise<Participant | null> {
+  const row = await prisma.participant.findUnique({ where: { email: email.toLowerCase() } });
+  if (!row) return null;
+  return { ...row, teamId: row.teamId ?? undefined, teamName: row.teamName ?? undefined };
+}
+
+export async function saveParticipant(p: Participant): Promise<void> {
+  await prisma.participant.upsert({
+    where:  { email: p.email.toLowerCase() },
+    update: { name: p.name, teamId: p.teamId ?? null, teamName: p.teamName ?? null },
+    create: { id: p.id, name: p.name, email: p.email.toLowerCase(), teamId: p.teamId ?? null, teamName: p.teamName ?? null },
+  });
+}
+
+export async function deleteParticipant(id: string): Promise<void> {
+  await prisma.participant.delete({ where: { id } });
+}
 
 // ── Teams ────────────────────────────────────────────────────────────────────
 

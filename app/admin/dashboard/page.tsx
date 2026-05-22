@@ -9,8 +9,9 @@ import {
   ThumbsUp, ArrowUp, ArrowDown, Loader2, Flag,
   Plus, Pencil, Trash2, X, UserPlus, Save
 } from 'lucide-react';
+import { Participant } from '@/types';
 
-type Tab = 'overview' | 'teams' | 'submissions' | 'assessments' | 'validation';
+type Tab = 'overview' | 'teams' | 'submissions' | 'assessments' | 'validation' | 'participants';
 
 const LEVEL_BADGE: Record<string, string> = {
   'Level 1': 'bg-slate-100 text-slate-700 border-slate-200',
@@ -687,12 +688,102 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
+// ─── Participant Form Modal ───────────────────────────────────────────────────
+
+function ParticipantFormModal({
+  initial,
+  teams,
+  onClose,
+  onSaved,
+}: {
+  initial?: Participant;
+  teams: Team[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const isEdit = !!initial;
+  const [name,     setName]     = useState(initial?.name     ?? '');
+  const [email,    setEmail]    = useState(initial?.email    ?? '');
+  const [teamId,   setTeamId]   = useState(initial?.teamId   ?? '');
+  const [saving,   setSaving]   = useState(false);
+  const [error,    setError]    = useState('');
+
+  const handleSave = async () => {
+    if (!name.trim() || !email.trim()) { setError('Name and email are required.'); return; }
+    setSaving(true); setError('');
+    const selectedTeam = teams.find(t => t.id === teamId);
+    try {
+      const url    = isEdit ? `/api/participants/${initial!.id}` : '/api/participants';
+      const method = isEdit ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), teamId: teamId || null, teamName: selectedTeam?.teamName || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed.');
+      onSaved();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Save failed.');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+          <h2 className="text-slate-900 font-bold text-lg">{isEdit ? 'Edit Participant' : 'Add Participant'}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-slate-600 text-sm mb-1.5">Full Name <span className="text-red-400">*</span></label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Ana Cruz"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors" />
+          </div>
+          <div>
+            <label className="block text-slate-600 text-sm mb-1.5">Email <span className="text-red-400">*</span></label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="ana.cruz@trendmicro.com"
+              disabled={isEdit}
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors disabled:bg-gray-50 disabled:text-slate-400" />
+            {isEdit && <p className="text-slate-400 text-xs mt-1">Email cannot be changed after creation.</p>}
+          </div>
+          <div>
+            <label className="block text-slate-600 text-sm mb-1.5">Assigned Team</label>
+            <select value={teamId} onChange={e => setTeamId(e.target.value)}
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-red-500 transition-colors">
+              <option value="">-- No team assigned yet --</option>
+              {teams.map(t => <option key={t.id} value={t.id}>{t.teamName}</option>)}
+            </select>
+            <p className="text-slate-400 text-xs mt-1">This will auto-fill the team field on the assessment form.</p>
+          </div>
+          {error && <p className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+        </div>
+        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+          <button type="button" onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-slate-600 text-sm font-medium hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave} disabled={saving}
+            className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
+            {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <><Save className="w-4 h-4" />{isEdit ? 'Save Changes' : 'Add Participant'}</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('overview');
   const [teams, setTeams] = useState<Team[]>([]);
   const [submissions, setSubmissions] = useState<ProjectSubmission[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Team CRUD modal state
@@ -700,15 +791,22 @@ export default function AdminDashboard() {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
 
+  // Participant CRUD modal state
+  const [showAddParticipant, setShowAddParticipant]     = useState(false);
+  const [editingParticipant, setEditingParticipant]     = useState<Participant | null>(null);
+  const [deletingParticipantId, setDeletingParticipantId] = useState<string | null>(null);
+  const [deletingParticipantName, setDeletingParticipantName] = useState('');
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [t, s, a] = await Promise.all([
+      const [t, s, a, p] = await Promise.all([
         fetch('/api/admin/teams').then(r => r.json()),
         fetch('/api/admin/submissions').then(r => r.json()),
         fetch('/api/admin/assessments').then(r => r.json()),
+        fetch('/api/participants').then(r => r.json()),
       ]);
-      setTeams(t); setSubmissions(s); setAssessments(a);
+      setTeams(t); setSubmissions(s); setAssessments(a); setParticipants(p);
     } finally { setLoading(false); }
   }, []);
 
@@ -720,11 +818,12 @@ export default function AdminDashboard() {
   const pendingValidation = assessments.filter(a => !a.validation).length;
 
   const tabs: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
-    { id: 'overview',    label: 'Overview',    icon: Zap },
-    { id: 'teams',       label: 'Teams',       icon: Users,      badge: teams.length },
-    { id: 'submissions', label: 'Submissions', icon: FileText,   badge: submissions.length },
-    { id: 'assessments', label: 'Assessments', icon: Brain,      badge: assessments.length },
-    { id: 'validation',  label: 'Validation',  icon: ShieldCheck, badge: pendingValidation || undefined },
+    { id: 'overview',     label: 'Overview',     icon: Zap },
+    { id: 'participants', label: 'Participants',  icon: UserPlus,   badge: participants.length },
+    { id: 'teams',        label: 'Teams',        icon: Users,      badge: teams.length },
+    { id: 'submissions',  label: 'Submissions',  icon: FileText,   badge: submissions.length },
+    { id: 'assessments',  label: 'Assessments',  icon: Brain,      badge: assessments.length },
+    { id: 'validation',   label: 'Validation',   icon: ShieldCheck, badge: pendingValidation || undefined },
   ];
 
   return (
@@ -749,6 +848,50 @@ export default function AdminDashboard() {
           onClose={() => setDeletingTeam(null)}
           onDeleted={() => { setDeletingTeam(null); fetchData(); }}
         />
+      )}
+      {showAddParticipant && (
+        <ParticipantFormModal
+          teams={teams}
+          onClose={() => setShowAddParticipant(false)}
+          onSaved={() => { setShowAddParticipant(false); fetchData(); }}
+        />
+      )}
+      {editingParticipant && (
+        <ParticipantFormModal
+          initial={editingParticipant}
+          teams={teams}
+          onClose={() => setEditingParticipant(null)}
+          onSaved={() => { setEditingParticipant(null); fetchData(); }}
+        />
+      )}
+      {deletingParticipantId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-slate-900 font-bold">Remove Participant</p>
+                <p className="text-slate-500 text-sm">This cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-slate-700 text-sm">Remove <strong>{deletingParticipantName}</strong> from the roster?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeletingParticipantId(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-slate-600 text-sm font-medium hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={async () => {
+                await fetch(`/api/participants/${deletingParticipantId}`, { method: 'DELETE' });
+                setDeletingParticipantId(null);
+                fetchData();
+              }} className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold py-2.5 rounded-xl">
+                <Trash2 className="w-4 h-4" />Remove
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <nav className="border-b border-gray-200 bg-white">
@@ -855,6 +998,74 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Participants tab */}
+        {tab === 'participants' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-slate-900 font-bold text-lg">Participants ({participants.length})</h2>
+                <p className="text-slate-400 text-sm mt-0.5">Name, email, and team pre-assignment. The assessment form auto-fills from this list.</p>
+              </div>
+              <button
+                onClick={() => setShowAddParticipant(true)}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
+              >
+                <Plus className="w-4 h-4" />Add Participant
+              </button>
+            </div>
+
+            {participants.length === 0 ? (
+              <div className="text-center py-20 text-slate-400">
+                <UserPlus className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">No participants yet.</p>
+                <p className="text-sm mt-1">Add participants so the assessment form auto-fills their team.</p>
+              </div>
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 px-5 py-3">
+                  <p className="col-span-4 text-slate-500 text-xs font-semibold uppercase tracking-wide">Name</p>
+                  <p className="col-span-4 text-slate-500 text-xs font-semibold uppercase tracking-wide">Email</p>
+                  <p className="col-span-3 text-slate-500 text-xs font-semibold uppercase tracking-wide">Assigned Team</p>
+                  <p className="col-span-1" />
+                </div>
+                {participants.map((p, i) => (
+                  <div key={p.id} className={`grid grid-cols-12 px-5 py-3.5 items-center ${i < participants.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                    <div className="col-span-4 flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-slate-900 text-sm font-medium truncate">{p.name}</span>
+                    </div>
+                    <div className="col-span-4 flex items-center gap-1 text-slate-500 text-sm truncate">
+                      <Mail className="w-3 h-3 text-slate-300 flex-shrink-0" />
+                      {p.email}
+                    </div>
+                    <div className="col-span-3">
+                      {p.teamName ? (
+                        <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 rounded-full px-2.5 py-0.5 text-xs font-medium">
+                          <Users className="w-3 h-3" />{p.teamName}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 text-xs italic">Unassigned</span>
+                      )}
+                    </div>
+                    <div className="col-span-1 flex items-center justify-end gap-1">
+                      <button onClick={() => setEditingParticipant(p)}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => { setDeletingParticipantId(p.id); setDeletingParticipantName(p.name); }}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition-colors" title="Remove">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

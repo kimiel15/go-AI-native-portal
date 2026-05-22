@@ -25,6 +25,14 @@ model Submission {
   submittedAt     String
 }
 
+model Participant {
+  id       String  @id
+  name     String
+  email    String  @unique
+  teamId   String?
+  teamName String?
+}
+
 model Assessment {
   id                     String  @id
   teamId                 String

@@ -1,3 +1,11 @@
+export interface Participant {
+  id: string;
+  name: string;
+  email: string;
+  teamId?: string;
+  teamName?: string;
+}
+
 export interface TeamMember {
   name: string;
   email: string;
