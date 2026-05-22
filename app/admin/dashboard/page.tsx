@@ -1,15 +1,16 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Team, TeamMember, ProjectSubmission, Assessment } from '@/types';
+import { Team, TeamMember, ProjectSubmission, Assessment, Participant } from '@/types';
 import {
   Zap, Users, FileText, Brain, LogOut, RefreshCw,
   ChevronDown, ChevronUp, Mail, Building2, Calendar,
   CheckCircle2, ShieldCheck, AlertTriangle, Sparkles,
   ThumbsUp, ArrowUp, ArrowDown, Loader2, Flag,
-  Plus, Pencil, Trash2, X, UserPlus, Save
+  Plus, Pencil, Trash2, X, UserPlus, Save,
+  Upload, Download, CheckCircle, AlertCircle
 } from 'lucide-react';
-import { Participant } from '@/types';
+import * as XLSX from 'xlsx';
 
 type Tab = 'overview' | 'teams' | 'submissions' | 'assessments' | 'validation' | 'participants';
 
@@ -688,6 +689,204 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
+// ─── Excel Import Modal ───────────────────────────────────────────────────────
+
+interface ImportRow { name: string; email: string; teamName?: string; }
+interface ImportResult { created: number; updated: number; skipped: number; errors: { row: number; email: string; reason: string }[]; }
+
+function downloadTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['Name', 'Email', 'Team Name'],
+    ['Ana Cruz', 'ana.cruz@trendmicro.com', 'Alpha Squad'],
+    ['Juan Reyes', 'juan.reyes@trendmicro.com', 'Alpha Squad'],
+  ]);
+  ws['!cols'] = [{ wch: 28 }, { wch: 36 }, { wch: 20 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Participants');
+  XLSX.writeFile(wb, 'participants-template.xlsx');
+}
+
+function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [rows, setRows] = useState<ImportRow[]>([]);
+  const [fileName, setFileName] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [parseError, setParseError] = useState('');
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParseError(''); setRows([]); setResult(null); setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(ev.target?.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' });
+        // Normalise column names: trim + lowercase
+        const parsed: ImportRow[] = raw.map(r => {
+          const norm: Record<string, string> = {};
+          Object.keys(r).forEach(k => { norm[k.trim().toLowerCase()] = String(r[k]).trim(); });
+          return {
+            name:     norm['name']      || norm['full name'] || norm['fullname'] || '',
+            email:    norm['email']     || norm['email address'] || '',
+            teamName: norm['team name'] || norm['team']       || norm['teamname'] || '',
+          };
+        }).filter(r => r.name || r.email);
+        if (parsed.length === 0) { setParseError('No data rows found. Make sure row 1 has headers: Name, Email, Team Name.'); return; }
+        setRows(parsed);
+      } catch {
+        setParseError('Could not read the file. Please use the provided template.');
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleImport = async () => {
+    setImporting(true);
+    try {
+      const res = await fetch('/api/participants/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setResult(data);
+    } catch (err: unknown) {
+      setParseError(err instanceof Error ? err.message : 'Import failed.');
+    } finally { setImporting(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+          <h2 className="text-slate-900 font-bold text-lg">Import from Excel</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          {/* Template download */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-blue-800 font-semibold text-sm">Step 1 — Download the template</p>
+              <p className="text-blue-600 text-xs mt-0.5">Fill in Name, Email, and Team Name columns. Team Name must match exactly.</p>
+            </div>
+            <button onClick={downloadTemplate}
+              className="flex-shrink-0 flex items-center gap-1.5 bg-white border border-blue-200 hover:bg-blue-50 text-blue-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+              <Download className="w-4 h-4" />Template
+            </button>
+          </div>
+
+          {/* File picker */}
+          <div>
+            <p className="text-slate-700 font-semibold text-sm mb-2">Step 2 — Upload your filled file</p>
+            <div
+              onClick={() => fileRef.current?.click()}
+              className="border-2 border-dashed border-gray-200 hover:border-red-300 rounded-xl p-8 text-center cursor-pointer transition-colors"
+            >
+              <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              {fileName ? (
+                <p className="text-slate-700 font-medium text-sm">{fileName}</p>
+              ) : (
+                <>
+                  <p className="text-slate-500 text-sm font-medium">Click to choose an Excel file</p>
+                  <p className="text-slate-400 text-xs mt-1">.xlsx or .xls</p>
+                </>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={handleFile} className="hidden" />
+          </div>
+
+          {parseError && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-red-700 text-sm">{parseError}</p>
+            </div>
+          )}
+
+          {/* Preview */}
+          {rows.length > 0 && !result && (
+            <div>
+              <p className="text-slate-700 font-semibold text-sm mb-2">
+                Step 3 — Preview ({rows.length} row{rows.length !== 1 ? 's' : ''})
+              </p>
+              <div className="border border-gray-200 rounded-xl overflow-hidden max-h-52 overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">#</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Name</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Email</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Team</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-3 py-2 text-slate-400">{i + 2}</td>
+                        <td className="px-3 py-2 text-slate-700 font-medium">{r.name || <span className="text-red-400">missing</span>}</td>
+                        <td className="px-3 py-2 text-slate-600">{r.email || <span className="text-red-400">missing</span>}</td>
+                        <td className="px-3 py-2 text-slate-500">{r.teamName || <span className="text-slate-300 italic">none</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Result */}
+          {result && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold text-emerald-700">{result.created}</p>
+                  <p className="text-emerald-600 text-xs font-medium">Created</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold text-blue-700">{result.updated}</p>
+                  <p className="text-blue-600 text-xs font-medium">Updated</p>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold text-amber-700">{result.skipped}</p>
+                  <p className="text-amber-600 text-xs font-medium">Skipped</p>
+                </div>
+              </div>
+              {result.errors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-1">
+                  <p className="text-red-700 text-xs font-semibold mb-2">Rows with errors:</p>
+                  {result.errors.map((e, i) => (
+                    <p key={i} className="text-red-600 text-xs">Row {e.row}: {e.email} — {e.reason}</p>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                <CheckCircle className="w-4 h-4" />Import complete
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+          <button onClick={result ? onImported : onClose}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-slate-600 text-sm font-medium hover:bg-gray-50">
+            {result ? 'Close' : 'Cancel'}
+          </button>
+          {!result && (
+            <button onClick={handleImport} disabled={rows.length === 0 || importing}
+              className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
+              {importing ? <><Loader2 className="w-4 h-4 animate-spin" />Importing...</> : <><Upload className="w-4 h-4" />Import {rows.length > 0 ? `${rows.length} rows` : ''}</>}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Participant Form Modal ───────────────────────────────────────────────────
 
 function ParticipantFormModal({
@@ -793,6 +992,7 @@ export default function AdminDashboard() {
 
   // Participant CRUD modal state
   const [showAddParticipant, setShowAddParticipant]     = useState(false);
+  const [showImportModal,    setShowImportModal]        = useState(false);
   const [editingParticipant, setEditingParticipant]     = useState<Participant | null>(null);
   const [deletingParticipantId, setDeletingParticipantId] = useState<string | null>(null);
   const [deletingParticipantName, setDeletingParticipantName] = useState('');
@@ -847,6 +1047,12 @@ export default function AdminDashboard() {
           team={deletingTeam}
           onClose={() => setDeletingTeam(null)}
           onDeleted={() => { setDeletingTeam(null); fetchData(); }}
+        />
+      )}
+      {showImportModal && (
+        <ExcelImportModal
+          onClose={() => setShowImportModal(false)}
+          onImported={() => { setShowImportModal(false); fetchData(); }}
         />
       )}
       {showAddParticipant && (
@@ -1009,12 +1215,20 @@ export default function AdminDashboard() {
                 <h2 className="text-slate-900 font-bold text-lg">Participants ({participants.length})</h2>
                 <p className="text-slate-400 text-sm mt-0.5">Name, email, and team pre-assignment. The assessment form auto-fills from this list.</p>
               </div>
-              <button
-                onClick={() => setShowAddParticipant(true)}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
-              >
-                <Plus className="w-4 h-4" />Add Participant
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="flex items-center gap-2 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-slate-700 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+                >
+                  <Upload className="w-4 h-4" />Import Excel
+                </button>
+                <button
+                  onClick={() => setShowAddParticipant(true)}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
+                >
+                  <Plus className="w-4 h-4" />Add One
+                </button>
+              </div>
             </div>
 
             {participants.length === 0 ? (
