@@ -97,6 +97,7 @@ function AssessmentForm() {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [progress, setProgress] = useState(0);
 
   // Check on mount (once email is available) whether this participant already submitted
   useEffect(() => {
@@ -111,6 +112,16 @@ function AssessmentForm() {
     e.preventDefault();
     setStatus('loading');
     setError('');
+    setProgress(0);
+
+    // Animate progress bar: ramp to 85% over ~12s, then snap to 100% on success
+    const start = Date.now();
+    const tick = setInterval(() => {
+      const elapsed = (Date.now() - start) / 1000;
+      // Logarithmic curve: fast early, slows down, caps at 85%
+      setProgress(Math.min(85, Math.round(85 * (1 - Math.exp(-elapsed / 8)))));
+    }, 200);
+
     try {
       const res = await fetch('/api/assessment', {
         method: 'POST',
@@ -119,9 +130,12 @@ function AssessmentForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
-      setResult(data);
-      setStatus('success');
+      clearInterval(tick);
+      setProgress(100);
+      setTimeout(() => { setResult(data); setStatus('success'); }, 400);
     } catch (err: unknown) {
+      clearInterval(tick);
+      setProgress(0);
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     }
@@ -457,6 +471,23 @@ function AssessmentForm() {
           <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
             <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+
+        {status === 'loading' && (
+          <div className="bg-white border border-orange-200 rounded-2xl p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 text-orange-500 animate-spin flex-shrink-0" />
+              <p className="text-slate-700 text-sm font-medium">Scoring your essays with Claude AI…</p>
+              <span className="ml-auto text-orange-500 text-sm font-semibold">{progress}%</span>
+            </div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <p className="text-slate-400 text-xs">This usually takes 10–15 seconds. Please don&apos;t close this tab.</p>
           </div>
         )}
 

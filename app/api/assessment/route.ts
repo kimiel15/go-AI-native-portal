@@ -68,7 +68,13 @@ export async function POST(req: NextRequest) {
     let categoryRecommendation: string;
     if (essayScores?.overall_level) {
       // "Level 1" / "Level 2" / "Level 3" → 0-based index into SKILL_LEVELS
-      const idx = Math.max(0, Math.min(2, parseInt(essayScores.overall_level.replace(/\D/g, ''), 10) - 1));
+      let idx = Math.max(0, Math.min(2, parseInt(essayScores.overall_level.replace(/\D/g, ''), 10) - 1));
+
+      // Override to Level 3 if the tool-building essay (Section 3) scores 7+.
+      // Someone who has actually deployed production tools org-wide is Level 3
+      // regardless of how they scored on prompting or mindset essays.
+      if ((essayScores.section3_essay?.score ?? 0) >= 7) idx = 2;
+
       preliminaryLevel = SKILL_LEVELS[idx].label;
       categoryRecommendation = SKILL_LEVELS[idx].category;
     } else {
