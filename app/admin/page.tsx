@@ -1,34 +1,20 @@
-'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Zap, Lock, Loader2, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { Zap, ArrowLeft, UserCheck } from 'lucide-react';
+import { auth, signIn } from '@/auth';
+import { ELEVATION_COOKIE, verifyElevation } from '@/lib/admin-elevation';
+import PasswordForm from './PasswordForm';
 
-export default function AdminLoginPage() {
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+export default async function AdminLandingPage() {
+  const session = await auth();
+  const email = session?.user?.email ?? undefined;
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Invalid password.');
-      sessionStorage.setItem('goainative_admin', 'true');
-      router.push('/admin/dashboard');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Already elevated? Skip the form.
+  const elevationToken = (await cookies()).get(ELEVATION_COOKIE)?.value;
+  if (email && (await verifyElevation(elevationToken, email))) {
+    redirect('/admin/dashboard');
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center px-6">
@@ -41,40 +27,47 @@ export default function AdminLoginPage() {
           <p className="text-slate-400 text-sm mt-1">Go AI-Native · Admin Dashboard</p>
         </div>
 
-        <form onSubmit={handleLogin} className="bg-white border border-gray-200 rounded-2xl p-8 space-y-5">
-          <div>
-            <label className="block text-slate-600 text-sm mb-1.5">
-              <Lock className="inline w-3.5 h-3.5 mr-1" />Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Enter admin password"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
-            />
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
-              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-              <p className="text-red-700 text-sm">{error}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all"
+        {!session ? (
+          <form
+            action={async () => {
+              'use server';
+              await signIn('microsoft-entra-id', { redirectTo: '/admin' });
+            }}
+            className="bg-white border border-gray-200 rounded-2xl p-8 space-y-4 text-center"
           >
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Logging in...</> : 'Login'}
-          </button>
-        </form>
+            <p className="text-slate-600 text-sm">
+              Step 1 — sign in with your Trend Micro account so we know who&apos;s logging in.
+            </p>
+            <button
+              type="submit"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-xl transition-all"
+            >
+              Sign in with Microsoft
+            </button>
+          </form>
+        ) : (
+          <>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-4 flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <p className="text-emerald-800 text-sm">
+                Signed in as <strong>{session.user?.name ?? email}</strong>
+              </p>
+            </div>
+            <p className="text-slate-500 text-sm mb-4 text-center">
+              Step 2 — enter the admin password to unlock the dashboard.
+            </p>
+            <PasswordForm />
+          </>
+        )}
 
-        <p className="text-center text-slate-300 text-xs mt-6">
-          Default password: <code className="text-slate-400">goainative2026</code>
-        </p>
+        <div className="text-center mt-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />Back to home
+          </Link>
+        </div>
       </div>
     </div>
   );

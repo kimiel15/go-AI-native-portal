@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { Team, TeamMember, ProjectSubmission, Assessment, Participant } from '@/types';
 import {
   Zap, Users, FileText, Brain, LogOut, RefreshCw,
@@ -1006,7 +1006,6 @@ function ParticipantFormModal({
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>('overview');
   const [teams, setTeams] = useState<Team[]>([]);
   const [submissions, setSubmissions] = useState<ProjectSubmission[]>([]);
@@ -1040,9 +1039,8 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (sessionStorage.getItem('goainative_admin') !== 'true') { router.replace('/admin'); return; }
     fetchData();
-  }, [fetchData, router]);
+  }, [fetchData]);
 
   const pendingValidation = assessments.filter(a => !a.validation).length;
 
@@ -1141,7 +1139,10 @@ export default function AdminDashboard() {
             <button onClick={fetchData} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
             </button>
-            <button onClick={() => { sessionStorage.removeItem('goainative_admin'); router.push('/admin'); }}
+            <button onClick={async () => {
+              await fetch('/api/admin/elevate', { method: 'DELETE' });
+              await signOut({ callbackUrl: '/' });
+            }}
               className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-400 transition-colors">
               <LogOut className="w-4 h-4" />Logout
             </button>
