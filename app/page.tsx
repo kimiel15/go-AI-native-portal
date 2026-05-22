@@ -95,14 +95,9 @@ export default function Home() {
         </p>
         <p className="text-slate-400 text-sm mb-2">Build with Claude. Ship in Git.</p>
 
-        <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 mb-10">
-          <Calendar className="w-4 h-4 text-red-400" />
-          <span className="text-slate-500 text-sm">Main Event · <strong className="text-red-600">Saturday, June 27, 2026</strong></span>
-        </div>
-
         <p className="text-slate-500 max-w-2xl mx-auto mb-12 leading-relaxed">
           Every team in RoW Support builds a Claude-powered tool, runs it on real production cases,
-          and proves measurable impact. 15 squads · 92 engineers · ~25 teams · 4 awards.
+          and proves measurable impact.
         </p>
 
         <div className="flex flex-wrap gap-4 justify-center">
