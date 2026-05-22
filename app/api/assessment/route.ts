@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
     }
 
-    const teams = getTeams();
+    const teams = await getTeams();
     if (!teams.find(t => t.id === teamId)) {
       return NextResponse.json({ error: 'Team not found.' }, { status: 404 });
     }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       submittedAt: new Date().toISOString(),
     };
 
-    saveAssessment(assessment);
+    await saveAssessment(assessment);
 
     return NextResponse.json({
       success: true,

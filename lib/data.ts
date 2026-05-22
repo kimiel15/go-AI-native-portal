@@ -5,7 +5,11 @@ import { Team, ProjectSubmission, Assessment } from '@/types';
 
 export async function getTeams(): Promise<Team[]> {
   const rows = await prisma.team.findMany({ orderBy: { registeredAt: 'asc' } });
-  return rows.map(r => ({ ...r, members: r.members as Team['members'] }));
+  return rows.map(r => ({
+    ...r,
+    members:      r.members      as unknown as Team['members'],
+    submissionId: r.submissionId ?? undefined,   // Prisma returns null; TS type expects undefined
+  }));
 }
 
 export async function saveTeam(team: Team): Promise<void> {
@@ -50,8 +54,14 @@ export async function getAssessments(): Promise<Assessment[]> {
   const rows = await prisma.assessment.findMany({ orderBy: { submittedAt: 'desc' } });
   return rows.map(r => ({
     ...r,
-    essayScores: r.essayScores as Assessment['essayScores'] ?? undefined,
-    validation:  r.validation  as Assessment['validation']  ?? undefined,
+    // Prisma nullable (null) → TypeScript optional (undefined)
+    essayScores:            r.essayScores            as unknown as Assessment['essayScores'] ?? undefined,
+    validation:             r.validation             as unknown as Assessment['validation']  ?? undefined,
+    essayTotal:             r.essayTotal             ?? undefined,
+    totalScore:             r.totalScore             ?? undefined,
+    totalPercent:           r.totalPercent           ?? undefined,
+    preliminaryLevel:       r.preliminaryLevel       ?? undefined,
+    categoryRecommendation: r.categoryRecommendation ?? undefined,
   }));
 }
 

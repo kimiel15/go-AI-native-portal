@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
-    const teams = getTeams();
+    const teams = await getTeams();
     const duplicate = teams.find(t => t.teamName.toLowerCase() === teamName.toLowerCase());
     if (duplicate) {
       return NextResponse.json({ error: 'A team with this name already exists.' }, { status: 409 });
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       registeredAt: new Date().toISOString(),
     };
 
-    saveTeam(team);
+    await saveTeam(team);
     return NextResponse.json({ success: true, teamId: team.id, teamName: team.teamName });
   } catch {
     return NextResponse.json({ error: 'Server error.' }, { status: 500 });
@@ -34,6 +34,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const teams = getTeams();
+  const teams = await getTeams();
   return NextResponse.json(teams.map(t => ({ id: t.id, teamName: t.teamName })));
 }

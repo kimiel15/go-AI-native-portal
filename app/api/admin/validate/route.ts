@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid action.' }, { status: 400 });
     }
 
-    const assessments = getAssessments();
+    const assessments = await getAssessments();
     if (!assessments.find(a => a.id === assessmentId)) {
       return NextResponse.json({ error: 'Assessment not found.' }, { status: 404 });
     }
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       validatedAt: new Date().toISOString(),
     };
 
-    updateAssessment(assessmentId, { validation });
+    await updateAssessment(assessmentId, { validation });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: 'Server error.' }, { status: 500 });
