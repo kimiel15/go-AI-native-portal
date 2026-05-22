@@ -514,6 +514,11 @@ function AssessmentReadCard({ assessment, onReset }: { assessment: Assessment; o
             ))}
           </div>
 
+          <VerifiedUsagePanel
+            participantEmail={assessment.participantEmail}
+            claimedLevel={displayLevel}
+          />
+
           {e && (
             <div className="space-y-3">
               <p className="text-slate-400 text-xs uppercase tracking-widest">Claude Essay Scores</p>
@@ -587,7 +592,17 @@ function levelIndex(level?: string): 0 | 1 | 2 | -1 {
   return (n === 1 ? 0 : n === 2 ? 1 : n === 3 ? 2 : -1) as 0 | 1 | 2 | -1;
 }
 
-function VerifiedUsagePanel({ participantEmail, claimedLevel }: { participantEmail: string; claimedLevel?: string }) {
+type UsageFlag = { kind: 'ok' | 'warn' | 'bad' | 'info'; text: string } | null;
+
+function VerifiedUsagePanel({
+  participantEmail,
+  claimedLevel,
+  onFlagChange,
+}: {
+  participantEmail: string;
+  claimedLevel?: string;
+  onFlagChange?: (flag: UsageFlag) => void;
+}) {
   const [summary, setSummary] = useState<UsageSummary | null>(null);
   const [state,   setState]   = useState<'loading' | 'no-siebel' | 'no-data' | 'ready'>('loading');
 
@@ -610,6 +625,29 @@ function VerifiedUsagePanel({ participantEmail, claimedLevel }: { participantEma
     })();
     return () => { cancelled = true; };
   }, [participantEmail]);
+
+  // Compute flag unconditionally so hook order stays stable across renders.
+  const tierForFlag: 'power' | 'active' | 'none' = summary?.tier ?? 'none';
+  const claimedIdxPre = levelIndex(claimedLevel);
+  const tierIdxPre    = tierForFlag === 'power' ? 2 : tierForFlag === 'active' ? 1 : 0;
+  let computedFlag: UsageFlag = null;
+  if ((state === 'ready' || state === 'no-data') && claimedIdxPre >= 0) {
+    if (claimedIdxPre === tierIdxPre) {
+      computedFlag = { kind: 'ok', text: 'Verified — claimed level matches AI usage.' };
+    } else if (claimedIdxPre > tierIdxPre) {
+      const diff = claimedIdxPre - tierIdxPre;
+      computedFlag = {
+        kind: diff >= 2 ? 'bad' : 'warn',
+        text:
+          tierForFlag === 'none'
+            ? `No verified usage but claimed ${claimedLevel}. Recommend downgrade.`
+            : `Claimed ${claimedLevel} but verified usage only supports ${tierForFlag === 'power' ? 'Level 3' : 'Level 2'}.`,
+      };
+    } else {
+      computedFlag = { kind: 'info', text: `Underclaimed — verified usage would support a higher level.` };
+    }
+  }
+  useEffect(() => { onFlagChange?.(computedFlag); }, [computedFlag?.kind, computedFlag?.text, onFlagChange]);
 
   // Loading / empty states.
   if (state === 'loading') {
@@ -639,26 +677,7 @@ function VerifiedUsagePanel({ participantEmail, claimedLevel }: { participantEma
   };
   const t = tierStyle[tier];
 
-  // Flag logic: compare claimed level vs verified tier.
-  const claimedIdx  = levelIndex(claimedLevel);            // 0/1/2
-  const tierIdx     = tier === 'power' ? 2 : tier === 'active' ? 1 : 0;
-  let flag: { kind: 'ok' | 'warn' | 'bad' | 'info'; text: string } | null = null;
-  if (claimedIdx >= 0) {
-    if (claimedIdx === tierIdx) {
-      flag = { kind: 'ok', text: 'Verified — claimed level matches AI usage.' };
-    } else if (claimedIdx > tierIdx) {
-      const diff = claimedIdx - tierIdx;
-      flag = {
-        kind: diff >= 2 ? 'bad' : 'warn',
-        text:
-          tier === 'none'
-            ? `No verified usage but claimed ${claimedLevel}. Recommend downgrade.`
-            : `Claimed ${claimedLevel} but verified usage only supports ${tier === 'power' ? 'Level 3' : 'Level 2'}.`,
-      };
-    } else {
-      flag = { kind: 'info', text: `Underclaimed — verified usage would support a higher level.` };
-    }
-  }
+  const flag = computedFlag;
   const flagStyle: Record<NonNullable<typeof flag>['kind'], string> = {
     ok:   'bg-emerald-50 border-emerald-200 text-emerald-700',
     warn: 'bg-amber-50 border-amber-200 text-amber-700',
@@ -747,6 +766,8 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
   const [validatedBy, setValidatedBy] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [usageFlag, setUsageFlag] = useState<UsageFlag>(null);
+  const handleFlagChange = useCallback((f: UsageFlag) => setUsageFlag(f), []);
   const validated = assessment.validation;
   const e = assessment.essayScores;
 
@@ -798,6 +819,20 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
         </div>
       </div>
 
+      {usageFlag && (usageFlag.kind === 'bad' || usageFlag.kind === 'warn') && (
+        <div className={`px-6 py-3 border-b text-sm flex items-start gap-2 ${
+          usageFlag.kind === 'bad'
+            ? 'bg-red-50 border-red-200 text-red-700'
+            : 'bg-amber-50 border-amber-200 text-amber-700'
+        }`}>
+          {usageFlag.kind === 'bad' ? <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" /> : <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />}
+          <div>
+            <p className="font-semibold">AI Usage Mismatch</p>
+            <p className="text-xs leading-relaxed mt-0.5">{usageFlag.text}</p>
+          </div>
+        </div>
+      )}
+
       <div className="px-6 py-5 space-y-5">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm">
           {[
@@ -836,6 +871,7 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
         <VerifiedUsagePanel
           participantEmail={assessment.participantEmail}
           claimedLevel={assessment.preliminaryLevel}
+          onFlagChange={handleFlagChange}
         />
 
         {e?.overall_explanation && (
@@ -1977,10 +2013,10 @@ export default function AdminDashboard() {
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl p-5">
                 <p className="text-slate-400 text-xs uppercase tracking-widest">Tiers</p>
-                <div className="mt-2 space-y-1 text-xs">
-                  <p><span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5" />Power User · ≥ $2,000</p>
-                  <p><span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1.5" />Active · $200 – $1,999</p>
-                  <p><span className="inline-block w-2 h-2 rounded-full bg-slate-300 mr-1.5" />No Usage · &lt; $200</p>
+                <div className="mt-2 space-y-1.5 text-xs font-medium">
+                  <p className="text-emerald-700 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2" />Power User · ≥ $2,000</p>
+                  <p className="text-amber-700 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-2" />Active · $200 – $1,999</p>
+                  <p className="text-slate-600 flex items-center"><span className="inline-block w-2 h-2 rounded-full bg-slate-400 mr-2" />No Usage · &lt; $200</p>
                 </div>
               </div>
             </div>

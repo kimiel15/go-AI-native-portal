@@ -51,3 +51,8 @@ next-env.d.ts
 /.claude
 
 /lib/generated/prisma
+
+# one-off participant import helpers (contain PII; regenerate locally)
+/scripts/participants.json
+/participants-import.xlsx
+/participants-template.xlsx

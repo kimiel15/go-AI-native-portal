@@ -243,10 +243,7 @@ function AssessmentForm() {
         <p className="text-slate-400 text-sm text-center mb-6">
           Your squad lead will review and confirm your final level before the event.
         </p>
-        <a href="/register" className="block text-center bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition-all">
-          Next: Register Your Team →
-        </a>
-        <a href="/" className="block text-center bg-gray-100 hover:bg-gray-200 text-slate-900 font-semibold py-3 rounded-xl transition-all">
+        <a href="/" className="block text-center bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition-all">
           Back to Home
         </a>
       </div>
