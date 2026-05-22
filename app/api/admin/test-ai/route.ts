@@ -18,17 +18,19 @@ export async function GET() {
   }
 
   try {
-    const res = await fetch(endpoint, {
+    const baseUrl = endpoint.replace(/\/$/, '');
+    const url = `${baseUrl}/chat/completions`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
-        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model,
-        max_tokens: 32,
         messages: [{ role: 'user', content: 'Reply with just the word PONG.' }],
+        max_tokens: 32,
+        stream: false,
       }),
     });
 
@@ -36,7 +38,7 @@ export async function GET() {
     return NextResponse.json({
       ok: res.ok,
       status: res.status,
-      endpoint,
+      url,
       model,
       responseBody: body,
     });

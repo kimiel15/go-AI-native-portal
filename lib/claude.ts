@@ -72,26 +72,29 @@ ${q7}`;
 }
 
 export async function scoreEssays(q4: string, q6: string, q7: string): Promise<ClaudeScoring> {
-  const endpoint = process.env.AI_ENDPOINT_URL;
-  const apiKey   = process.env.ANTHROPIC_API_KEY;
-  const model    = process.env.AI_MODEL ?? 'claude-4.6-opus';
+  const baseUrl = (process.env.AI_ENDPOINT_URL ?? '').replace(/\/$/, '');
+  const apiKey  = process.env.ANTHROPIC_API_KEY;
+  const model   = process.env.AI_MODEL ?? 'claude-4.6-sonnet-aws';
 
-  if (!endpoint || !apiKey) throw new Error('AI_ENDPOINT_URL or ANTHROPIC_API_KEY is not configured.');
+  if (!baseUrl || !apiKey) throw new Error('AI_ENDPOINT_URL or ANTHROPIC_API_KEY is not configured.');
 
-  // Call the Trend Micro AI proxy directly — bypassing the Anthropic SDK so the
-  // URL is used as-is rather than having /v1/messages appended to it.
-  const res = await fetch(endpoint, {
+  // RDSEC ONE uses OpenAI-compatible Chat Completions format
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
-      'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
       model,
+      messages: [
+        { role: 'system', content: SCORING_SYSTEM_PROMPT },
+        { role: 'user',   content: buildUserPrompt(q4, q6, q7) },
+      ],
       max_tokens: 1024,
-      system: SCORING_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildUserPrompt(q4, q6, q7) }],
+      temperature: 0.5,
+      top_p: 1,
+      stream: false,
     }),
   });
 
@@ -101,8 +104,8 @@ export async function scoreEssays(q4: string, q6: string, q7: string): Promise<C
   }
 
   const data = await res.json();
-  const text: string = data?.content?.[0]?.text ?? '';
-  if (!text) throw new Error(`Empty response from AI endpoint. Full response: ${JSON.stringify(data)}`);
+  const text: string = data?.choices?.[0]?.message?.content ?? '';
+  if (!text) throw new Error(`Empty response. Full: ${JSON.stringify(data)}`);
 
   // Strip markdown code fences if present
   const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
