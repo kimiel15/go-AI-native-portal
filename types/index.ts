@@ -2,9 +2,33 @@ export interface Participant {
   id: string;
   name: string;
   email: string;
+  siebelId?: string;
   teamId?: string;
   teamName?: string;
 }
+
+export interface AIUsageRow {
+  id: string;
+  siebelId: string;
+  month: string;       // "YYYY-MM"
+  amountUsd: number;
+  uploadedAt: string;
+}
+
+export interface AIUsageSummary {
+  siebelId: string;
+  total: number;
+  monthly: { month: string; amount: number }[];
+  tier: 'power' | 'active' | 'none';
+  lastUpdated: string | null;
+}
+
+// Verified-usage thresholds (USD). Total spend across all available months.
+export const USAGE_THRESHOLDS = {
+  power:  2000,   // ≥ $2,000 supports Level 3 claim
+  active:  200,   // $200–$1,999 supports Level 2
+  // below 200 → 'none'
+} as const;
 
 export interface TeamMember {
   name: string;

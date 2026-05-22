@@ -3,7 +3,7 @@ import { getTeams, getParticipantByEmail, saveParticipant } from '@/lib/data';
 import { Participant } from '@/types';
 import { randomUUID } from 'crypto';
 
-interface ImportRow { name: string; email: string; teamName?: string; }
+interface ImportRow { name: string; email: string; teamName?: string; siebelId?: string; }
 interface ImportResult {
   created: number;
   updated: number;
@@ -43,11 +43,14 @@ export async function POST(req: NextRequest) {
         ? teams.find(t => t.teamName.toLowerCase() === teamName.toLowerCase())
         : undefined;
 
+      const siebelId = row.siebelId?.toString().trim().toLowerCase() || undefined;
+
       const existing = await getParticipantByEmail(email);
       const participant: Participant = {
         id:       existing?.id ?? randomUUID(),
         name,
         email,
+        siebelId: siebelId ?? existing?.siebelId,
         teamId:   matchedTeam?.id       ?? existing?.teamId,
         teamName: matchedTeam?.teamName ?? (teamName && !matchedTeam ? teamName : existing?.teamName),
       };

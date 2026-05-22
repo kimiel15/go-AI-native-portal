@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { Team, TeamMember, ProjectSubmission, Assessment, Participant } from '@/types';
@@ -9,11 +9,11 @@ import {
   CheckCircle2, ShieldCheck, AlertTriangle, Sparkles,
   ThumbsUp, ArrowUp, ArrowDown, Loader2, Flag,
   Plus, Pencil, Trash2, X, UserPlus, Save,
-  Upload, Download, CheckCircle, AlertCircle
+  Upload, Download, CheckCircle, AlertCircle, Activity
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-type Tab = 'overview' | 'teams' | 'submissions' | 'assessments' | 'validation' | 'participants';
+type Tab = 'overview' | 'teams' | 'submissions' | 'assessments' | 'validation' | 'participants' | 'aiUsage';
 
 const LEVEL_BADGE: Record<string, string> = {
   'Level 1': 'bg-slate-100 text-slate-700 border-slate-200',
@@ -569,6 +569,169 @@ function AssessmentReadCard({ assessment, onReset }: { assessment: Assessment; o
   );
 }
 
+// ─── Verified AI Usage Panel ──────────────────────────────────────────────────
+
+interface UsageSummary {
+  siebelId: string;
+  total: number;
+  monthly: { month: string; amount: number }[];
+  tier: 'power' | 'active' | 'none';
+  lastUpdated: string | null;
+}
+
+function levelIndex(level?: string): 0 | 1 | 2 | -1 {
+  if (!level) return -1;
+  const m = level.match(/Level\s*(\d)/i);
+  if (!m) return -1;
+  const n = parseInt(m[1], 10);
+  return (n === 1 ? 0 : n === 2 ? 1 : n === 3 ? 2 : -1) as 0 | 1 | 2 | -1;
+}
+
+function VerifiedUsagePanel({ participantEmail, claimedLevel }: { participantEmail: string; claimedLevel?: string }) {
+  const [summary, setSummary] = useState<UsageSummary | null>(null);
+  const [state,   setState]   = useState<'loading' | 'no-siebel' | 'no-data' | 'ready'>('loading');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        // Look up the participant's siebelId by email.
+        const p = await fetch(`/api/participants?email=${encodeURIComponent(participantEmail)}`).then(r => r.json());
+        const siebelId = p?.siebelId as string | undefined;
+        if (!siebelId) { if (!cancelled) setState('no-siebel'); return; }
+        const data: UsageSummary | null = await fetch(`/api/admin/ai-usage/summary/${encodeURIComponent(siebelId)}`).then(r => r.json());
+        if (cancelled) return;
+        if (!data) { setState('no-data'); return; }
+        setSummary(data);
+        setState('ready');
+      } catch {
+        if (!cancelled) setState('no-data');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [participantEmail]);
+
+  // Loading / empty states.
+  if (state === 'loading') {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-slate-400 flex items-center gap-2">
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />Loading verified usage…
+      </div>
+    );
+  }
+  if (state === 'no-siebel') {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm">
+        <p className="text-slate-700 font-semibold mb-0.5">Verified AI Usage</p>
+        <p className="text-slate-400 text-xs">No Siebel ID on this participant — add one in the Participants tab to enable verification.</p>
+      </div>
+    );
+  }
+  // no-data → treat as "No Usage" (red) per agreed design.
+  const tier: 'power' | 'active' | 'none' = summary?.tier ?? 'none';
+  const total = summary?.total ?? 0;
+  const monthly = summary?.monthly ?? [];
+
+  const tierStyle: Record<typeof tier, { bg: string; border: string; text: string; dot: string; label: string }> = {
+    power:  { bg: 'bg-emerald-50',  border: 'border-emerald-200', text: 'text-emerald-700', dot: 'bg-emerald-500', label: 'Power User' },
+    active: { bg: 'bg-amber-50',    border: 'border-amber-200',   text: 'text-amber-700',   dot: 'bg-amber-500',   label: 'Active' },
+    none:   { bg: 'bg-slate-50',    border: 'border-slate-200',   text: 'text-slate-600',   dot: 'bg-slate-400',   label: 'No Usage' },
+  };
+  const t = tierStyle[tier];
+
+  // Flag logic: compare claimed level vs verified tier.
+  const claimedIdx  = levelIndex(claimedLevel);            // 0/1/2
+  const tierIdx     = tier === 'power' ? 2 : tier === 'active' ? 1 : 0;
+  let flag: { kind: 'ok' | 'warn' | 'bad' | 'info'; text: string } | null = null;
+  if (claimedIdx >= 0) {
+    if (claimedIdx === tierIdx) {
+      flag = { kind: 'ok', text: 'Verified — claimed level matches AI usage.' };
+    } else if (claimedIdx > tierIdx) {
+      const diff = claimedIdx - tierIdx;
+      flag = {
+        kind: diff >= 2 ? 'bad' : 'warn',
+        text:
+          tier === 'none'
+            ? `No verified usage but claimed ${claimedLevel}. Recommend downgrade.`
+            : `Claimed ${claimedLevel} but verified usage only supports ${tier === 'power' ? 'Level 3' : 'Level 2'}.`,
+      };
+    } else {
+      flag = { kind: 'info', text: `Underclaimed — verified usage would support a higher level.` };
+    }
+  }
+  const flagStyle: Record<NonNullable<typeof flag>['kind'], string> = {
+    ok:   'bg-emerald-50 border-emerald-200 text-emerald-700',
+    warn: 'bg-amber-50 border-amber-200 text-amber-700',
+    bad:  'bg-red-50 border-red-200 text-red-700',
+    info: 'bg-blue-50 border-blue-200 text-blue-700',
+  };
+
+  // Sparkline: simple SVG. Width scales by number of months.
+  const maxAmt = Math.max(1, ...monthly.map(m => m.amount));
+  const barW   = 8;
+  const gap    = 3;
+  const h      = 28;
+  const svgW   = monthly.length * (barW + gap);
+
+  return (
+    <div className={`${t.bg} ${t.border} border rounded-xl p-4 space-y-3`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-slate-500 text-xs font-semibold uppercase tracking-widest flex items-center gap-1.5">
+            <Activity className="w-3 h-3" />Verified AI Usage
+          </p>
+          <p className="text-slate-900 font-bold text-2xl mt-0.5">${total.toLocaleString('en-US', { maximumFractionDigits: 2 })}</p>
+          {summary && (
+            <p className="text-slate-400 text-xs mt-0.5">
+              {monthly.length} month{monthly.length !== 1 ? 's' : ''} · siebelId: <span className="font-mono">{summary.siebelId}</span>
+            </p>
+          )}
+        </div>
+        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${t.border} ${t.text} bg-white/60`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />{t.label}
+        </span>
+      </div>
+
+      {monthly.length > 0 && (
+        <div>
+          <svg width={svgW} height={h} className="block">
+            {monthly.map((m, i) => {
+              const barH = Math.max(1, Math.round((m.amount / maxAmt) * h));
+              return (
+                <rect
+                  key={m.month}
+                  x={i * (barW + gap)}
+                  y={h - barH}
+                  width={barW}
+                  height={barH}
+                  rx={1.5}
+                  className={t.dot}
+                  fill="currentColor"
+                />
+              );
+            })}
+          </svg>
+          <div className="flex gap-[3px] mt-1 text-[9px] text-slate-400 font-mono leading-none">
+            {monthly.map(m => (
+              <span key={m.month} style={{ width: barW }} className="text-center truncate">{m.month.slice(2)}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {flag && (
+        <div className={`text-xs rounded-lg border px-2.5 py-2 ${flagStyle[flag.kind]}`}>
+          {flag.kind === 'ok'   && <CheckCircle2  className="w-3 h-3 inline mr-1 -mt-0.5" />}
+          {flag.kind === 'warn' && <AlertTriangle className="w-3 h-3 inline mr-1 -mt-0.5" />}
+          {flag.kind === 'bad'  && <AlertCircle   className="w-3 h-3 inline mr-1 -mt-0.5" />}
+          {flag.kind === 'info' && <Sparkles      className="w-3 h-3 inline mr-1 -mt-0.5" />}
+          {flag.text}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Validation Card ──────────────────────────────────────────────────────────
 
 const LEVELS = [
@@ -670,6 +833,11 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
           <span className="text-slate-400 text-xs ml-1">→ {assessment.categoryRecommendation}</span>
         </div>
 
+        <VerifiedUsagePanel
+          participantEmail={assessment.participantEmail}
+          claimedLevel={assessment.preliminaryLevel}
+        />
+
         {e?.overall_explanation && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4">
             <p className="text-red-300 text-xs font-semibold uppercase tracking-widest mb-1 flex items-center gap-1">
@@ -753,16 +921,16 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
 
 // ─── Excel Import Modal ───────────────────────────────────────────────────────
 
-interface ImportRow { name: string; email: string; teamName?: string; }
+interface ImportRow { name: string; email: string; teamName?: string; siebelId?: string; }
 interface ImportResult { created: number; updated: number; skipped: number; errors: { row: number; email: string; reason: string }[]; }
 
 function downloadTemplate() {
   const ws = XLSX.utils.aoa_to_sheet([
-    ['Name', 'Email Address', 'Squad'],
-    ['Ana Cruz', 'ana.cruz@trendmicro.com', 'Alpha Squad'],
-    ['Juan Reyes', 'juan.reyes@trendmicro.com', 'Alpha Squad'],
+    ['Name', 'Email Address', 'Squad', 'Siebel ID'],
+    ['Ana Cruz', 'ana.cruz@trendmicro.com', 'Alpha Squad', 'acruz'],
+    ['Juan Reyes', 'juan.reyes@trendmicro.com', 'Alpha Squad', 'jreyes'],
   ]);
-  ws['!cols'] = [{ wch: 28 }, { wch: 36 }, { wch: 20 }];
+  ws['!cols'] = [{ wch: 28 }, { wch: 36 }, { wch: 20 }, { wch: 16 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Participants');
   XLSX.writeFile(wb, 'participants-template.xlsx');
@@ -794,6 +962,7 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
             name:     norm['name']          || norm['full name'] || norm['fullname'] || '',
             email:    norm['email address'] || norm['email']     || '',
             teamName: norm['squad']         || norm['team name'] || norm['team']    || norm['teamname'] || '',
+            siebelId: norm['siebel id']     || norm['siebelid']  || norm['siebel']   || '',
           };
         }).filter(r => r.name || r.email);
         if (parsed.length === 0) { setParseError('No data rows found. Make sure row 1 has headers: Name, Email Address, Squad.'); return; }
@@ -883,6 +1052,7 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
                       <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Name</th>
                       <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Email Address</th>
                       <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Squad</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-semibold uppercase tracking-wide">Siebel ID</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -892,6 +1062,7 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
                         <td className="px-3 py-2 text-slate-700 font-medium">{r.name || <span className="text-red-400">missing</span>}</td>
                         <td className="px-3 py-2 text-slate-600">{r.email || <span className="text-red-400">missing</span>}</td>
                         <td className="px-3 py-2 text-slate-500">{r.teamName || <span className="text-slate-300 italic">none</span>}</td>
+                        <td className="px-3 py-2 text-slate-500 font-mono">{r.siebelId || <span className="text-slate-300 italic">—</span>}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -954,32 +1125,47 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
 function ParticipantFormModal({
   initial,
   teams,
+  existingSquadNames,
   onClose,
   onSaved,
 }: {
   initial?: Participant;
   teams: Team[];
+  existingSquadNames: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const isEdit = !!initial;
-  const [name,     setName]     = useState(initial?.name     ?? '');
-  const [email,    setEmail]    = useState(initial?.email    ?? '');
-  const [teamId,   setTeamId]   = useState(initial?.teamId   ?? '');
-  const [saving,   setSaving]   = useState(false);
-  const [error,    setError]    = useState('');
+  const [name,     setName]      = useState(initial?.name     ?? '');
+  const [email,    setEmail]     = useState(initial?.email    ?? '');
+  const [teamName, setTeamName]  = useState(initial?.teamName ?? '');
+  const [siebelId, setSiebelId]  = useState(initial?.siebelId ?? '');
+  const [saving,   setSaving]    = useState(false);
+  const [error,    setError]     = useState('');
 
   const handleSave = async () => {
     if (!name.trim() || !email.trim()) { setError('Name and email are required.'); return; }
     setSaving(true); setError('');
-    const selectedTeam = teams.find(t => t.id === teamId);
+    const cleanedTeamName = teamName.trim();
+    // If the typed squad name happens to exactly match a registered hackathon team,
+    // link the participant to that team (teamId) too. Otherwise it's just a
+    // free-text squad — same shape as the Excel import.
+    const matchedTeam = cleanedTeamName
+      ? teams.find(t => t.teamName.toLowerCase() === cleanedTeamName.toLowerCase())
+      : undefined;
     try {
       const url    = isEdit ? `/api/admin/participants/${initial!.id}` : '/api/admin/participants';
       const method = isEdit ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), teamId: teamId || null, teamName: selectedTeam?.teamName || null }),
+        body: JSON.stringify({
+          name:     name.trim(),
+          email:    email.trim(),
+          teamId:   matchedTeam?.id ?? null,
+          teamName: cleanedTeamName || null,
+          siebelId: siebelId.trim().toLowerCase() || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed.');
@@ -1011,13 +1197,27 @@ function ParticipantFormModal({
             {isEdit && <p className="text-slate-400 text-xs mt-1">Email cannot be changed after creation.</p>}
           </div>
           <div>
-            <label className="block text-slate-600 text-sm mb-1.5">Assigned Team</label>
-            <select value={teamId} onChange={e => setTeamId(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-red-500 transition-colors">
-              <option value="">-- No team assigned yet --</option>
-              {teams.map(t => <option key={t.id} value={t.id}>{t.teamName}</option>)}
-            </select>
-            <p className="text-slate-400 text-xs mt-1">This will auto-fill the team field on the assessment form.</p>
+            <label className="block text-slate-600 text-sm mb-1.5">Squad / Team</label>
+            <input
+              type="text"
+              value={teamName}
+              onChange={e => setTeamName(e.target.value)}
+              list="existing-squads"
+              placeholder="e.g. Squad Kimiel"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+            />
+            <datalist id="existing-squads">
+              {existingSquadNames.map(n => <option key={n} value={n} />)}
+              {teams.map(t => <option key={t.id} value={t.teamName} />)}
+            </datalist>
+            <p className="text-slate-400 text-xs mt-1">Free-text squad name (e.g. Squad Kimiel) or a registered hackathon team. Existing entries autocomplete.</p>
+          </div>
+          <div>
+            <label className="block text-slate-600 text-sm mb-1.5">Siebel ID <span className="text-slate-400 font-normal">(optional)</span></label>
+            <input type="text" value={siebelId} onChange={e => setSiebelId(e.target.value)}
+              placeholder="e.g. johnrusselc"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors font-mono text-sm" />
+            <p className="text-slate-400 text-xs mt-1">Used to match Power BI AI usage data. Lowercase, no spaces.</p>
           </div>
           {error && <p className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
         </div>
@@ -1036,6 +1236,260 @@ function ParticipantFormModal({
   );
 }
 
+// ─── AI Usage Upload Modal ────────────────────────────────────────────────────
+
+interface UsageRow { siebelId: string; month: string; amountUsd: number; }
+interface UsageImportResult {
+  inserted: number;
+  distinctUsers: number;
+  errors: { row: number; siebelId: string; reason: string }[];
+  uploadedAt: string;
+}
+
+// Convert a column header into "YYYY-MM". Handles all of these formats:
+//   "July 2025"   "Jul 2025"   "Jul-2025"   "Jul-25"   "2025-07"
+const MONTH_NUMS: Record<string, string> = {
+  jan: '01', january:   '01',
+  feb: '02', february:  '02',
+  mar: '03', march:     '03',
+  apr: '04', april:     '04',
+  may: '05',
+  jun: '06', june:      '06',
+  jul: '07', july:      '07',
+  aug: '08', august:    '08',
+  sep: '09', sept: '09', september: '09',
+  oct: '10', october:   '10',
+  nov: '11', november:  '11',
+  dec: '12', december:  '12',
+};
+function headerToMonth(h: string): string | null {
+  const s = h.trim();
+  if (/^\d{4}-\d{2}$/.test(s)) return s;
+  // Match "<MonthName>[ -]<2- or 4-digit year>", with optional whitespace.
+  const m = s.match(/^([A-Za-z]+)[\s-]+(\d{2}|\d{4})$/);
+  if (!m) return null;
+  const mm = MONTH_NUMS[m[1].toLowerCase()];
+  if (!mm) return null;
+  // Two-digit years from Excel: assume 2000+yy (covers 2025, 2026; if you ever need 1995, expand here).
+  const yyyy = m[2].length === 2 ? `20${m[2]}` : m[2];
+  return `${yyyy}-${mm}`;
+}
+
+function AIUsageUploadModal({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState('');
+  const [rows, setRows]         = useState<UsageRow[]>([]);
+  const [parseError, setParseError] = useState('');
+  const [importing, setImporting]   = useState(false);
+  const [result, setResult]         = useState<UsageImportResult | null>(null);
+
+  // Parse the matrix shape (row 0 = month headers, row 1 = "Cost" sub-header,
+  // row 2+ = data) into our flat UsageRow[] format. Shared between xlsx and CSV.
+  const parseAOA = (aoa: (string | number | null)[][]): { rows: UsageRow[]; error?: string } => {
+    if (aoa.length < 3) return { rows: [], error: 'File has too few rows. Expected the Power BI matrix export (months across the top).' };
+    const monthCols: { col: number; month: string }[] = [];
+    const header = aoa[0];
+    for (let c = 1; c < header.length; c++) {
+      const cell = header[c];
+      if (cell == null) continue;
+      const month = headerToMonth(String(cell));
+      if (month) monthCols.push({ col: c, month });
+    }
+    if (monthCols.length === 0) {
+      return { rows: [], error: 'Could not find month columns (e.g. "July 2025") in the header row.' };
+    }
+    const out: UsageRow[] = [];
+    for (let r = 2; r < aoa.length; r++) {
+      const row = aoa[r];
+      const siebel = row?.[0];
+      if (!siebel) continue;
+      const siebelId = String(siebel).trim().toLowerCase();
+      if (siebelId === 'total' || siebelId === 'user name' || siebelId.startsWith('applied filters')) continue;
+      for (const { col, month } of monthCols) {
+        const cell = row[col];
+        if (cell == null || cell === '') continue;
+        const amount = typeof cell === 'number' ? cell : Number(String(cell).replace(/[$,]/g, ''));
+        if (!Number.isFinite(amount) || amount <= 0) continue;
+        out.push({ siebelId, month, amountUsd: amount });
+      }
+    }
+    if (out.length === 0) return { rows: [], error: 'No usage rows found. Check that the file has the expected matrix layout.' };
+    return { rows: out };
+  };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParseError(''); setRows([]); setResult(null); setFileName(file.name);
+
+    const isCsv = /\.csv$/i.test(file.name);
+    const reader = new FileReader();
+
+    reader.onload = ev => {
+      try {
+        let aoa: (string | number | null)[][];
+        if (isCsv) {
+          const text = String(ev.target?.result ?? '');
+          const wb   = XLSX.read(text, { type: 'string' });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: null }) as (string | number | null)[][];
+        } else {
+          const wb = XLSX.read(ev.target?.result, { type: 'binary' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: null }) as (string | number | null)[][];
+        }
+
+        const { rows, error } = parseAOA(aoa);
+        if (error) { setParseError(error); return; }
+        setRows(rows);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        // Friendlier message for the most common corporate-IT failure: sensitivity-labeled xlsx.
+        if (/ECMA-376|EncryptionInfo|encrypted/i.test(msg)) {
+          setParseError(
+            'This Excel file has a sensitivity / rights-management label that the parser cannot read. ' +
+            'In Excel, choose File → Save As → save a new copy as CSV (Comma delimited), then upload the CSV here.',
+          );
+        } else {
+          setParseError(msg || 'Could not read the file.');
+        }
+      }
+    };
+
+    if (isCsv) reader.readAsText(file);
+    else       reader.readAsBinaryString(file);
+  };
+
+  const handleImport = async () => {
+    setImporting(true);
+    try {
+      const res  = await fetch('/api/admin/ai-usage/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed.');
+      setResult(data);
+    } catch (err: unknown) {
+      setParseError(err instanceof Error ? err.message : 'Upload failed.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Quick preview summary: distinct users + total spend.
+  const distinctUsers = new Set(rows.map(r => r.siebelId)).size;
+  const totalSpend    = rows.reduce((s, r) => s + r.amountUsd, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+          <h2 className="text-slate-900 font-bold text-lg">Upload AI Usage Snapshot</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm">
+            <p className="text-blue-800 font-semibold mb-1">Power BI export</p>
+            <p className="text-blue-700/80 text-xs leading-relaxed">
+              Open the AI usage report in Power BI → click the matrix → <strong>Export</strong> → <strong>Data with current layout</strong> → upload here.
+              <strong>.xlsx or .csv</strong> both work — if the xlsx has a sensitivity label and won&apos;t parse, open it in Excel and Save As CSV instead.
+              Uploading replaces the previous snapshot entirely.
+            </p>
+          </div>
+
+          <div>
+            <div
+              onClick={() => fileRef.current?.click()}
+              className="border-2 border-dashed border-gray-200 hover:border-red-300 rounded-xl p-8 text-center cursor-pointer transition-colors"
+            >
+              <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              {fileName ? (
+                <p className="text-slate-700 font-medium text-sm">{fileName}</p>
+              ) : (
+                <>
+                  <p className="text-slate-500 text-sm font-medium">Click to choose the Power BI export</p>
+                  <p className="text-slate-400 text-xs mt-1">.xlsx, .xls, or .csv</p>
+                </>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="hidden" />
+          </div>
+
+          {parseError && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-red-700 text-sm">{parseError}</p>
+            </div>
+          )}
+
+          {rows.length > 0 && !result && (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2 text-sm">
+              <p className="text-slate-700 font-semibold">Preview</p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-slate-900 font-bold">{distinctUsers}</p>
+                  <p className="text-slate-500 text-xs">users</p>
+                </div>
+                <div>
+                  <p className="text-slate-900 font-bold">{rows.length}</p>
+                  <p className="text-slate-500 text-xs">monthly rows</p>
+                </div>
+                <div>
+                  <p className="text-slate-900 font-bold">${totalSpend.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+                  <p className="text-slate-500 text-xs">total spend</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {result && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold text-emerald-700">{result.inserted}</p>
+                  <p className="text-emerald-600 text-xs font-medium">rows inserted</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold text-blue-700">{result.distinctUsers}</p>
+                  <p className="text-blue-600 text-xs font-medium">users covered</p>
+                </div>
+              </div>
+              {result.errors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-1 text-xs">
+                  <p className="text-red-700 font-semibold mb-1">Skipped rows:</p>
+                  {result.errors.slice(0, 10).map((e, i) => (
+                    <p key={i} className="text-red-600">Row {e.row} ({e.siebelId}): {e.reason}</p>
+                  ))}
+                  {result.errors.length > 10 && <p className="text-red-500 italic">+ {result.errors.length - 10} more…</p>}
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                <CheckCircle className="w-4 h-4" />Upload complete
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+          <button onClick={result ? onImported : onClose}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-slate-600 text-sm font-medium hover:bg-gray-50">
+            {result ? 'Close' : 'Cancel'}
+          </button>
+          {!result && (
+            <button onClick={handleImport} disabled={rows.length === 0 || importing}
+              className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
+              {importing ? <><Loader2 className="w-4 h-4 animate-spin" />Uploading…</> : <><Upload className="w-4 h-4" />Replace snapshot</>}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
@@ -1045,6 +1499,15 @@ export default function AdminDashboard() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const existingSquadNames = useMemo(
+    () => Array.from(new Set(participants.map(p => p.teamName).filter(Boolean) as string[])).sort(),
+    [participants]
+  );
+
+  // AI Usage state
+  const [usageMeta, setUsageMeta] = useState<{ count: number; lastUploadedAt: string | null }>({ count: 0, lastUploadedAt: null });
+  const [showUsageUpload, setShowUsageUpload] = useState(false);
 
   // Team CRUD modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -1061,13 +1524,14 @@ export default function AdminDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [t, s, a, p] = await Promise.all([
+      const [t, s, a, p, u] = await Promise.all([
         fetch('/api/admin/teams').then(r => r.json()),
         fetch('/api/admin/submissions').then(r => r.json()),
         fetch('/api/admin/assessments').then(r => r.json()),
         fetch('/api/admin/participants').then(r => r.json()),
+        fetch('/api/admin/ai-usage').then(r => r.json()).catch(() => ({ count: 0, lastUploadedAt: null })),
       ]);
-      setTeams(t); setSubmissions(s); setAssessments(a); setParticipants(p);
+      setTeams(t); setSubmissions(s); setAssessments(a); setParticipants(p); setUsageMeta(u);
     } finally { setLoading(false); }
   }, []);
 
@@ -1084,6 +1548,7 @@ export default function AdminDashboard() {
     { id: 'submissions',  label: 'Submissions',  icon: FileText,   badge: submissions.length },
     { id: 'assessments',  label: 'Assessments',  icon: Brain,      badge: assessments.length },
     { id: 'validation',   label: 'Validation',   icon: ShieldCheck, badge: pendingValidation || undefined },
+    { id: 'aiUsage',      label: 'AI Usage',     icon: Activity },
   ];
 
   return (
@@ -1118,6 +1583,7 @@ export default function AdminDashboard() {
       {showAddParticipant && (
         <ParticipantFormModal
           teams={teams}
+          existingSquadNames={existingSquadNames}
           onClose={() => setShowAddParticipant(false)}
           onSaved={() => { setShowAddParticipant(false); fetchData(); }}
         />
@@ -1126,6 +1592,7 @@ export default function AdminDashboard() {
         <ParticipantFormModal
           initial={editingParticipant}
           teams={teams}
+          existingSquadNames={existingSquadNames}
           onClose={() => setEditingParticipant(null)}
           onSaved={() => { setEditingParticipant(null); fetchData(); }}
         />
@@ -1279,7 +1746,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-slate-900 font-bold text-lg">Participants ({participants.length})</h2>
-                <p className="text-slate-400 text-sm mt-0.5">Name, email, and team pre-assignment. The assessment form auto-fills from this list.</p>
+                <p className="text-slate-400 text-sm mt-0.5">Name, email, team pre-assignment, and Siebel ID for AI usage verification.</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1297,6 +1764,18 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {participants.length > 0 && (() => {
+              const missingSiebel = participants.filter(p => !p.siebelId).length;
+              return missingSiebel > 0 ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <p className="text-amber-800 text-sm">
+                    <strong>{missingSiebel}</strong> of {participants.length} participants are missing a Siebel ID — AI usage verification won&apos;t work for them.
+                  </p>
+                </div>
+              ) : null;
+            })()}
+
             {participants.length === 0 ? (
               <div className="text-center py-20 text-slate-400">
                 <UserPlus className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -1306,22 +1785,32 @@ export default function AdminDashboard() {
             ) : (
               <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                 <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 px-5 py-3">
-                  <p className="col-span-4 text-slate-500 text-xs font-semibold uppercase tracking-wide">Name</p>
-                  <p className="col-span-4 text-slate-500 text-xs font-semibold uppercase tracking-wide">Email</p>
+                  <p className="col-span-3 text-slate-500 text-xs font-semibold uppercase tracking-wide">Name</p>
+                  <p className="col-span-3 text-slate-500 text-xs font-semibold uppercase tracking-wide">Email</p>
+                  <p className="col-span-2 text-slate-500 text-xs font-semibold uppercase tracking-wide">Siebel ID</p>
                   <p className="col-span-3 text-slate-500 text-xs font-semibold uppercase tracking-wide">Assigned Team</p>
                   <p className="col-span-1" />
                 </div>
                 {participants.map((p, i) => (
                   <div key={p.id} className={`grid grid-cols-12 px-5 py-3.5 items-center ${i < participants.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                    <div className="col-span-4 flex items-center gap-2.5">
+                    <div className="col-span-3 flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                         {p.name.charAt(0).toUpperCase()}
                       </div>
                       <span className="text-slate-900 text-sm font-medium truncate">{p.name}</span>
                     </div>
-                    <div className="col-span-4 flex items-center gap-1 text-slate-500 text-sm truncate">
+                    <div className="col-span-3 flex items-center gap-1 text-slate-500 text-sm truncate">
                       <Mail className="w-3 h-3 text-slate-300 flex-shrink-0" />
                       {p.email}
+                    </div>
+                    <div className="col-span-2">
+                      {p.siebelId ? (
+                        <span className="inline-flex items-center bg-slate-50 text-slate-700 border border-slate-200 rounded-md px-2 py-0.5 text-xs font-mono">
+                          {p.siebelId}
+                        </span>
+                      ) : (
+                        <span className="text-amber-500 text-xs italic">missing</span>
+                      )}
                     </div>
                     <div className="col-span-3">
                       {p.teamName ? (
@@ -1433,7 +1922,90 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
+
+        {tab === 'aiUsage' && (
+          <div className="space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-slate-900 font-bold text-lg">AI Usage Verification</h2>
+                <p className="text-slate-500 text-sm mt-1 max-w-2xl">
+                  Upload the monthly Power BI export to cross-check what participants claim against their actual Claude / AI spend.
+                  Verification appears on each assessment in the Validation tab.
+                </p>
+              </div>
+              <div className="flex-shrink-0 flex items-center gap-2">
+                {usageMeta.count > 0 && (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Delete the current snapshot (${usageMeta.count.toLocaleString()} rows)? You can re-upload after.`)) return;
+                      const res = await fetch('/api/admin/ai-usage', { method: 'DELETE' });
+                      if (!res.ok) {
+                        const data = await res.json().catch(() => ({}));
+                        alert(`Clear failed: ${data.error || res.statusText}`);
+                        return;
+                      }
+                      fetchData();
+                    }}
+                    className="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-slate-700 font-semibold px-4 py-2.5 rounded-xl transition-all text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />Clear snapshot
+                  </button>
+                )}
+                <button onClick={() => setShowUsageUpload(true)}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm shadow-md shadow-red-500/20">
+                  <Upload className="w-4 h-4" />Upload snapshot
+                </button>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                <p className="text-slate-400 text-xs uppercase tracking-widest">Snapshot rows</p>
+                <p className="text-slate-900 font-bold text-2xl mt-1">{usageMeta.count.toLocaleString()}</p>
+                <p className="text-slate-400 text-xs">monthly user-cost entries</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                <p className="text-slate-400 text-xs uppercase tracking-widest">Last upload</p>
+                <p className="text-slate-900 font-bold text-2xl mt-1">
+                  {usageMeta.lastUploadedAt
+                    ? new Date(usageMeta.lastUploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : '—'}
+                </p>
+                <p className="text-slate-400 text-xs">
+                  {usageMeta.lastUploadedAt ? new Date(usageMeta.lastUploadedAt).toLocaleTimeString() : 'No snapshot uploaded yet'}
+                </p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                <p className="text-slate-400 text-xs uppercase tracking-widest">Tiers</p>
+                <div className="mt-2 space-y-1 text-xs">
+                  <p><span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5" />Power User · ≥ $2,000</p>
+                  <p><span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1.5" />Active · $200 – $1,999</p>
+                  <p><span className="inline-block w-2 h-2 rounded-full bg-slate-300 mr-1.5" />No Usage · &lt; $200</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-blue-800 font-semibold">Heads up</p>
+                <p className="text-blue-700/80 text-xs leading-relaxed mt-0.5">
+                  Verification matches by <strong>Siebel ID</strong>. Make sure participants in the roster have their Siebel ID filled in
+                  (Participants tab → Edit, or include a &quot;Siebel ID&quot; column in your Excel import).
+                  Each new upload <strong>replaces</strong> the previous snapshot.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {showUsageUpload && (
+        <AIUsageUploadModal
+          onClose={() => setShowUsageUpload(false)}
+          onImported={() => { setShowUsageUpload(false); fetchData(); }}
+        />
+      )}
     </div>
   );
 }
