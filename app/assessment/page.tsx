@@ -27,6 +27,7 @@ interface SubmitResult {
   overallExplanation: string | null;
   squadLeadNote: string | null;
   essayScoringFailed: boolean;
+  essayScoringError: string | null;
 }
 
 function ScoreBar({ label, score, max }: { label: string; score: number; max: number }) {
@@ -203,7 +204,11 @@ function AssessmentForm() {
 
           {result.essayScoringFailed && (
             <div className="mt-3 bg-white border border-gray-200 rounded-xl p-4 border-l-4 border-l-orange-400">
-              <p className="text-slate-700 text-sm">Essay scoring is pending — your squad lead will review manually.</p>
+              <p className="text-orange-700 text-xs font-semibold uppercase tracking-widest mb-1">Essay Scoring Unavailable</p>
+              <p className="text-slate-700 text-sm">Your squad lead will review essays manually.</p>
+              {result.essayScoringError && (
+                <p className="text-slate-400 text-xs mt-2 font-mono break-all">{result.essayScoringError}</p>
+              )}
             </div>
           )}
         </div>

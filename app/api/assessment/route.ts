@@ -46,13 +46,15 @@ export async function POST(req: NextRequest) {
     // Score essays via Claude
     let essayScores;
     let essayTotal = 0;
+    let essayScoringError: string | null = null;
     try {
       essayScores = await scoreEssays(q4_essay, q6_essay, q7_essay);
       essayTotal = essayScores.section2_essay.score
                 + essayScores.section3_essay.score
                 + essayScores.section4_essay.score;
     } catch (err) {
-      console.error('Claude scoring failed:', err);
+      essayScoringError = err instanceof Error ? err.message : String(err);
+      console.error('Claude scoring failed:', essayScoringError);
       // Graceful fallback: essays unscored, mark for manual review
     }
 
@@ -108,6 +110,7 @@ export async function POST(req: NextRequest) {
       overallExplanation: essayScores?.overall_explanation ?? null,
       squadLeadNote: essayScores?.squad_lead_note ?? null,
       essayScoringFailed: !essayScores,
+      essayScoringError,
     });
   } catch {
     return NextResponse.json({ error: 'Server error.' }, { status: 500 });
