@@ -93,7 +93,6 @@ export async function scoreEssays(q4: string, q6: string, q7: string): Promise<C
       ],
       max_tokens: 1024,
       temperature: 0.5,
-      top_p: 1,
       stream: false,
     }),
   });
