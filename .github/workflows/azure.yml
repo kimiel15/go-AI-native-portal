@@ -30,10 +30,9 @@ jobs:
           AI_ENDPOINT_URL: ${{ secrets.AI_ENDPOINT_URL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
-      - name: Run Prisma db push (creates tables if they don't exist)
-        run: npx prisma db push
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # prisma db push runs inside Azure at startup (startup command), not here.
+      # GitHub Actions runners are outside Azure's network and can't reach
+      # the PostgreSQL server. The startup command handles table creation.
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
