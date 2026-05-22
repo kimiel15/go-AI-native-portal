@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { Team, ProjectSubmission, Assessment, Participant } from '@/types';
+import { Team, ProjectSubmission, Assessment, Participant, AIUsageRow, AIUsageSummary, USAGE_THRESHOLDS } from '@/types';
 
 // ── Participants ─────────────────────────────────────────────────────────────
 
@@ -7,6 +7,7 @@ export async function getParticipants(): Promise<Participant[]> {
   const rows = await prisma.participant.findMany({ orderBy: { name: 'asc' } });
   return rows.map(r => ({
     ...r,
+    siebelId: r.siebelId ?? undefined,
     teamId:   r.teamId   ?? undefined,
     teamName: r.teamName ?? undefined,
   }));
@@ -15,14 +16,25 @@ export async function getParticipants(): Promise<Participant[]> {
 export async function getParticipantByEmail(email: string): Promise<Participant | null> {
   const row = await prisma.participant.findUnique({ where: { email: email.toLowerCase() } });
   if (!row) return null;
-  return { ...row, teamId: row.teamId ?? undefined, teamName: row.teamName ?? undefined };
+  return {
+    ...row,
+    siebelId: row.siebelId ?? undefined,
+    teamId:   row.teamId   ?? undefined,
+    teamName: row.teamName ?? undefined,
+  };
 }
 
 export async function saveParticipant(p: Participant): Promise<void> {
+  const data = {
+    name:     p.name,
+    siebelId: p.siebelId ?? null,
+    teamId:   p.teamId ?? null,
+    teamName: p.teamName ?? null,
+  };
   await prisma.participant.upsert({
     where:  { email: p.email.toLowerCase() },
-    update: { name: p.name, teamId: p.teamId ?? null, teamName: p.teamName ?? null },
-    create: { id: p.id, name: p.name, email: p.email.toLowerCase(), teamId: p.teamId ?? null, teamName: p.teamName ?? null },
+    update: data,
+    create: { id: p.id, email: p.email.toLowerCase(), ...data },
   });
 }
 
@@ -145,4 +157,52 @@ export async function updateAssessment(id: string, updates: Partial<Assessment>)
   if (updates.essayScores) data.essayScores = updates.essayScores as object;
   if (updates.validation)  data.validation  = updates.validation  as object;
   await prisma.assessment.update({ where: { id }, data });
+}
+
+// ── AI Usage Verification ───────────────────────────────────────────────────
+
+export async function replaceAIUsage(rows: AIUsageRow[]): Promise<{ inserted: number }> {
+  if (rows.length === 0) return { inserted: 0 };
+  // A fresh upload represents the latest snapshot — wipe and replace.
+  await prisma.$transaction([
+    prisma.aIUsage.deleteMany({}),
+    prisma.aIUsage.createMany({
+      data: rows.map(r => ({
+        id:         r.id,
+        siebelId:   r.siebelId.toLowerCase(),
+        month:      r.month,
+        amountUsd:  r.amountUsd,
+        uploadedAt: r.uploadedAt,
+      })),
+    }),
+  ]);
+  return { inserted: rows.length };
+}
+
+export async function getUsageSummaryBySiebelId(siebelId: string): Promise<AIUsageSummary | null> {
+  const id = siebelId.toLowerCase();
+  const rows = await prisma.aIUsage.findMany({
+    where:   { siebelId: id },
+    orderBy: { month: 'asc' },
+  });
+  if (rows.length === 0) return null;
+
+  const monthly = rows.map(r => ({ month: r.month, amount: r.amountUsd }));
+  const total   = monthly.reduce((s, m) => s + m.amount, 0);
+  const tier: AIUsageSummary['tier'] =
+    total >= USAGE_THRESHOLDS.power  ? 'power'  :
+    total >= USAGE_THRESHOLDS.active ? 'active' : 'none';
+
+  return {
+    siebelId:    id,
+    total,
+    monthly,
+    tier,
+    lastUpdated: rows[0]?.uploadedAt ?? null,
+  };
+}
+
+export async function getUsageLastUploadedAt(): Promise<string | null> {
+  const row = await prisma.aIUsage.findFirst({ orderBy: { uploadedAt: 'desc' } });
+  return row?.uploadedAt ?? null;
 }

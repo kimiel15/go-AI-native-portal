@@ -8,7 +8,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const { name, email, teamId, teamName } = await req.json();
+    const { name, email, teamId, teamName, siebelId } = await req.json();
     if (!name?.trim() || !email?.trim()) {
       return NextResponse.json({ error: 'Name and email are required.' }, { status: 400 });
     }
@@ -18,6 +18,7 @@ export async function PUT(
       email:    email.trim().toLowerCase(),
       teamId:   teamId   || undefined,
       teamName: teamName || undefined,
+      siebelId: siebelId?.trim().toLowerCase() || undefined,
     });
     return NextResponse.json({ success: true });
   } catch (err) {

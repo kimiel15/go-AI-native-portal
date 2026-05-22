@@ -29,8 +29,20 @@ model Participant {
   id       String  @id
   name     String
   email    String  @unique
+  siebelId String?
   teamId   String?
   teamName String?
+}
+
+model AIUsage {
+  id         String @id
+  siebelId   String
+  month      String   // "YYYY-MM" (e.g., "2026-03")
+  amountUsd  Float
+  uploadedAt String
+
+  @@unique([siebelId, month])
+  @@index([siebelId])
 }
 
 model Assessment {
