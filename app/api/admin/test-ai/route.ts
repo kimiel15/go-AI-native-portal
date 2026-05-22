@@ -28,8 +28,13 @@ export async function GET() {
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: 'user', content: 'Reply with just the word PONG.' }],
-        max_tokens: 32,
+        messages: [
+          { role: 'system', content: 'You are a JSON API. Reply only with valid JSON.' },
+          { role: 'user',   content: 'Return this JSON exactly: {"status":"ok"}' },
+        ],
+        max_tokens: 64,
+        temperature: 0.5,
+        top_p: 1,
         stream: false,
       }),
     });
