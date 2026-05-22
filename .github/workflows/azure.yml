@@ -30,9 +30,10 @@ jobs:
           AI_ENDPOINT_URL: ${{ secrets.AI_ENDPOINT_URL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
-      # prisma db push runs inside Azure at startup (startup command), not here.
-      # GitHub Actions runners are outside Azure's network and can't reach
-      # the PostgreSQL server. The startup command handles table creation.
+      - name: Push database schema
+        run: npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Package standalone bundle
         run: |
