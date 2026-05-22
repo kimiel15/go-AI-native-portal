@@ -20,8 +20,10 @@ export async function PUT(
       teamName: teamName || undefined,
     });
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: 'Server error.' }, { status: 500 });
+  } catch (err) {
+    console.error('[PUT participant]', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -38,7 +40,9 @@ export async function DELETE(
     }
     await deleteParticipant(id);
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: 'Server error.' }, { status: 500 });
+  } catch (err) {
+    console.error('[DELETE participant]', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

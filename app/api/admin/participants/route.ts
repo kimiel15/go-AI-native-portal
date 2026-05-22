@@ -5,8 +5,14 @@ import { randomUUID } from 'crypto';
 
 // GET /api/admin/participants — full list
 export async function GET() {
-  const list = await getParticipants();
-  return NextResponse.json(list);
+  try {
+    const list = await getParticipants();
+    return NextResponse.json(list);
+  } catch (err) {
+    console.error('[GET participants]', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
 
 // POST /api/admin/participants — create a new participant
@@ -31,7 +37,9 @@ export async function POST(req: NextRequest) {
     };
     await saveParticipant(participant);
     return NextResponse.json({ success: true, participant });
-  } catch {
-    return NextResponse.json({ error: 'Server error.' }, { status: 500 });
+  } catch (err) {
+    console.error('[POST participants]', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
