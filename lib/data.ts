@@ -22,6 +22,10 @@ export async function updateTeam(id: string, updates: Partial<Team>): Promise<vo
   await prisma.team.update({ where: { id }, data });
 }
 
+export async function deleteTeam(id: string): Promise<void> {
+  await prisma.team.delete({ where: { id } });
+}
+
 // ── Submissions ──────────────────────────────────────────────────────────────
 
 export async function getSubmissions(): Promise<ProjectSubmission[]> {

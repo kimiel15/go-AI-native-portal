@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Team, ProjectSubmission, Assessment } from '@/types';
+import { Team, TeamMember, ProjectSubmission, Assessment } from '@/types';
 import {
   Zap, Users, FileText, Brain, LogOut, RefreshCw,
   ChevronDown, ChevronUp, Mail, Building2, Calendar,
   CheckCircle2, ShieldCheck, AlertTriangle, Sparkles,
-  ThumbsUp, ArrowUp, ArrowDown, Loader2, Flag
+  ThumbsUp, ArrowUp, ArrowDown, Loader2, Flag,
+  Plus, Pencil, Trash2, X, UserPlus, Save
 } from 'lucide-react';
 
 type Tab = 'overview' | 'teams' | 'submissions' | 'assessments' | 'validation';
@@ -35,30 +36,307 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
   );
 }
 
-function TeamCard({ team, submissions }: { team: Team; submissions: ProjectSubmission[] }) {
+// ─── Team Form Modal ──────────────────────────────────────────────────────────
+
+const EMPTY_MEMBER = (): TeamMember => ({ name: '', email: '', role: '' });
+
+function TeamFormModal({
+  initial,
+  onClose,
+  onSaved,
+}: {
+  initial?: Team;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const isEdit = !!initial;
+  const [teamName, setTeamName] = useState(initial?.teamName ?? '');
+  const [department, setDepartment] = useState(initial?.department ?? '');
+  const [members, setMembers] = useState<TeamMember[]>(
+    initial?.members && initial.members.length > 0 ? initial.members : [EMPTY_MEMBER()]
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const addMember = () => setMembers(m => [...m, EMPTY_MEMBER()]);
+  const removeMember = (i: number) => setMembers(m => m.filter((_, idx) => idx !== i));
+  const updateMember = (i: number, field: keyof TeamMember, value: string) =>
+    setMembers(m => m.map((mem, idx) => idx === i ? { ...mem, [field]: value } : mem));
+
+  const handleSave = async () => {
+    if (!teamName.trim() || !department.trim()) {
+      setError('Team name and department are required.');
+      return;
+    }
+    const filledMembers = members.filter(m => m.name.trim() && m.email.trim());
+    if (filledMembers.length === 0) {
+      setError('At least one member with name and email is required.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const url = isEdit ? `/api/admin/teams/${initial!.id}` : '/api/admin/teams';
+      const method = isEdit ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamName: teamName.trim(), department: department.trim(), members: filledMembers }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed.');
+      onSaved();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Save failed.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+          <h2 className="text-slate-900 font-bold text-lg">
+            {isEdit ? 'Edit Team' : 'Add Team'}
+          </h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          {/* Team Name */}
+          <div>
+            <label className="block text-slate-600 text-sm mb-1.5">Team Name <span className="text-red-400">*</span></label>
+            <input
+              type="text"
+              value={teamName}
+              onChange={e => setTeamName(e.target.value)}
+              placeholder="e.g. Alpha Squad"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+            />
+          </div>
+
+          {/* Department */}
+          <div>
+            <label className="block text-slate-600 text-sm mb-1.5">Department <span className="text-red-400">*</span></label>
+            <input
+              type="text"
+              value={department}
+              onChange={e => setDepartment(e.target.value)}
+              placeholder="e.g. Engineering"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+            />
+          </div>
+
+          {/* Members */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-slate-600 text-sm">Members <span className="text-red-400">*</span></label>
+              <button
+                type="button"
+                onClick={addMember}
+                className="flex items-center gap-1 text-xs text-red-600 hover:text-red-500 font-medium transition-colors"
+              >
+                <UserPlus className="w-3.5 h-3.5" />Add member
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {members.map((m, i) => (
+                <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 text-xs font-medium">Member {i + 1}</span>
+                    {members.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeMember(i)}
+                        className="text-slate-300 hover:text-red-400 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={m.name}
+                      onChange={e => updateMember(i, 'name', e.target.value)}
+                      placeholder="Full name *"
+                      className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+                    />
+                    <input
+                      type="email"
+                      value={m.email}
+                      onChange={e => updateMember(i, 'email', e.target.value)}
+                      placeholder="Email *"
+                      className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={m.role}
+                    onChange={e => updateMember(i, 'role', e.target.value)}
+                    placeholder="Role (optional)"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-slate-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all"
+          >
+            {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <><Save className="w-4 h-4" />{isEdit ? 'Save Changes' : 'Create Team'}</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Delete Confirm Modal ─────────────────────────────────────────────────────
+
+function DeleteConfirmModal({
+  team,
+  onClose,
+  onDeleted,
+}: {
+  team: Team;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/teams/${team.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed.');
+      onDeleted();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Delete failed.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+            <Trash2 className="w-5 h-5 text-red-600" />
+          </div>
+          <div>
+            <p className="text-slate-900 font-bold">Delete Team</p>
+            <p className="text-slate-500 text-sm">This cannot be undone.</p>
+          </div>
+        </div>
+
+        <p className="text-slate-700 text-sm">
+          Are you sure you want to delete <strong>{team.teamName}</strong> and all their data?
+        </p>
+
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-slate-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all"
+          >
+            {deleting ? <><Loader2 className="w-4 h-4 animate-spin" />Deleting...</> : <><Trash2 className="w-4 h-4" />Delete</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Team Card (with edit/delete) ─────────────────────────────────────────────
+
+function TeamCard({
+  team,
+  submissions,
+  onEdit,
+  onDelete,
+}: {
+  team: Team;
+  submissions: ProjectSubmission[];
+  onEdit: (t: Team) => void;
+  onDelete: (t: Team) => void;
+}) {
   const [open, setOpen] = useState(false);
   const sub = submissions.find(s => s.teamId === team.id);
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <button onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white transition-colors text-left">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white font-bold text-sm">
+      <div className="flex items-center justify-between px-5 py-4">
+        <button onClick={() => setOpen(o => !o)} className="flex items-center gap-3 text-left flex-1 min-w-0">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             {team.teamName.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <p className="text-slate-900 font-semibold">{team.teamName}</p>
+          <div className="min-w-0">
+            <p className="text-slate-900 font-semibold truncate">{team.teamName}</p>
             <div className="flex items-center gap-3 text-slate-400 text-xs mt-0.5">
               <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{team.department}</span>
               <span className="flex items-center gap-1"><Users className="w-3 h-3" />{team.members.length} member{team.members.length !== 1 ? 's' : ''}</span>
             </div>
           </div>
+        </button>
+        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+          {sub && <span className="hidden sm:flex items-center gap-1 text-xs text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full"><CheckCircle2 className="w-3 h-3" />Submitted</span>}
+          <button
+            onClick={() => onEdit(team)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+            title="Edit team"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(team)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            title="Delete team"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+          <button onClick={() => setOpen(o => !o)} className="text-slate-400 ml-1">
+            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
         </div>
-        <div className="flex items-center gap-3">
-          {sub && <span className="flex items-center gap-1 text-xs text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full"><CheckCircle2 className="w-3 h-3" />Submitted</span>}
-          {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-        </div>
-      </button>
+      </div>
       {open && (
         <div className="border-t border-gray-200 px-5 py-4 space-y-4">
           <p className="text-slate-400 text-xs uppercase tracking-widest mb-2">Members</p>
@@ -82,6 +360,8 @@ function TeamCard({ team, submissions }: { team: Team; submissions: ProjectSubmi
     </div>
   );
 }
+
+// ─── Submission Card ──────────────────────────────────────────────────────────
 
 function SubmissionCard({ sub }: { sub: ProjectSubmission }) {
   const [open, setOpen] = useState(false);
@@ -124,6 +404,8 @@ function SubmissionCard({ sub }: { sub: ProjectSubmission }) {
   );
 }
 
+// ─── Assessment Read Card ─────────────────────────────────────────────────────
+
 function AssessmentReadCard({ assessment }: { assessment: Assessment }) {
   const [open, setOpen] = useState(false);
   const e = assessment.essayScores;
@@ -154,7 +436,6 @@ function AssessmentReadCard({ assessment }: { assessment: Assessment }) {
 
       {open && (
         <div className="border-t border-gray-200 px-5 py-4 space-y-4">
-          {/* Scores */}
           <div className="grid grid-cols-4 gap-3 text-center">
             {[
               { label: 'MC Score', value: `${assessment.mcScore}/${assessment.mcMax}` },
@@ -169,7 +450,6 @@ function AssessmentReadCard({ assessment }: { assessment: Assessment }) {
             ))}
           </div>
 
-          {/* Claude essay scoring details */}
           {e && (
             <div className="space-y-3">
               <p className="text-slate-400 text-xs uppercase tracking-widest">Claude Essay Scores</p>
@@ -209,7 +489,6 @@ function AssessmentReadCard({ assessment }: { assessment: Assessment }) {
             </div>
           )}
 
-          {/* Validation status */}
           {validated && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
               <p className="text-emerald-300 text-xs font-semibold uppercase tracking-widest mb-1 flex items-center gap-1">
@@ -225,6 +504,8 @@ function AssessmentReadCard({ assessment }: { assessment: Assessment }) {
     </div>
   );
 }
+
+// ─── Validation Card ──────────────────────────────────────────────────────────
 
 const LEVELS = [
   'Level 1 – Prompt Creator',
@@ -267,7 +548,6 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-      {/* Header */}
       <div className="px-6 py-5 border-b border-gray-200">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -292,10 +572,9 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
       </div>
 
       <div className="px-6 py-5 space-y-5">
-        {/* Score summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm">
           {[
-            { label: 'Section 1', sub: 'AI Familiarity', score: `${assessment.mcScore !== undefined ? (assessment.mcScore) : '—'}`, note: 'MC only' },
+            { label: 'Section 1', sub: 'AI Familiarity', score: `${assessment.mcScore !== undefined ? assessment.mcScore : '—'}`, note: 'MC only' },
             { label: 'Section 2', sub: 'Prompting', score: e ? `${e.section2_essay.score}/8` : '—', note: 'Essay' },
             { label: 'Section 3', sub: 'Workflow', score: e ? `${e.section3_essay.score}/8` : '—', note: 'Essay' },
             { label: 'Section 4', sub: 'Mindset', score: e ? `${e.section4_essay.score}/8` : '—', note: 'Essay' },
@@ -342,7 +621,6 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
           </div>
         )}
 
-        {/* Validation form or done state */}
         {validated ? (
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-1">
             <p className="text-emerald-300 text-sm font-semibold flex items-center gap-2">
@@ -407,6 +685,8 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
   );
 }
 
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('overview');
@@ -414,6 +694,11 @@ export default function AdminDashboard() {
   const [submissions, setSubmissions] = useState<ProjectSubmission[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Team CRUD modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -444,6 +729,28 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+      {/* Modals */}
+      {showAddModal && (
+        <TeamFormModal
+          onClose={() => setShowAddModal(false)}
+          onSaved={() => { setShowAddModal(false); fetchData(); }}
+        />
+      )}
+      {editingTeam && (
+        <TeamFormModal
+          initial={editingTeam}
+          onClose={() => setEditingTeam(null)}
+          onSaved={() => { setEditingTeam(null); fetchData(); }}
+        />
+      )}
+      {deletingTeam && (
+        <DeleteConfirmModal
+          team={deletingTeam}
+          onClose={() => setDeletingTeam(null)}
+          onDeleted={() => { setDeletingTeam(null); fetchData(); }}
+        />
+      )}
+
       <nav className="border-b border-gray-200 bg-white">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -478,7 +785,7 @@ export default function AdminDashboard() {
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                   id === 'validation' && badge > 0
                     ? 'bg-amber-100 text-amber-700'
-                    : tab === id ? 'bg-gray-200' : 'bg-gray-100'
+                    : tab === id ? 'bg-red-500 text-white' : 'bg-gray-100 text-slate-500'
                 }`}>{badge}</span>
               )}
             </button>
@@ -551,11 +858,37 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Teams tab — full CRUD */}
         {tab === 'teams' && (
-          <div className="space-y-3">
-            <h2 className="text-slate-900 font-bold text-lg mb-4">Registered Teams ({teams.length})</h2>
-            {teams.length === 0 ? <div className="text-center py-16 text-slate-400">No teams yet.</div>
-              : teams.map(t => <TeamCard key={t.id} team={t} submissions={submissions} />)}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-slate-900 font-bold text-lg">Registered Teams ({teams.length})</h2>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
+              >
+                <Plus className="w-4 h-4" />Add Team
+              </button>
+            </div>
+            {teams.length === 0 ? (
+              <div className="text-center py-20 text-slate-400">
+                <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">No teams yet.</p>
+                <p className="text-sm mt-1">Click &quot;Add Team&quot; to register the first team.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {teams.map(t => (
+                  <TeamCard
+                    key={t.id}
+                    team={t}
+                    submissions={submissions}
+                    onEdit={setEditingTeam}
+                    onDelete={setDeletingTeam}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -590,7 +923,6 @@ export default function AdminDashboard() {
               <div className="text-center py-16 text-slate-400">No assessments to validate yet.</div>
             ) : (
               <>
-                {/* Pending first */}
                 {assessments.filter(a => !a.validation).map(a => (
                   <ValidationCard key={a.id} assessment={a} onValidated={fetchData} />
                 ))}
