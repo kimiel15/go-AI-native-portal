@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signJudgeToken, JUDGE_COOKIE, JUDGE_TTL } from '@/lib/judge-auth';
 
+const ALLOWED_JUDGES = ['ribenitor', 'karens', 'jezriela', 'michaell'];
+
 export async function POST(req: NextRequest) {
   const { siebelId, password } = await req.json();
 
   const judgePassword = process.env.JUDGE_PASSWORD;
   if (!judgePassword) return NextResponse.json({ error: 'Judge access is not configured.' }, { status: 503 });
 
-  if (!siebelId?.trim() || password !== judgePassword) {
+  const id = siebelId?.trim().toLowerCase();
+
+  if (!id || !ALLOWED_JUDGES.includes(id) || password !== judgePassword) {
     return NextResponse.json({ error: 'Invalid Siebel ID or password.' }, { status: 401 });
   }
 
-  const token = await signJudgeToken(siebelId.trim().toLowerCase());
+  const token = await signJudgeToken(id);
   const res = NextResponse.json({ ok: true });
   res.cookies.set(JUDGE_COOKIE, token, {
     httpOnly: true,
