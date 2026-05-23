@@ -272,26 +272,21 @@ function SubmitForm() {
           {showGuide && (
             <div className="border-t border-gray-100 px-6 py-5">
               <p className="text-slate-500 text-sm mb-4 leading-relaxed">
-                Your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-rose-600 text-xs">[tool-name].md</code> is your full submission — judges score it against the rubric. Keep a separate <code className="bg-gray-100 px-1.5 py-0.5 rounded text-rose-600 text-xs">CONTRIBUTORS.md</code>.
+                Your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-rose-600 text-xs">[tool-name].md</code> in your Git repo is your full submission — judges score it against this structure.
               </p>
               <pre className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-slate-700 overflow-x-auto leading-relaxed font-mono whitespace-pre">{`# [tool-name].md
 
 > One-line: what it does and who it helps
 
-## How to run
-\`\`\`bash
-command 1
-command 2
-command 3
-\`\`\`
-
-## Problem
-What business problem are you solving?
+## Problem Statement
+What is the business problem? Include data or evidence that the problem is real
+(e.g. volume, handle time, error rate, customer impact).
 
 ## Solution
-How does your Claude-powered tool address it?
+How does your Claude-powered tool solve it?
+Describe what it does, how it works, and who uses it.
 
-## Business value
+## Production Evidence & Results
 Pilot dates: [Jun 15 – 21]
 Cases handled: [number]
 Deployed in: [queue / tool / environment]
@@ -304,8 +299,22 @@ Impact math:
 Baseline: [X cases/day × Y min = Z hrs]
 Delta: [reduction × cost = $value saved]
 
-## Claude integration
-How is Claude meaningfully embedded as a core enabler?`}</pre>
+## Contribution
+What did each team member do?
+- [Name] — [what they built / owned]
+- [Name] — [what they built / owned]
+
+## Claude Usage
+How was Claude meaningfully used to build this tool?
+What prompts, workflows, or integrations were key?
+
+## Usage Instructions
+Step-by-step guide to run the tool:
+\`\`\`bash
+command 1
+command 2
+command 3
+\`\`\``}</pre>
             </div>
           )}
         </div>
