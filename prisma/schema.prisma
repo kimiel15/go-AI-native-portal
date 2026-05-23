@@ -42,6 +42,22 @@ model AIUsage {
   uploadedAt String
 }
 
+model JudgeScore {
+  id                    String  @id
+  submissionId          String
+  judgeId               String  // Siebel ID of the judge
+  businessValue         Int
+  solutionEffectiveness Int
+  productionEvidence    Int
+  problemClarity        Int
+  aiIntegration         Int
+  totalScore            Float
+  notes                 String?
+  scoredAt              String
+
+  @@unique([submissionId, judgeId])
+}
+
 model Setting {
   key   String @id
   value String
