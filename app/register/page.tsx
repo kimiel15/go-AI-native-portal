@@ -27,14 +27,11 @@ function MemberAutocomplete({
   const ref = useRef<HTMLDivElement>(null);
 
   const q = value.toLowerCase().trim();
+  // Always search both name (contains TS-XXXXXX ID) and email regardless of which field is active
   const suggestions = q.length >= 1
     ? squadRoster
         .filter(m => !usedEmails.has(m.email))
-        .filter(m =>
-          field === 'name'
-            ? m.name.toLowerCase().includes(q)
-            : m.email.toLowerCase().includes(q) || (m.siebelId ?? '').toLowerCase().includes(q)
-        )
+        .filter(m => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
         .slice(0, 8)
     : [];
 
@@ -367,7 +364,7 @@ export default function RegisterPage() {
                 Three is the floor that prevents free-riders; four is the ceiling that keeps roles focused.
                 Every member must have at least one meaningful Git commit under their own identity.
                 {squadRoster.length > 0 && (
-                  <> Start typing a name or <span className="font-mono text-red-400">TS-XXXXXX</span> ID to pick from your squad.</>
+                  <> Start typing a name or <span className="font-mono text-red-400">TS-AS</span> ID to pick from your squad.</>
                 )}
               </p>
             </div>
@@ -418,7 +415,7 @@ export default function RegisterPage() {
                     <MemberAutocomplete
                       value={member.email}
                       field="email"
-                      placeholder="Email or TS-XXXXXX"
+                      placeholder="Email Address"
                       squadRoster={squadRoster}
                       usedEmails={new Set([...usedEmails].filter(e => e !== member.email))}
                       onChange={val => updateMember(i, 'email', val)}
