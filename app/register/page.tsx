@@ -223,13 +223,9 @@ export default function RegisterPage() {
               <CheckCircle className="w-8 h-8 text-emerald-600" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Team Registered!</h2>
-            <p className="text-slate-500 mb-6">
-              <strong className="text-slate-900">{teamName}</strong> is in. Save your Team ID — you&apos;ll need it for your project submission.
+            <p className="text-slate-500 mb-8">
+              <strong className="text-slate-900">{teamName}</strong> is in. Your next step is to submit your project profile.
             </p>
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8">
-              <p className="text-red-300 text-xs uppercase tracking-widest mb-1">Your Team ID</p>
-              <p className="text-slate-900 font-mono text-sm break-all">{teamId}</p>
-            </div>
             <div className="flex flex-col gap-3">
               <a href={`/submit?teamId=${teamId}`}
                 className="block bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition-all">
