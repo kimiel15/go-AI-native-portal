@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   if (!submissionId) return NextResponse.json({ error: 'submissionId required' }, { status: 400 });
 
   // Weights: BV 30%, SE 20%, PE 20%, PC 15%, AI 15%
-  // Each criterion scored 1–10; weighted total → /10
+  // Each criterion scored 0–100; weighted total → percentage out of 100
   const totalScore =
     (businessValue         * 0.30) +
     (solutionEffectiveness * 0.20) +

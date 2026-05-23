@@ -33,30 +33,36 @@ const CRITERIA = [
 
 type CriteriaKey = typeof CRITERIA[number]['key'];
 
-function ScoreSlider({ label, weight, desc, value, onChange }: {
+function ScoreInput({ label, weight, desc, value, onChange }: {
   label: string; weight: string; desc: string; value: number; onChange: (v: number) => void;
 }) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
           <span className="text-slate-900 text-sm font-medium">{label}</span>
           <span className="ml-2 text-xs text-slate-400 font-mono">{weight}</span>
+          <p className="text-slate-400 text-xs mt-0.5">{desc}</p>
         </div>
-        <span className={`text-lg font-bold w-8 text-right ${value >= 8 ? 'text-emerald-600' : value >= 5 ? 'text-amber-500' : 'text-red-500'}`}>
-          {value}
-        </span>
-      </div>
-      <p className="text-slate-400 text-xs">{desc}</p>
-      <input
-        type="range" min={1} max={10} step={1} value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-2 rounded-full appearance-none cursor-pointer accent-red-600"
-      />
-      <div className="flex justify-between text-xs text-slate-300">
-        <span>1 — Poor</span>
-        <span>5 — Adequate</span>
-        <span>10 — Excellent</span>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={1}
+            value={value}
+            onChange={e => {
+              const v = Math.min(100, Math.max(0, Number(e.target.value)));
+              onChange(isNaN(v) ? 0 : v);
+            }}
+            className={`w-20 text-right text-lg font-bold border rounded-lg px-2 py-1 focus:outline-none focus:border-red-500 transition-colors
+              ${value >= 80 ? 'text-emerald-600 border-emerald-200 bg-emerald-50' :
+                value >= 50 ? 'text-amber-500 border-amber-200 bg-amber-50' :
+                value > 0   ? 'text-red-500 border-red-200 bg-red-50' :
+                              'text-slate-400 border-gray-200 bg-white'}`}
+          />
+          <span className="text-slate-400 text-sm font-medium">%</span>
+        </div>
       </div>
     </div>
   );
@@ -65,21 +71,21 @@ function ScoreSlider({ label, weight, desc, value, onChange }: {
 function SubmissionCard({ sub, judgeId, onScored }: { sub: Submission; judgeId: string; onScored: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [scores, setScores] = useState<Record<CriteriaKey, number>>({
-    businessValue:         sub.myScore?.businessValue         ?? 5,
-    solutionEffectiveness: sub.myScore?.solutionEffectiveness ?? 5,
-    productionEvidence:    sub.myScore?.productionEvidence    ?? 5,
-    problemClarity:        sub.myScore?.problemClarity        ?? 5,
-    aiIntegration:         sub.myScore?.aiIntegration         ?? 5,
+    businessValue:         sub.myScore?.businessValue         ?? 0,
+    solutionEffectiveness: sub.myScore?.solutionEffectiveness ?? 0,
+    productionEvidence:    sub.myScore?.productionEvidence    ?? 0,
+    problemClarity:        sub.myScore?.problemClarity        ?? 0,
+    aiIntegration:         sub.myScore?.aiIntegration         ?? 0,
   });
   const [notes, setNotes] = useState(sub.myScore?.notes ?? '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const weighted = Math.round(
-    (scores.businessValue * 0.30 + scores.solutionEffectiveness * 0.20 +
-     scores.productionEvidence * 0.20 + scores.problemClarity * 0.15 +
-     scores.aiIntegration * 0.15) * 10
-  ) / 10;
+    scores.businessValue * 0.30 + scores.solutionEffectiveness * 0.20 +
+    scores.productionEvidence * 0.20 + scores.problemClarity * 0.15 +
+    scores.aiIntegration * 0.15
+  );
 
   const handleSave = async () => {
     setSaving(true);
@@ -111,7 +117,7 @@ function SubmissionCard({ sub, judgeId, onScored }: { sub: Submission; judgeId: 
           </div>
           <div className="min-w-0">
             <p className="text-slate-900 font-semibold text-sm truncate">{sub.teamName}</p>
-            <p className="text-slate-400 text-xs">{scored ? `Scored: ${sub.myScore!.totalScore}/10` : 'Not yet scored'}</p>
+            <p className="text-slate-400 text-xs">{scored ? `Scored: ${sub.myScore!.totalScore}%` : 'Not yet scored'}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -135,10 +141,10 @@ function SubmissionCard({ sub, judgeId, onScored }: { sub: Submission; judgeId: 
             </div>
           )}
 
-          {/* Sliders */}
-          <div className="space-y-5">
+          {/* Score inputs */}
+          <div className="space-y-4">
             {CRITERIA.map(c => (
-              <ScoreSlider
+              <ScoreInput
                 key={c.key}
                 label={c.label}
                 weight={c.weight}
@@ -154,7 +160,7 @@ function SubmissionCard({ sub, judgeId, onScored }: { sub: Submission; judgeId: 
             <span className="text-slate-600 text-sm font-medium flex items-center gap-1.5">
               <Star className="w-4 h-4 text-red-500" /> Weighted Score
             </span>
-            <span className="text-2xl font-black text-red-600">{weighted}<span className="text-sm font-medium text-slate-400">/10</span></span>
+            <span className="text-2xl font-black text-red-600">{weighted}<span className="text-sm font-medium text-slate-400">%</span></span>
           </div>
 
           {/* Notes */}
