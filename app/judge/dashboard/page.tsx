@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Gavel, LogOut, Loader2, CheckCircle2, Clock, ExternalLink, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import Link from 'next/link';
+import { Gavel, LogOut, Loader2, CheckCircle2, Clock, ExternalLink, ChevronDown, ChevronUp, Star, Trophy } from 'lucide-react';
 
 interface Submission {
   id: string;
@@ -228,13 +229,25 @@ export default function JudgeDashboard() {
       {/* Nav */}
       <nav className="border-b border-red-100 bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
-              <Gavel className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
+                <Gavel className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p className="text-slate-900 font-bold text-sm leading-tight">Judge&apos;s Corner</p>
+                <p className="text-slate-400 text-xs leading-tight">Go AI-Native Hackathon</p>
+              </div>
             </div>
-            <div>
-              <p className="text-slate-900 font-bold text-sm leading-tight">Judge&apos;s Corner</p>
-              <p className="text-slate-400 text-xs leading-tight">Go AI-Native Hackathon</p>
+            <div className="hidden sm:flex items-center gap-1 text-xs">
+              <span className="text-red-600 font-semibold px-2 py-1">Scoring</span>
+              <span className="text-slate-200">/</span>
+              <Link
+                href="/judge/rankings"
+                className="text-slate-400 hover:text-slate-700 px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+              >
+                <Trophy className="w-3.5 h-3.5" />Rankings
+              </Link>
             </div>
           </div>
           <div className="flex items-center gap-4">
