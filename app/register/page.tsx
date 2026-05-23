@@ -92,6 +92,24 @@ export default function RegisterPage() {
   const [teamId, setTeamId] = useState('');
   const [existingTeam, setExistingTeam] = useState<ExistingTeam | null>(null);
   const [existingChecked, setExistingChecked] = useState(false);
+  const [nameStatus, setNameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+
+  // Debounced team name availability check
+  useEffect(() => {
+    const trimmed = teamName.trim();
+    if (!trimmed) { setNameStatus('idle'); return; }
+    setNameStatus('checking');
+    const timer = setTimeout(() => {
+      fetch('/api/register')
+        .then(r => r.json())
+        .then((teams: { teamName: string }[]) => {
+          const taken = teams.some(t => t.teamName.toLowerCase() === trimmed.toLowerCase());
+          setNameStatus(taken ? 'taken' : 'available');
+        })
+        .catch(() => setNameStatus('idle'));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [teamName]);
 
   // Check whether the logged-in user is already on a team
   useEffect(() => {
@@ -305,10 +323,25 @@ export default function RegisterPage() {
             <h2 className="text-slate-900 font-semibold text-sm uppercase tracking-widest">Team Information</h2>
 
             <div>
-              <label className="block text-slate-600 text-sm mb-1.5">Team Name <span className="text-red-400">*</span></label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-slate-600 text-sm">Team Name <span className="text-red-400">*</span></label>
+                {nameStatus === 'checking' && (
+                  <span className="flex items-center gap-1 text-slate-400 text-xs"><Loader2 className="w-3 h-3 animate-spin" /> Checking…</span>
+                )}
+                {nameStatus === 'available' && (
+                  <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium"><CheckCircle className="w-3.5 h-3.5" /> Available</span>
+                )}
+                {nameStatus === 'taken' && (
+                  <span className="flex items-center gap-1 text-red-500 text-xs font-medium"><AlertCircle className="w-3.5 h-3.5" /> Already taken</span>
+                )}
+              </div>
               <input type="text" required value={teamName} onChange={e => setTeamName(e.target.value)}
                 placeholder="e.g., Ctrl + AI + Del"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors" />
+                className={`w-full bg-white border rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none transition-colors ${
+                  nameStatus === 'taken' ? 'border-red-400 focus:border-red-500' :
+                  nameStatus === 'available' ? 'border-emerald-400 focus:border-emerald-500' :
+                  'border-gray-200 focus:border-red-500'
+                }`} />
             </div>
 
             <div>
@@ -422,7 +455,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button type="submit" disabled={status === 'loading'}
+          <button type="submit" disabled={status === 'loading' || nameStatus === 'taken'}
             className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all">
             {status === 'loading'
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Registering...</>
