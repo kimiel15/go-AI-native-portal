@@ -253,7 +253,7 @@ export default function RankingsPage() {
                 <Gavel className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-slate-900 font-bold text-sm leading-tight">Judge&apos;s Corner</p>
+                <p className="text-slate-900 font-bold text-sm leading-tight">Judges&apos; Corner</p>
                 <p className="text-slate-400 text-xs leading-tight">Go AI-Native Hackathon</p>
               </div>
             </div>

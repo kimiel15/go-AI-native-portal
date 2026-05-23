@@ -51,7 +51,7 @@ export default function JudgeLoginPage() {
             </div>
             <div>
               <p className="text-red-400 text-xs uppercase tracking-widest font-medium">Restricted</p>
-              <h1 className="text-xl font-bold text-slate-900">Judge&apos;s Corner</h1>
+              <h1 className="text-xl font-bold text-slate-900">Judges&apos; Corner</h1>
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export default function JudgeLoginPage() {
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all"
             >
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</> : 'Enter Judge\'s Corner'}
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</> : "Enter Judges' Corner"}
             </button>
           </form>
         </div>
