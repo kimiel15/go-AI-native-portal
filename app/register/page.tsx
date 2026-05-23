@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
-import { Users, Plus, Trash2, CheckCircle, AlertCircle, Loader2, Info, UserCheck, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Users, Plus, Trash2, CheckCircle, AlertCircle, Loader2, UserCheck, ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface Member { name: string; email: string; }
 const emptyMember = (): Member => ({ name: '', email: '' });
@@ -357,19 +357,7 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Size notice */}
-            <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-              <Info className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-red-300/70 text-xs leading-relaxed">
-                Three is the floor that prevents free-riders; four is the ceiling that keeps roles focused.
-                Every member must have at least one meaningful Git commit under their own identity.
-                {squadRoster.length > 0 && (
-                  <> Start typing a name or <span className="font-mono text-red-400">TS-AS</span> ID to pick from your squad.</>
-                )}
-              </p>
-            </div>
-
-            {members.map((member, i) => (
+{members.map((member, i) => (
               <div key={i} className={`rounded-xl p-4 space-y-3 ${i === 0 ? 'bg-red-50 border border-red-100' : 'bg-white'}`}>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 text-xs font-medium flex items-center gap-1.5">
