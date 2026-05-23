@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTeams, getSubmissionByTeamId, saveSubmission } from '@/lib/data';
+import { getTeams, getSubmissionByTeamId, saveSubmission, getSetting } from '@/lib/data';
 import { ProjectSubmission } from '@/types';
 import { randomUUID } from 'crypto';
+
+const CLOSED_MSG = 'Submissions are closed. Contact the admin if you believe this is an error.';
 
 // GET /api/submit?teamId=xxx — load existing submission for a team
 export async function GET(req: NextRequest) {
@@ -14,6 +16,9 @@ export async function GET(req: NextRequest) {
 // POST /api/submit — save draft (create or update)
 export async function POST(req: NextRequest) {
   try {
+    const submissionsOpen = (await getSetting('submissionsOpen', 'true')) === 'true';
+    if (!submissionsOpen) return NextResponse.json({ error: CLOSED_MSG }, { status: 403 });
+
     const body = await req.json();
     const { teamId, gitRepoUrl, measuredResults } = body;
 
@@ -59,6 +64,9 @@ export async function POST(req: NextRequest) {
 // PATCH /api/submit — finalise and lock submission for review
 export async function PATCH(req: NextRequest) {
   try {
+    const submissionsOpen = (await getSetting('submissionsOpen', 'true')) === 'true';
+    if (!submissionsOpen) return NextResponse.json({ error: CLOSED_MSG }, { status: 403 });
+
     const body = await req.json();
     const { teamId, gitRepoUrl, measuredResults } = body;
 

@@ -1480,6 +1480,8 @@ export default function AdminDashboard() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submissionsOpen, setSubmissionsOpen] = useState(true);
+  const [togglingSubmissions, setTogglingSubmissions] = useState(false);
 
   const existingSquadNames = useMemo(
     () => Array.from(new Set(participants.map(p => p.teamName).filter(Boolean) as string[])).sort(),
@@ -1505,20 +1507,35 @@ export default function AdminDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [t, s, a, p, u] = await Promise.all([
+      const [t, s, a, p, u, settings] = await Promise.all([
         fetch('/api/admin/teams').then(r => r.json()),
         fetch('/api/admin/submissions').then(r => r.json()),
         fetch('/api/admin/assessments').then(r => r.json()),
         fetch('/api/admin/participants').then(r => r.json()),
         fetch('/api/admin/ai-usage').then(r => r.json()).catch(() => ({ count: 0, lastUploadedAt: null })),
+        fetch('/api/admin/settings').then(r => r.json()).catch(() => ({ submissionsOpen: true })),
       ]);
       setTeams(t); setSubmissions(s); setAssessments(a); setParticipants(p); setUsageMeta(u);
+      setSubmissionsOpen(settings.submissionsOpen ?? true);
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const toggleSubmissions = async () => {
+    setTogglingSubmissions(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submissionsOpen: !submissionsOpen }),
+      });
+      const data = await res.json();
+      setSubmissionsOpen(data.submissionsOpen);
+    } finally { setTogglingSubmissions(false); }
+  };
 
   const pendingValidation = assessments.filter(a => !a.validation).length;
 
@@ -1658,6 +1675,27 @@ export default function AdminDashboard() {
         {/* Overview */}
         {tab === 'overview' && (
           <div className="space-y-8">
+
+            {/* Portal Controls */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+              <h2 className="text-slate-900 font-semibold text-sm uppercase tracking-widest mb-4">Portal Controls</h2>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-900 font-medium text-sm">Project Submissions</p>
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    {submissionsOpen ? 'Teams can currently submit their projects.' : 'Submissions are closed — teams cannot submit or edit.'}
+                  </p>
+                </div>
+                <button
+                  onClick={toggleSubmissions}
+                  disabled={togglingSubmissions}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${submissionsOpen ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${submissionsOpen ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            </div>
+
             <div className="grid sm:grid-cols-4 gap-4">
               <StatCard label="Registered Teams"    value={teams.length}       icon={Users}      color="from-red-500 to-rose-600" />
               <StatCard label="Project Submissions" value={submissions.length} icon={FileText}   color="from-rose-500 to-pink-600" />

@@ -42,6 +42,11 @@ model AIUsage {
   uploadedAt String
 }
 
+model Setting {
+  key   String @id
+  value String
+}
+
 model Assessment {
   id                     String  @id
   teamId                 String?
