@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
 import { Users, Plus, Trash2, CheckCircle, AlertCircle, Loader2, Info, UserCheck, ShieldCheck, ArrowRight } from 'lucide-react';
@@ -7,7 +7,77 @@ import { Users, Plus, Trash2, CheckCircle, AlertCircle, Loader2, Info, UserCheck
 interface Member { name: string; email: string; }
 const emptyMember = (): Member => ({ name: '', email: '' });
 
+interface SquadMember { name: string; email: string; siebelId?: string | null; }
+
 type Status = 'idle' | 'loading' | 'success' | 'error';
+
+// ── Autocomplete input ────────────────────────────────────────────────────────
+function MemberAutocomplete({
+  value, field, placeholder, squadRoster, usedEmails, onChange, onSelect,
+}: {
+  value: string;
+  field: 'name' | 'email';
+  placeholder: string;
+  squadRoster: SquadMember[];
+  usedEmails: Set<string>;
+  onChange: (val: string) => void;
+  onSelect: (m: SquadMember) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const q = value.toLowerCase().trim();
+  const suggestions = q.length >= 1
+    ? squadRoster
+        .filter(m => !usedEmails.has(m.email))
+        .filter(m =>
+          field === 'name'
+            ? m.name.toLowerCase().includes(q)
+            : m.email.toLowerCase().includes(q) || (m.siebelId ?? '').toLowerCase().includes(q)
+        )
+        .slice(0, 8)
+    : [];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <input
+        type={field === 'email' ? 'email' : 'text'}
+        placeholder={placeholder}
+        value={value}
+        autoComplete="off"
+        onChange={e => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+      />
+      {open && suggestions.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          {suggestions.map(m => (
+            <li key={m.email}>
+              <button
+                type="button"
+                onMouseDown={e => { e.preventDefault(); onSelect(m); setOpen(false); }}
+                className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors"
+              >
+                <p className="text-slate-900 text-sm font-medium leading-tight">{m.name}</p>
+                <p className="text-slate-400 text-xs">
+                  {m.email}{m.siebelId ? ` · ${m.siebelId}` : ''}
+                </p>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 interface ExistingTeam { id: string; teamName: string; department: string; members: Member[]; registeredAt: string; }
 
@@ -17,6 +87,7 @@ export default function RegisterPage() {
   const [squad, setSquad] = useState('');
   const [squadLocked, setSquadLocked] = useState(false);   // true when pre-assigned from roster
   const [rosterLoaded, setRosterLoaded] = useState(false);
+  const [squadRoster, setSquadRoster] = useState<SquadMember[]>([]);
   // members[0] is always the leader (auto-filled from session, locked)
   const [members, setMembers] = useState<Member[]>([emptyMember(), emptyMember(), emptyMember()]);
   const [status, setStatus] = useState<Status>('idle');
@@ -64,6 +135,15 @@ export default function RegisterPage() {
       .finally(() => setRosterLoaded(true));
   }, [session?.user?.email]);
 
+  // Once squad is known, fetch all squad members for autocomplete
+  useEffect(() => {
+    if (!squad) return;
+    fetch(`/api/participants?squad=${encodeURIComponent(squad)}`)
+      .then(r => r.json())
+      .then((rows: SquadMember[]) => setSquadRoster(rows))
+      .catch(() => {});
+  }, [squad]);
+
   const addMember = () => {
     if (members.length < 4) setMembers(m => [...m, emptyMember()]);
   };
@@ -73,6 +153,11 @@ export default function RegisterPage() {
   };
   const updateMember = (i: number, field: keyof Member, value: string) =>
     setMembers(m => m.map((mb, idx) => idx === i ? { ...mb, [field]: value } : mb));
+  const selectMember = (i: number, picked: SquadMember) =>
+    setMembers(m => m.map((mb, idx) => idx === i ? { name: picked.name, email: picked.email } : mb));
+
+  // Emails already claimed — prevent duplicate selection
+  const usedEmails = new Set(members.map(m => m.email).filter(Boolean));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,6 +366,9 @@ export default function RegisterPage() {
               <p className="text-red-300/70 text-xs leading-relaxed">
                 Three is the floor that prevents free-riders; four is the ceiling that keeps roles focused.
                 Every member must have at least one meaningful Git commit under their own identity.
+                {squadRoster.length > 0 && (
+                  <> Start typing a name or <span className="font-mono text-red-400">TS-XXXXXX</span> ID to pick from your squad.</>
+                )}
               </p>
             </div>
 
@@ -307,16 +395,37 @@ export default function RegisterPage() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input type="text" placeholder="Full Name"
-                    value={member.name} onChange={e => updateMember(i, 'name', e.target.value)}
-                    readOnly={i === 0}
-                    className={`border rounded-lg px-3 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none transition-colors ${i === 0 ? 'bg-white/60 border-red-200 text-slate-600 cursor-default' : 'bg-white border-gray-200 focus:border-red-500'}`} />
-                  <input type="email" placeholder="Email Address"
-                    value={member.email} onChange={e => updateMember(i, 'email', e.target.value)}
-                    readOnly={i === 0}
-                    className={`border rounded-lg px-3 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none transition-colors ${i === 0 ? 'bg-white/60 border-red-200 text-slate-600 cursor-default' : 'bg-white border-gray-200 focus:border-red-500'}`} />
-                </div>
+                {i === 0 ? (
+                  // Leader — read-only locked inputs
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input type="text" readOnly value={member.name}
+                      className="bg-white/60 border border-red-200 rounded-lg px-3 py-2.5 text-slate-600 text-sm cursor-default focus:outline-none" />
+                    <input type="email" readOnly value={member.email}
+                      className="bg-white/60 border border-red-200 rounded-lg px-3 py-2.5 text-slate-600 text-sm cursor-default focus:outline-none" />
+                  </div>
+                ) : (
+                  // Other members — autocomplete from squad roster
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <MemberAutocomplete
+                      value={member.name}
+                      field="name"
+                      placeholder="Full Name"
+                      squadRoster={squadRoster}
+                      usedEmails={new Set([...usedEmails].filter(e => e !== member.email))}
+                      onChange={val => updateMember(i, 'name', val)}
+                      onSelect={picked => selectMember(i, picked)}
+                    />
+                    <MemberAutocomplete
+                      value={member.email}
+                      field="email"
+                      placeholder="Email or TS-XXXXXX"
+                      squadRoster={squadRoster}
+                      usedEmails={new Set([...usedEmails].filter(e => e !== member.email))}
+                      onChange={val => updateMember(i, 'email', val)}
+                      onSelect={picked => selectMember(i, picked)}
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
