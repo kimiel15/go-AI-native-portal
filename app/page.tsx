@@ -176,11 +176,11 @@ export default function Home() {
             <p className="col-span-2 text-white text-xs font-semibold uppercase tracking-wide text-right">Weight</p>
           </div>
           {[
-            { criteria: 'Business Value',               desc: 'Is there a clear link to revenue growth, retention, or operational efficiency?',                                  weight: '30%', top: true  },
-            { criteria: 'Problem Clarity',              desc: 'Is the business problem clearly defined and well-understood?',                                                    weight: '25%', top: false },
-            { criteria: 'Solution Effectiveness',       desc: 'Does the solution directly address the problem and produce accurate, useful, and consistent outputs?',           weight: '20%', top: false },
-            { criteria: 'AI Integration & Reusability', desc: 'Is Claude meaningfully embedded as a core enabler, and can the solution be easily adopted by other engineers?',  weight: '15%', top: false },
-            { criteria: 'Production Evidence',           desc: 'Was the tool deployed and run on real production cases? Evidence must show when, where, how many cases, and who authorized the run.',  weight: '10%', top: false },
+            { criteria: 'Business Value',               desc: 'Is there a clear link to revenue growth or volume reduction?',                                                                          weight: '30%', top: true  },
+            { criteria: 'Solution Effectiveness',       desc: 'Does the solution — whether a tool, skill or plugin — directly address the problem and produce accurate, useful, and consistent outputs?', weight: '20%', top: false },
+            { criteria: 'Production Evidence',          desc: 'Was the tool deployed and run on real production cases? Evidence must show when, where, how many cases, and who authorized the run.',    weight: '20%', top: false },
+            { criteria: 'Problem Clarity',              desc: 'Is the business problem clearly defined and well-understood?',                                                                           weight: '15%', top: false },
+            { criteria: 'AI Integration & Reusability', desc: 'Is Claude meaningfully embedded as a core enabler, and can the solution be easily adopted by other engineers?',                         weight: '15%', top: false },
           ].map(({ criteria, desc, weight, top }, i, arr) => (
             <div key={criteria} className={`grid grid-cols-12 px-6 py-4 items-start ${i < arr.length - 1 ? 'border-b border-gray-100' : ''} ${top ? 'bg-red-50' : ''}`}>
               <p className={`col-span-4 text-sm font-semibold ${top ? 'text-red-700' : 'text-slate-900'}`}>{criteria}</p>
