@@ -402,7 +402,7 @@ export default function RegisterPage() {
                       </>
                     ) : (
                       <>
-                        Member {i + 1} {i < 2 ? <span className="text-red-400">*</span> : <span className="text-slate-400">(optional)</span>}
+                        Member {i + 1} {i < 3 ? <span className="text-red-400">*</span> : <span className="text-slate-400">(optional)</span>}
                       </>
                     )}
                   </span>
