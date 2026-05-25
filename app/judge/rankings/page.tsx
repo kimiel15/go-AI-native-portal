@@ -50,12 +50,20 @@ const CRITERIA = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function scoreColor(score: number) {
-  return score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-500' : 'text-red-500';
+const JUDGE_NAMES: Record<string, string> = {
+  ribenitor:  'Bennett',
+  karens:     'Karen',
+  jezriela:   'Jez',
+  michaell:   'Mickey',
+  descartesc: 'Descartes',
+};
+
+function judgeName(id: string) {
+  return JUDGE_NAMES[id] ?? id.charAt(0).toUpperCase() + id.slice(1);
 }
 
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+function scoreColor(score: number) {
+  return score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-500' : 'text-red-500';
 }
 
 // ─── Score Bar ────────────────────────────────────────────────────────────────
@@ -117,7 +125,7 @@ function NotesModal({ sub, onClose }: { sub: RankedSubmission; onClose: () => vo
             <>
               {withNotes.map(s => (
                 <div key={s.judgeId} className="space-y-1.5">
-                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest">{capitalize(s.judgeId)}</p>
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest">{judgeName(s.judgeId)}</p>
                   <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
                     <p className="text-slate-700 text-sm leading-relaxed">&ldquo;{s.notes}&rdquo;</p>
                   </div>
@@ -126,7 +134,7 @@ function NotesModal({ sub, onClose }: { sub: RankedSubmission; onClose: () => vo
               {noNotes.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-slate-300 text-xs font-semibold uppercase tracking-widest">No comment left by</p>
-                  <p className="text-slate-400 text-sm">{noNotes.map(s => capitalize(s.judgeId)).join(', ')}</p>
+                  <p className="text-slate-400 text-sm">{noNotes.map(s => judgeName(s.judgeId)).join(', ')}</p>
                 </div>
               )}
             </>
@@ -275,7 +283,7 @@ function ScoreTable({ rankings, judges, onNotesClick }: {
             {/* One column per judge */}
             {judges.map(j => (
               <th key={j} className="text-center px-4 py-3 text-slate-500 font-semibold text-xs uppercase tracking-wide min-w-[90px]">
-                {capitalize(j)}
+                {judgeName(j)}
               </th>
             ))}
             {/* Average */}
