@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signJudgeToken, JUDGE_COOKIE, JUDGE_TTL } from '@/lib/judge-auth';
 
-const ALLOWED_JUDGES = ['ribenitor', 'karens', 'jezriela', 'michaell'];
+const ALLOWED_JUDGES = ['ribenitor', 'karens', 'jezriela', 'michaell', 'descartesc'];
 
 export async function POST(req: NextRequest) {
   const { siebelId, password } = await req.json();

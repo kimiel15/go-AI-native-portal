@@ -3,7 +3,7 @@ import { getJudgeSession } from '@/lib/judge-auth';
 import prisma from '@/lib/prisma';
 
 // Keep in sync with ALLOWED_JUDGES in app/api/judge/login/route.ts
-const JUDGE_ROSTER = ['ribenitor', 'karens', 'jezriela', 'michaell'];
+const JUDGE_ROSTER = ['ribenitor', 'karens', 'jezriela', 'michaell', 'descartesc'];
 
 export async function GET() {
   const judgeId = await getJudgeSession();
