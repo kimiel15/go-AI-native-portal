@@ -25,44 +25,45 @@ interface JudgeScore {
 }
 
 const CRITERIA = [
-  { key: 'businessValue',         label: 'Business Value',               weight: '30%', desc: 'Clear link to revenue growth or volume reduction' },
-  { key: 'solutionEffectiveness', label: 'Solution Effectiveness',       weight: '20%', desc: 'Directly addresses problem; accurate, useful outputs' },
-  { key: 'productionEvidence',    label: 'Production Evidence',          weight: '20%', desc: 'Deployed on real cases; shows when, where, how many' },
-  { key: 'problemClarity',        label: 'Problem Clarity',              weight: '15%', desc: 'Business problem clearly defined and well-understood' },
-  { key: 'aiIntegration',         label: 'AI Integration & Reusability', weight: '15%', desc: 'Claude meaningfully embedded; adoptable by other engineers' },
+  { key: 'businessValue',         label: 'Business Value',               max: 30, desc: 'Clear link to revenue growth or volume reduction' },
+  { key: 'solutionEffectiveness', label: 'Solution Effectiveness',       max: 20, desc: 'Directly addresses problem; accurate, useful outputs' },
+  { key: 'productionEvidence',    label: 'Production Evidence',          max: 20, desc: 'Deployed on real cases; shows when, where, how many' },
+  { key: 'problemClarity',        label: 'Problem Clarity',              max: 15, desc: 'Business problem clearly defined and well-understood' },
+  { key: 'aiIntegration',         label: 'AI Integration & Reusability', max: 15, desc: 'Claude meaningfully embedded; adoptable by other engineers' },
 ] as const;
 
 type CriteriaKey = typeof CRITERIA[number]['key'];
 
-function ScoreInput({ label, weight, desc, value, onChange }: {
-  label: string; weight: string; desc: string; value: number; onChange: (v: number) => void;
+function ScoreInput({ label, max, desc, value, onChange }: {
+  label: string; max: number; desc: string; value: number; onChange: (v: number) => void;
 }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <span className="text-slate-900 text-sm font-medium">{label}</span>
-          <span className="ml-2 text-xs text-slate-400 font-mono">{weight}</span>
+          <span className="ml-2 text-xs text-slate-400 font-mono">max {max}%</span>
           <p className="text-slate-400 text-xs mt-0.5">{desc}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <input
             type="number"
             min={0}
-            max={100}
+            max={max}
             step={1}
             value={value}
             onChange={e => {
-              const v = Math.min(100, Math.max(0, Number(e.target.value)));
+              const v = Math.min(max, Math.max(0, Number(e.target.value)));
               onChange(isNaN(v) ? 0 : v);
             }}
-            className={`w-20 text-right text-lg font-bold border rounded-lg px-2 py-1 focus:outline-none focus:border-red-500 transition-colors
-              ${value >= 80 ? 'text-emerald-600 border-emerald-200 bg-emerald-50' :
-                value >= 50 ? 'text-amber-500 border-amber-200 bg-amber-50' :
-                value > 0   ? 'text-red-500 border-red-200 bg-red-50' :
-                              'text-slate-400 border-gray-200 bg-white'}`}
+            className={`w-16 text-right text-lg font-bold border rounded-lg px-2 py-1 focus:outline-none focus:border-red-500 transition-colors
+              ${pct >= 80 ? 'text-emerald-600 border-emerald-200 bg-emerald-50' :
+                pct >= 50 ? 'text-amber-500 border-amber-200 bg-amber-50' :
+                value > 0 ? 'text-red-500 border-red-200 bg-red-50' :
+                            'text-slate-400 border-gray-200 bg-white'}`}
           />
-          <span className="text-slate-400 text-sm font-medium">%</span>
+          <span className="text-slate-400 text-xs font-medium">/ {max}%</span>
         </div>
       </div>
     </div>
@@ -82,11 +83,9 @@ function SubmissionCard({ sub, judgeId, onScored }: { sub: Submission; judgeId: 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const weighted = Math.round(
-    scores.businessValue * 0.30 + scores.solutionEffectiveness * 0.20 +
-    scores.productionEvidence * 0.20 + scores.problemClarity * 0.15 +
-    scores.aiIntegration * 0.15
-  );
+  const weighted =
+    scores.businessValue + scores.solutionEffectiveness +
+    scores.productionEvidence + scores.problemClarity + scores.aiIntegration;
 
   const handleSave = async () => {
     setSaving(true);
@@ -148,7 +147,7 @@ function SubmissionCard({ sub, judgeId, onScored }: { sub: Submission; judgeId: 
               <ScoreInput
                 key={c.key}
                 label={c.label}
-                weight={c.weight}
+                max={c.max}
                 desc={c.desc}
                 value={scores[c.key]}
                 onChange={v => setScores(s => ({ ...s, [c.key]: v }))}

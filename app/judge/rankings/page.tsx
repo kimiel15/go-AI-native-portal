@@ -35,15 +35,15 @@ interface RankedSubmission {
 }
 
 const CRITERIA = [
-  { key: 'avgBusinessValue',         label: 'Business Value',         weight: '30%' },
-  { key: 'avgSolutionEffectiveness', label: 'Solution Effectiveness', weight: '20%' },
-  { key: 'avgProductionEvidence',    label: 'Production Evidence',    weight: '20%' },
-  { key: 'avgProblemClarity',        label: 'Problem Clarity',        weight: '15%' },
-  { key: 'avgAiIntegration',         label: 'AI Integration',         weight: '15%' },
+  { key: 'avgBusinessValue',         label: 'Business Value',         max: 30 },
+  { key: 'avgSolutionEffectiveness', label: 'Solution Effectiveness', max: 20 },
+  { key: 'avgProductionEvidence',    label: 'Production Evidence',    max: 20 },
+  { key: 'avgProblemClarity',        label: 'Problem Clarity',        max: 15 },
+  { key: 'avgAiIntegration',         label: 'AI Integration',         max: 15 },
 ] as const;
 
-function ScoreBar({ value, max = 100 }: { value: number; max?: number }) {
-  const pct = Math.round((value / max) * 100);
+function ScoreBar({ value, max }: { value: number; max: number }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   const color =
     pct >= 80 ? 'from-emerald-500 to-emerald-400' :
     pct >= 60 ? 'from-amber-500 to-amber-400' :
@@ -160,9 +160,9 @@ function RankedCard({ sub, rank }: { sub: RankedSubmission; rank: number }) {
                 <div key={c.key} className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-700 text-xs font-medium">{c.label}</span>
-                    <span className="text-slate-400 text-xs font-mono">{c.weight}</span>
+                    <span className="text-slate-400 text-xs font-mono">{sub[c.key] as number} / {c.max}%</span>
                   </div>
-                  <ScoreBar value={sub[c.key] as number} />
+                  <ScoreBar value={sub[c.key] as number} max={c.max} />
                 </div>
               ))}
             </div>

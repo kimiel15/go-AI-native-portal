@@ -34,9 +34,7 @@ export async function GET() {
     const avgTotal =
       judgeCount === 0
         ? 0
-        : Math.round(
-            subScores.reduce((sum, s) => sum + s.totalScore, 0) / judgeCount
-          );
+        : Math.round(subScores.reduce((sum, s) => sum + s.totalScore, 0) / judgeCount);
 
     return {
       id: sub.id,

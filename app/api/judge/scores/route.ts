@@ -28,14 +28,11 @@ export async function POST(req: NextRequest) {
 
   if (!submissionId) return NextResponse.json({ error: 'submissionId required' }, { status: 400 });
 
-  // Weights: BV 30%, SE 20%, PE 20%, PC 15%, AI 15%
-  // Each criterion scored 0–100; weighted total → percentage out of 100
+  // Each criterion is scored on its own weight cap:
+  // BV 0–30, SE 0–20, PE 0–20, PC 0–15, AI 0–15 → total out of 100
   const totalScore =
-    (businessValue         * 0.30) +
-    (solutionEffectiveness * 0.20) +
-    (productionEvidence    * 0.20) +
-    (problemClarity        * 0.15) +
-    (aiIntegration         * 0.15);
+    businessValue + solutionEffectiveness + productionEvidence +
+    problemClarity + aiIntegration;
 
   const data = {
     submissionId,
@@ -45,7 +42,7 @@ export async function POST(req: NextRequest) {
     productionEvidence,
     problemClarity,
     aiIntegration,
-    totalScore: Math.round(totalScore * 10) / 10,
+    totalScore: Math.round(totalScore),
     notes: notes ?? null,
     scoredAt: new Date().toISOString(),
   };
