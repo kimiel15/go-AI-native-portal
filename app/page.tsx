@@ -149,22 +149,101 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Timeline */}
+      {/* Calendar of Activities */}
       <section className="max-w-6xl mx-auto px-6 pb-16">
         <h2 className="text-center text-slate-400 text-xs font-semibold uppercase tracking-widest mb-10">
-          June 2026 Timeline
+          Calendar of Activities
         </h2>
-        <div className="grid sm:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { phase: 'Build',            dates: 'Jun 1–14',  desc: 'Pick a problem. Declare in Git. Build your tool.',               color: 'border-tl-red/30 bg-tl-cream'         },
-            { phase: 'Run in Production', dates: 'Jun 15–21', desc: 'Deploy on real cases. Capture measured results.',                  color: 'border-tl-orange/30 bg-orange-50'      },
-            { phase: 'Event Prep',        dates: 'Jun 22–26', desc: 'Judges verify results. Awards locked.',                            color: 'border-tl-teal-light border-opacity-60 bg-tl-teal-light/20' },
-            { phase: 'Main Event',        dates: 'Jun 27 🎉', desc: 'Recognition, celebration, Roll Call, four awards.',               color: 'border-amber-200 bg-amber-50'          },
-          ].map(({ phase, dates, desc, color }) => (
-            <div key={phase} className={`border ${color} rounded-2xl p-5`}>
+            {
+              phase: 'Preparation',
+              dates: 'May 14–27',
+              color: 'border-tl-red/30 bg-tl-cream',
+              dateColor: 'text-tl-red/70',
+              tasks: [
+                'Plan discussion with Go AI-Native committee',
+                'Squad Leads introduce C4E and GitHub EMU to Squad',
+              ],
+            },
+            {
+              phase: 'Kick Off',
+              dates: 'May 28',
+              color: 'border-tl-orange/40 bg-orange-50',
+              dateColor: 'text-tl-orange',
+              tasks: [
+                'Announce & share details during Town Hall Session',
+              ],
+            },
+            {
+              phase: 'Build & Registration',
+              dates: 'Jun 1–7',
+              color: 'border-tl-orange/30 bg-amber-50',
+              dateColor: 'text-tl-orange',
+              tasks: [
+                'Start building Claude projects',
+                'Complete team registration',
+              ],
+            },
+            {
+              phase: 'Build & Registration',
+              dates: 'Jun 8–14',
+              color: 'border-tl-orange/30 bg-amber-50',
+              dateColor: 'text-tl-orange',
+              tasks: [
+                'Test and validate results',
+                'Launch to production',
+              ],
+            },
+            {
+              phase: 'Run Phase',
+              dates: 'Jun 15–21',
+              color: 'border-tl-teal/40 bg-tl-teal-light/15',
+              dateColor: 'text-tl-teal',
+              tasks: [
+                'Run projects in production',
+              ],
+            },
+            {
+              phase: 'Measure & Document',
+              dates: 'Jun 22–24',
+              color: 'border-tl-sky/40 bg-tl-teal-light/20',
+              dateColor: 'text-tl-sky',
+              tasks: [
+                'Measure results and update documentation in GitHub',
+                'Run individual AI assessment (starting Jun 22)',
+              ],
+            },
+            {
+              phase: 'Validation',
+              dates: 'Jun 25–26',
+              color: 'border-amber-200 bg-amber-50',
+              dateColor: 'text-amber-600',
+              tasks: [
+                'Deliberate results and identify winners',
+              ],
+            },
+            {
+              phase: 'Main Event 🎉',
+              dates: 'Jun 27',
+              color: 'border-yellow-300 bg-yellow-50',
+              dateColor: 'text-yellow-600',
+              tasks: [
+                'Recap event and recognize winners',
+              ],
+            },
+          ].map(({ phase, dates, tasks, color, dateColor }) => (
+            <div key={`${phase}-${dates}`} className={`border ${color} rounded-2xl p-5`}>
               <p className="text-slate-900 font-bold text-sm mb-1">{phase}</p>
-              <p className="text-slate-400 text-xs font-mono mb-3">{dates}</p>
-              <p className="text-slate-500 text-xs leading-relaxed">{desc}</p>
+              <p className={`text-xs font-mono mb-3 ${dateColor}`}>{dates}</p>
+              <ul className="space-y-1.5">
+                {tasks.map(t => (
+                  <li key={t} className="text-slate-500 text-xs leading-relaxed flex gap-1.5">
+                    <span className="mt-1 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
