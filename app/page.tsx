@@ -1,5 +1,13 @@
 import Link from 'next/link';
-import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Zap, Calendar } from 'lucide-react';
+import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Calendar } from 'lucide-react';
+
+function TLMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 133.91 122.64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M132.07,30.67c-1.84-7.9-5.5-15.32-11.17-21.12-25.65-26.27-60.08,6.57-68.61,38.85h0c-5.15,17.62-7.08,38.58,4.11,54.59-15.78-.09-37.51-3.93-43.7-20.4-4.14-17.3,16.12-29.21,30.77-32.61.6-2.33,1.29-4.73,2.11-7C-25.65,55.51-6.93,122.31,57.21,122.6c58.67,1.72,84.05-52.55,74.86-91.92ZM112.31,47.68c-1.41,13.28-11.89,47.54-33.33,51.77-2.59.51-5.27.41-7.78-.4-17.94-5.83-18.06-35.94-12.19-51.02,29.97-.12,40.99,16.13,40.99,16.13,1.35-3.59,2.44-7.34,3.24-11.18-16.52-12.08-41.66-11.28-41.66-11.28C76.94,7.26,117.59.11,112.31,47.68Z" fill="currentColor"/>
+    </svg>
+  );
+}
 
 const menuItems = [
   {
@@ -7,7 +15,7 @@ const menuItems = [
     label: 'Team Registration',
     desc: 'Register your team of 3–4',
     href: '/register',
-    color: 'from-red-500 to-rose-600',
+    color: 'from-tl-red to-tl-burgundy',
     badge: 'Team',
   },
   {
@@ -15,7 +23,7 @@ const menuItems = [
     label: 'Project Submission',
     desc: 'View and submit projects',
     href: '/submissions',
-    color: 'from-rose-500 to-pink-600',
+    color: 'from-tl-teal to-tl-sky',
     badge: 'Submit',
   },
   {
@@ -23,21 +31,19 @@ const menuItems = [
     label: 'AI Proficiency Assessment',
     desc: 'Take the individual assessment',
     href: '/assessment',
-    color: 'from-orange-500 to-red-500',
+    color: 'from-tl-orange to-tl-red',
     badge: 'Individual',
   },
 ];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, var(--tl-cream) 0%, #ffffff 60%, #f0f8fa 100%)' }}>
       {/* Nav */}
-      <nav className="border-b border-red-100 bg-white shadow-sm sticky top-0 z-10">
+      <nav className="border-b border-tl-teal-light/40 bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-400 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <TLMark className="w-7 h-7 text-tl-logo-red" />
             <span className="text-slate-900 font-bold text-base tracking-tight">Go AI-Native</span>
           </div>
 
@@ -47,9 +53,9 @@ export default function Home() {
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-red-50 transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-tl-cream transition-all"
               >
-                <Icon className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <Icon className="w-4 h-4 text-tl-red flex-shrink-0" />
                 {label}
               </Link>
             ))}
@@ -62,14 +68,14 @@ export default function Home() {
         </div>
 
         {/* Mobile menu */}
-        <div className="md:hidden border-t border-red-50 px-4 py-2 flex gap-2 overflow-x-auto">
+        <div className="md:hidden border-t border-tl-teal-light/20 px-4 py-2 flex gap-2 overflow-x-auto">
           {menuItems.map(({ icon: Icon, label, href }) => (
             <Link
               key={href}
               href={href}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-red-50 border border-gray-200 transition-all"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-tl-cream border border-gray-200 transition-all"
             >
-              <Icon className="w-3.5 h-3.5 text-red-400" />
+              <Icon className="w-3.5 h-3.5 text-tl-red" />
               {label}
             </Link>
           ))}
@@ -78,14 +84,14 @@ export default function Home() {
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 bg-red-100 border border-red-200 rounded-full px-4 py-1.5 mb-4">
-          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-red-700 text-sm font-medium">RoW Support · AI Acceleration Hackathon</span>
+        <div className="inline-flex items-center gap-2 bg-tl-cream border border-tl-teal-light/60 rounded-full px-4 py-1.5 mb-4">
+          <span className="w-2 h-2 rounded-full bg-tl-red animate-pulse" />
+          <span className="text-tl-teal text-sm font-medium">RoW Support · AI Acceleration Hackathon</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-4 leading-tight tracking-tight">
           Go{' '}
-          <span className="bg-gradient-to-r from-red-400 via-rose-400 to-orange-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-tl-red via-tl-orange to-tl-teal bg-clip-text text-transparent">
             AI-Native
           </span>
         </h1>
@@ -102,7 +108,7 @@ export default function Home() {
 
         <div className="flex flex-wrap gap-4 justify-center">
           <Link href="/register"
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-red-500/25 hover:shadow-red-500/40">
+            className="flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-tl-red/25 hover:shadow-tl-red/40">
             Get Started <ArrowRight className="w-4 h-4" />
           </Link>
           <Link href="/submissions"
@@ -130,11 +136,11 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="mb-1">
-                  <span className="inline-block text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">{badge}</span>
+                  <span className="inline-block text-xs font-semibold text-tl-teal uppercase tracking-wider mb-2">{badge}</span>
                   <h3 className="text-slate-900 font-bold text-lg leading-snug">{label}</h3>
                 </div>
                 <p className="text-slate-500 text-sm leading-relaxed mb-6">{desc}</p>
-                <div className="flex items-center gap-2 text-red-400 text-sm font-semibold group-hover:gap-3 transition-all">
+                <div className="flex items-center gap-2 text-tl-red text-sm font-semibold group-hover:gap-3 transition-all">
                   Open <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
@@ -150,10 +156,10 @@ export default function Home() {
         </h2>
         <div className="grid sm:grid-cols-4 gap-4">
           {[
-            { phase: 'Build', dates: 'Jun 1–14', desc: 'Pick a problem. Declare in Git. Build your tool.', color: 'border-red-200 bg-red-50' },
-            { phase: 'Run in Production', dates: 'Jun 15–21', desc: 'Deploy on real cases. Capture measured results.', color: 'border-rose-200 bg-rose-50' },
-            { phase: 'Event Prep', dates: 'Jun 22–26', desc: 'Judges verify results. Awards locked.', color: 'border-pink-200 bg-pink-50' },
-            { phase: 'Main Event', dates: 'Jun 27 🎉', desc: 'Recognition, celebration, Roll Call, four awards.', color: 'border-amber-200 bg-amber-50' },
+            { phase: 'Build',            dates: 'Jun 1–14',  desc: 'Pick a problem. Declare in Git. Build your tool.',               color: 'border-tl-red/30 bg-tl-cream'         },
+            { phase: 'Run in Production', dates: 'Jun 15–21', desc: 'Deploy on real cases. Capture measured results.',                  color: 'border-tl-orange/30 bg-orange-50'      },
+            { phase: 'Event Prep',        dates: 'Jun 22–26', desc: 'Judges verify results. Awards locked.',                            color: 'border-tl-teal-light border-opacity-60 bg-tl-teal-light/20' },
+            { phase: 'Main Event',        dates: 'Jun 27 🎉', desc: 'Recognition, celebration, Roll Call, four awards.',               color: 'border-amber-200 bg-amber-50'          },
           ].map(({ phase, dates, desc, color }) => (
             <div key={phase} className={`border ${color} rounded-2xl p-5`}>
               <p className="text-slate-900 font-bold text-sm mb-1">{phase}</p>
@@ -170,7 +176,7 @@ export default function Home() {
           Judging Criteria
         </h2>
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-12 bg-red-600 px-6 py-3">
+          <div className="grid grid-cols-12 bg-tl-teal px-6 py-3">
             <p className="col-span-4 text-white text-xs font-semibold uppercase tracking-wide">Criteria</p>
             <p className="col-span-6 text-white text-xs font-semibold uppercase tracking-wide">Description</p>
             <p className="col-span-2 text-white text-xs font-semibold uppercase tracking-wide text-right">Weight</p>
@@ -182,10 +188,10 @@ export default function Home() {
             { criteria: 'Problem Clarity',              desc: 'Is the business problem clearly defined and well-understood?',                                                                           weight: '15%', top: false },
             { criteria: 'AI Integration & Reusability', desc: 'Is Claude meaningfully embedded as a core enabler, and can the solution be easily adopted by other engineers?',                         weight: '15%', top: false },
           ].map(({ criteria, desc, weight, top }, i, arr) => (
-            <div key={criteria} className={`grid grid-cols-12 px-6 py-4 items-start ${i < arr.length - 1 ? 'border-b border-gray-100' : ''} ${top ? 'bg-red-50' : ''}`}>
-              <p className={`col-span-4 text-sm font-semibold ${top ? 'text-red-700' : 'text-slate-900'}`}>{criteria}</p>
+            <div key={criteria} className={`grid grid-cols-12 px-6 py-4 items-start ${i < arr.length - 1 ? 'border-b border-gray-100' : ''} ${top ? 'bg-tl-cream' : ''}`}>
+              <p className={`col-span-4 text-sm font-semibold ${top ? 'text-tl-teal' : 'text-slate-900'}`}>{criteria}</p>
               <p className="col-span-6 text-slate-500 text-sm leading-relaxed">{desc}</p>
-              <p className={`col-span-2 text-right text-sm font-bold ${top ? 'text-red-600' : 'text-slate-700'}`}>{weight}</p>
+              <p className={`col-span-2 text-right text-sm font-bold ${top ? 'text-tl-teal' : 'text-slate-700'}`}>{weight}</p>
             </div>
           ))}
         </div>

@@ -1,14 +1,22 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+
+function TLMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 133.91 122.64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M132.07,30.67c-1.84-7.9-5.5-15.32-11.17-21.12-25.65-26.27-60.08,6.57-68.61,38.85h0c-5.15,17.62-7.08,38.58,4.11,54.59-15.78-.09-37.51-3.93-43.7-20.4-4.14-17.3,16.12-29.21,30.77-32.61.6-2.33,1.29-4.73,2.11-7C-25.65,55.51-6.93,122.31,57.21,122.6c58.67,1.72,84.05-52.55,74.86-91.92ZM112.31,47.68c-1.41,13.28-11.89,47.54-33.33,51.77-2.59.51-5.27.41-7.78-.4-17.94-5.83-18.06-35.94-12.19-51.02,29.97-.12,40.99,16.13,40.99,16.13,1.35-3.59,2.44-7.34,3.24-11.18-16.52-12.08-41.66-11.28-41.66-11.28C76.94,7.26,117.59.11,112.31,47.68Z" fill="currentColor"/>
+    </svg>
+  );
+}
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { Team, TeamMember, ProjectSubmission, Assessment, Participant } from '@/types';
 import {
-  Zap, Users, FileText, Brain, LogOut, RefreshCw, Home,
+  Users, FileText, Brain, LogOut, RefreshCw, Home,
   ChevronDown, ChevronUp, Mail, Building2, Calendar,
   CheckCircle2, ShieldCheck, AlertTriangle, Sparkles,
   ThumbsUp, ArrowUp, ArrowDown, Loader2, Flag,
-  Plus, Pencil, Trash2, X, UserPlus, Save,
+  Plus, Pencil, Trash2, X, UserPlus, Save, LayoutDashboard,
   Upload, Download, CheckCircle, AlertCircle, Activity
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -119,7 +127,7 @@ function TeamFormModal({
               value={teamName}
               onChange={e => setTeamName(e.target.value)}
               placeholder="e.g. Alpha Squad"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
             />
           </div>
 
@@ -131,7 +139,7 @@ function TeamFormModal({
               value={department}
               onChange={e => setDepartment(e.target.value)}
               placeholder="e.g. Engineering"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
             />
           </div>
 
@@ -169,14 +177,14 @@ function TeamFormModal({
                       value={m.name}
                       onChange={e => updateMember(i, 'name', e.target.value)}
                       placeholder="Full name *"
-                      className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+                      className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
                     />
                     <input
                       type="email"
                       value={m.email}
                       onChange={e => updateMember(i, 'email', e.target.value)}
                       placeholder="Email *"
-                      className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+                      className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
                     />
                   </div>
                   <input
@@ -184,7 +192,7 @@ function TeamFormModal({
                     value={m.role}
                     onChange={e => updateMember(i, 'role', e.target.value)}
                     placeholder="Role (optional)"
-                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
                   />
                 </div>
               ))}
@@ -209,7 +217,7 @@ function TeamFormModal({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all"
+            className="flex-1 flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all"
           >
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <><Save className="w-4 h-4" />{isEdit ? 'Save Changes' : 'Create Team'}</>}
           </button>
@@ -279,7 +287,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all"
+            className="flex-1 flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all"
           >
             {deleting ? <><Loader2 className="w-4 h-4 animate-spin" />Deleting...</> : <><Trash2 className="w-4 h-4" />Delete</>}
           </button>
@@ -308,7 +316,7 @@ function TeamCard({
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4">
         <button onClick={() => setOpen(o => !o)} className="flex items-center gap-3 text-left flex-1 min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-tl-red to-tl-burgundy flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             {team.teamName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -320,7 +328,7 @@ function TeamCard({
           </div>
         </button>
         <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-          {sub && <span className="hidden sm:flex items-center gap-1 text-xs text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full"><CheckCircle2 className="w-3 h-3" />Submitted</span>}
+          {sub && <span className="hidden sm:flex items-center gap-1 text-xs text-tl-teal bg-tl-teal-light/30 px-2 py-1 rounded-full"><CheckCircle2 className="w-3 h-3" />Submitted</span>}
           <button
             onClick={() => onEdit(team)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
@@ -330,7 +338,7 @@ function TeamCard({
           </button>
           <button
             onClick={() => onDelete(team)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-tl-teal hover:bg-tl-teal-light/20 transition-colors"
             title="Delete team"
           >
             <Trash2 className="w-4 h-4" />
@@ -393,7 +401,7 @@ function SubmissionCard({ sub, onDeleted }: { sub: ProjectSubmission; onDeleted:
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
       <div className="flex items-center px-5 py-4 gap-3">
         <button onClick={() => setOpen(o => !o)} className="flex items-center gap-3 flex-1 text-left min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-tl-teal to-tl-sky flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             {sub.teamName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -406,7 +414,7 @@ function SubmissionCard({ sub, onDeleted }: { sub: ProjectSubmission; onDeleted:
             <>
               <span className="text-slate-500 text-xs">Delete?</span>
               <button onClick={handleDelete} disabled={deleting}
-                className="text-xs bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg font-medium transition-colors disabled:opacity-50">
+                className="text-xs bg-tl-red hover:bg-tl-burgundy text-white px-2.5 py-1 rounded-lg font-medium transition-colors disabled:opacity-50">
                 {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
               </button>
               <button onClick={() => setConfirming(false)}
@@ -416,7 +424,7 @@ function SubmissionCard({ sub, onDeleted }: { sub: ProjectSubmission; onDeleted:
             </>
           ) : (
             <button onClick={() => setConfirming(true)} title="Delete submission (team can resubmit)"
-              className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition-colors">
+              className="p-1.5 rounded-lg text-slate-300 hover:text-tl-teal hover:bg-tl-teal-light/20 transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
@@ -478,7 +486,7 @@ function AssessmentReadCard({ assessment, onReset }: { assessment: Assessment; o
             <>
               <span className="text-slate-500 text-xs">Reset?</span>
               <button onClick={handleReset} disabled={resetting}
-                className="text-xs bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg font-medium transition-colors disabled:opacity-50">
+                className="text-xs bg-tl-red hover:bg-tl-burgundy text-white px-2.5 py-1 rounded-lg font-medium transition-colors disabled:opacity-50">
                 {resetting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Yes'}
               </button>
               <button onClick={() => setConfirming(false)}
@@ -488,7 +496,7 @@ function AssessmentReadCard({ assessment, onReset }: { assessment: Assessment; o
             </>
           ) : (
             <button onClick={() => setConfirming(true)} title="Reset assessment"
-              className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition-colors">
+              className="p-1.5 rounded-lg text-slate-300 hover:text-tl-teal hover:bg-tl-teal-light/20 transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
@@ -826,7 +834,7 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
         <div className="flex items-center gap-3">
           <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-red-500 to-rose-500 rounded-full"
+              className="h-full bg-gradient-to-r from-tl-red to-tl-orange rounded-full"
               style={{ width: `${assessment.totalPercent ?? 0}%` }}
             />
           </div>
@@ -893,7 +901,7 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
               <div>
                 <label className="block text-slate-500 text-sm mb-1.5">Final Level</label>
                 <select value={finalLevel} onChange={e => setFinalLevel(e.target.value)}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-red-500 transition-colors">
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-tl-teal transition-colors">
                   {LEVELS.map(l => <option key={l} value={l} className="bg-white">{l}</option>)}
                 </select>
               </div>
@@ -903,20 +911,20 @@ function ValidationCard({ assessment, onValidated }: { assessment: Assessment; o
               <label className="block text-slate-500 text-sm mb-1.5">Reason <span className="text-red-400">*</span></label>
               <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)}
                 placeholder="Brief reason for your decision..."
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 resize-none" />
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal resize-none" />
             </div>
 
             <div>
               <label className="block text-slate-500 text-sm mb-1.5">Your Name <span className="text-red-400">*</span></label>
               <input type="text" value={validatedBy} onChange={e => setValidatedBy(e.target.value)}
                 placeholder="Squad lead name"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500" />
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal" />
             </div>
 
             {error && <p className="text-red-400 text-xs">{error}</p>}
 
             <button onClick={handleSave} disabled={saving}
-              className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all">
+              className="w-full flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all">
               {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <><ShieldCheck className="w-4 h-4" />Save Validation</>}
             </button>
           </div>
@@ -1119,7 +1127,7 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
           </button>
           {!result && (
             <button onClick={handleImport} disabled={rows.length === 0 || importing}
-              className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
+              className="flex-1 flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
               {importing ? <><Loader2 className="w-4 h-4 animate-spin" />Importing...</> : <><Upload className="w-4 h-4" />Import {rows.length > 0 ? `${rows.length} rows` : ''}</>}
             </button>
           )}
@@ -1195,14 +1203,14 @@ function ParticipantFormModal({
           <div>
             <label className="block text-slate-600 text-sm mb-1.5">Full Name <span className="text-red-400">*</span></label>
             <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Ana Cruz"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors" />
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors" />
           </div>
           <div>
             <label className="block text-slate-600 text-sm mb-1.5">Email <span className="text-red-400">*</span></label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="ana.cruz@trendmicro.com"
               disabled={isEdit}
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors disabled:bg-gray-50 disabled:text-slate-400" />
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors disabled:bg-gray-50 disabled:text-slate-400" />
             {isEdit && <p className="text-slate-400 text-xs mt-1">Email cannot be changed after creation.</p>}
           </div>
           <div>
@@ -1213,7 +1221,7 @@ function ParticipantFormModal({
               onChange={e => setTeamName(e.target.value)}
               list="existing-squads"
               placeholder="e.g. Squad Kimiel"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
             />
             <datalist id="existing-squads">
               {existingSquadNames.map(n => <option key={n} value={n} />)}
@@ -1225,7 +1233,7 @@ function ParticipantFormModal({
             <label className="block text-slate-600 text-sm mb-1.5">Siebel ID <span className="text-slate-400 font-normal">(optional)</span></label>
             <input type="text" value={siebelId} onChange={e => setSiebelId(e.target.value)}
               placeholder="e.g. johnrusselc"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors font-mono text-sm" />
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors font-mono text-sm" />
             <p className="text-slate-400 text-xs mt-1">Used to match Power BI AI usage data. Lowercase, no spaces.</p>
           </div>
           {error && <p className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
@@ -1236,7 +1244,7 @@ function ParticipantFormModal({
             Cancel
           </button>
           <button type="button" onClick={handleSave} disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
+            className="flex-1 flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <><Save className="w-4 h-4" />{isEdit ? 'Save Changes' : 'Add Participant'}</>}
           </button>
         </div>
@@ -1461,7 +1469,7 @@ function AIUsageUploadModal({ onClose, onImported }: { onClose: () => void; onIm
           </button>
           {!result && (
             <button onClick={handleImport} disabled={rows.length === 0 || importing}
-              className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
+              className="flex-1 flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
               {importing ? <><Loader2 className="w-4 h-4 animate-spin" />Uploading…</> : <><Upload className="w-4 h-4" />Replace snapshot</>}
             </button>
           )}
@@ -1540,7 +1548,7 @@ export default function AdminDashboard() {
   const pendingValidation = assessments.filter(a => !a.validation).length;
 
   const tabs: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
-    { id: 'overview',     label: 'Overview',     icon: Zap },
+    { id: 'overview',     label: 'Overview',     icon: LayoutDashboard },
     { id: 'participants', label: 'Participants',  icon: UserPlus,   badge: participants.length },
     { id: 'teams',        label: 'Teams',        icon: Users,      badge: teams.length },
     { id: 'submissions',  label: 'Submissions',  icon: FileText,   badge: submissions.length },
@@ -1550,7 +1558,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen tl-page-bg">
       {/* Modals */}
       {showAddModal && (
         <TeamFormModal
@@ -1617,7 +1625,7 @@ export default function AdminDashboard() {
                 await fetch(`/api/admin/participants/${deletingParticipantId}`, { method: 'DELETE' });
                 setDeletingParticipantId(null);
                 fetchData();
-              }} className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold py-2.5 rounded-xl">
+              }} className="flex-1 flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white text-sm font-semibold py-2.5 rounded-xl">
                 <Trash2 className="w-4 h-4" />Remove
               </button>
             </div>
@@ -1628,9 +1636,7 @@ export default function AdminDashboard() {
       <nav className="border-b border-gray-200 bg-white">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-400 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <TLMark className="w-7 h-7 text-tl-logo-red" />
             <span className="text-slate-900 font-bold text-lg tracking-tight">Go AI-Native Admin</span>
           </div>
           <div className="flex items-center gap-3">
@@ -1657,7 +1663,7 @@ export default function AdminDashboard() {
           {tabs.map(({ id, label, icon: Icon, badge }) => (
             <button key={id} onClick={() => setTab(id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                tab === id ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-900'
+                tab === id ? 'bg-tl-teal text-white shadow-lg shadow-tl-teal/20' : 'text-slate-500 hover:text-slate-900'
               }`}>
               <Icon className="w-4 h-4" />
               {label}
@@ -1697,8 +1703,8 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid sm:grid-cols-4 gap-4">
-              <StatCard label="Registered Teams"    value={teams.length}       icon={Users}      color="from-red-500 to-rose-600" />
-              <StatCard label="Project Submissions" value={submissions.length} icon={FileText}   color="from-rose-500 to-pink-600" />
+              <StatCard label="Registered Teams"    value={teams.length}       icon={Users}      color="from-tl-red to-tl-burgundy" />
+              <StatCard label="Project Submissions" value={submissions.length} icon={FileText}   color="from-tl-teal to-tl-sky" />
               <StatCard label="Assessments Taken"   value={assessments.length} icon={Brain}      color="from-orange-500 to-red-600" />
               <StatCard label="Pending Validation"  value={pendingValidation}  icon={ShieldCheck} color="from-amber-500 to-orange-600" />
             </div>
@@ -1710,7 +1716,7 @@ export default function AdminDashboard() {
                   <div className="space-y-2">
                     {teams.slice(-5).reverse().map(t => (
                       <div key={t.id} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white text-xs font-bold">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-tl-red to-tl-burgundy flex items-center justify-center text-white text-xs font-bold">
                           {t.teamName.charAt(0)}
                         </div>
                         <div>
@@ -1734,7 +1740,7 @@ export default function AdminDashboard() {
                       <span className="text-slate-400 text-sm mb-1">of teams submitted</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-red-500 to-rose-600 rounded-full transition-all"
+                      <div className="h-full bg-gradient-to-r from-tl-red to-tl-burgundy rounded-full transition-all"
                         style={{ width: `${teams.length === 0 ? 0 : (submissions.length / teams.length) * 100}%` }} />
                     </div>
                   </div>
@@ -1776,7 +1782,7 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setShowAddParticipant(true)}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
+                  className="flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
                 >
                   <Plus className="w-4 h-4" />Add One
                 </button>
@@ -1813,7 +1819,7 @@ export default function AdminDashboard() {
                 {participants.map((p, i) => (
                   <div key={p.id} className={`grid grid-cols-12 px-5 py-3.5 items-center ${i < participants.length - 1 ? 'border-b border-gray-100' : ''}`}>
                     <div className="col-span-3 flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-tl-red to-tl-burgundy flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                         {p.name.charAt(0).toUpperCase()}
                       </div>
                       <span className="text-slate-900 text-sm font-medium truncate">{p.name}</span>
@@ -1846,7 +1852,7 @@ export default function AdminDashboard() {
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button onClick={() => { setDeletingParticipantId(p.id); setDeletingParticipantName(p.name); }}
-                        className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition-colors" title="Remove">
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-tl-teal hover:bg-tl-teal-light/20 transition-colors" title="Remove">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1864,7 +1870,7 @@ export default function AdminDashboard() {
               <h2 className="text-slate-900 font-bold text-lg">Registered Teams ({teams.length})</h2>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
+                className="flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
               >
                 <Plus className="w-4 h-4" />Add Team
               </button>
@@ -1971,7 +1977,7 @@ export default function AdminDashboard() {
                   </button>
                 )}
                 <button onClick={() => setShowUsageUpload(true)}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm shadow-md shadow-red-500/20">
+                  className="flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm shadow-md shadow-red-500/20">
                   <Upload className="w-4 h-4" />Upload snapshot
                 </button>
               </div>

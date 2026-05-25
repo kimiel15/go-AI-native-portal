@@ -44,7 +44,7 @@ export default function PasswordForm() {
           value={password}
           onChange={e => setPassword(e.target.value)}
           placeholder="Enter admin password"
-          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
         />
       </div>
 
@@ -58,7 +58,7 @@ export default function PasswordForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all"
+        className="w-full flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all"
       >
         {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Unlocking...</> : 'Unlock Admin Access'}
       </button>

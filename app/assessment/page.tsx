@@ -40,7 +40,7 @@ function ScoreBar({ label, score, max }: { label: string; score: number; max: nu
       </div>
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-red-500 to-rose-500 rounded-full transition-all duration-500"
+          className="h-full bg-gradient-to-r from-tl-red to-tl-orange rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -56,7 +56,7 @@ function RadioOption({ name, value, label, points, selected, onChange }: {
     <label
       className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
         selected
-          ? 'border-red-400 bg-red-50'
+          ? 'border-tl-teal bg-tl-teal-light/20'
           : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
       }`}
     >
@@ -180,7 +180,7 @@ function AssessmentForm() {
       <div className="max-w-2xl mx-auto px-6 py-12">
         <div className={`border ${colors.border} ${colors.bg} rounded-2xl p-8 mb-6`}>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-tl-red to-tl-burgundy flex items-center justify-center">
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -243,7 +243,7 @@ function AssessmentForm() {
         <p className="text-slate-400 text-sm text-center mb-6">
           Your squad lead will review and confirm your final level before the event.
         </p>
-        <a href="/" className="block text-center bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition-all">
+        <a href="/" className="block text-center bg-tl-red hover:bg-tl-burgundy text-white font-semibold py-3 rounded-xl transition-all">
           Back to Home
         </a>
       </div>
@@ -255,7 +255,7 @@ function AssessmentForm() {
     <div className="max-w-2xl mx-auto px-6 py-12">
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-tl-orange to-tl-red flex items-center justify-center">
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -274,7 +274,7 @@ function AssessmentForm() {
         <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-slate-900 font-semibold text-sm uppercase tracking-widest">Your Information</h2>
-            <span className="ml-auto flex items-center gap-1 text-emerald-600 text-xs font-medium">
+            <span className="ml-auto flex items-center gap-1 text-tl-teal text-xs font-medium">
               <UserCheck className="w-3.5 h-3.5" /> Auto-filled from your account
             </span>
           </div>
@@ -480,7 +480,7 @@ function AssessmentForm() {
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-300 ease-out"
+                className="h-full bg-gradient-to-r from-tl-orange to-tl-red rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -489,7 +489,7 @@ function AssessmentForm() {
         )}
 
         <button type="submit" disabled={status === 'loading'}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/20">
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-tl-red to-tl-orange hover:from-tl-burgundy hover:to-tl-red disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/20">
           {status === 'loading' ? (
             <><Loader2 className="w-4 h-4 animate-spin" /> Scoring with Claude AI...</>
           ) : (
@@ -506,7 +506,7 @@ function AssessmentForm() {
 
 export default function AssessmentPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen tl-page-bg">
       <NavBar />
       <Suspense fallback={<div className="text-slate-500 text-center py-20">Loading...</div>}>
         <AssessmentForm />

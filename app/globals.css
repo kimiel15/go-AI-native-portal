@@ -40,6 +40,11 @@ body {
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }
 
+/* Shared page background — cream gradient matching TL brand narrative */
+.tl-page-bg {
+  background: linear-gradient(135deg, var(--tl-cream) 0%, #ffffff 60%, #f0f8fa 100%);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
   -webkit-background-clip: text;

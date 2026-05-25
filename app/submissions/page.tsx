@@ -22,7 +22,7 @@ export default async function SubmissionsPage() {
   const canSubmit = !!myTeam && !mySubmission;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen tl-page-bg">
       <NavBar />
 
       <div className="max-w-4xl mx-auto px-6 py-12">
@@ -30,11 +30,11 @@ export default async function SubmissionsPage() {
         <div className="flex items-start justify-between gap-4 mb-10">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-tl-red to-tl-burgundy flex items-center justify-center shadow-lg">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-rose-400 text-xs uppercase tracking-widest">Hackathon</p>
+                <p className="text-tl-teal text-xs uppercase tracking-widest">Hackathon</p>
                 <h1 className="text-2xl font-bold text-slate-900">Project Submissions</h1>
               </div>
             </div>
@@ -45,14 +45,14 @@ export default async function SubmissionsPage() {
             </p>
           </div>
           {mySubmission ? (
-            <div className="flex-shrink-0 flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold px-5 py-2.5 rounded-xl text-sm">
+            <div className="flex-shrink-0 flex items-center gap-2 bg-tl-teal-light/20 border border-tl-teal-light text-tl-teal font-semibold px-5 py-2.5 rounded-xl text-sm">
               <CheckCircle2 className="w-4 h-4" />
               Your team submitted
             </div>
           ) : canSubmit ? (
             <Link
               href="/submit"
-              className="flex-shrink-0 flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm shadow-md shadow-rose-500/20"
+              className="flex-shrink-0 flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm shadow-md shadow-rose-500/20"
             >
               <Plus className="w-4 h-4" />
               Submit Project
@@ -78,7 +78,7 @@ export default async function SubmissionsPage() {
             {canSubmit && (
               <Link
                 href="/submit"
-                className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold px-6 py-3 rounded-xl transition-all text-sm"
+                className="inline-flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white font-semibold px-6 py-3 rounded-xl transition-all text-sm"
               >
                 Submit Your Project <ArrowRight className="w-4 h-4" />
               </Link>
@@ -121,7 +121,7 @@ export default async function SubmissionsPage() {
                       href={sub.gitRepoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-rose-500 hover:text-rose-600 text-sm font-medium transition-colors group/link"
+                      className="inline-flex items-center gap-1.5 text-tl-teal hover:text-tl-sky text-sm font-medium transition-colors group/link"
                     >
                       <GitBranch className="w-3.5 h-3.5" />
                       View Repository
@@ -136,14 +136,14 @@ export default async function SubmissionsPage() {
 
         {/* Bottom CTA — only show if the user is still allowed to submit */}
         {submissions.length > 0 && canSubmit && (
-          <div className="mt-10 bg-white border border-rose-100 rounded-2xl p-6 flex items-center justify-between gap-4">
+          <div className="mt-10 bg-white border border-tl-teal-light/40 rounded-2xl p-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-slate-900 font-semibold text-sm">Ready to submit your project?</p>
               <p className="text-slate-400 text-xs mt-0.5">Deadline: EOD June 21, 2026</p>
             </div>
             <Link
               href="/submit"
-              className="flex-shrink-0 flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm"
+              className="flex-shrink-0 flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm"
             >
               Submit Your Project <ArrowRight className="w-4 h-4" />
             </Link>
@@ -152,12 +152,12 @@ export default async function SubmissionsPage() {
 
         {/* Confirmation for teams that have already submitted */}
         {submissions.length > 0 && mySubmission && (
-          <div className="mt-10 bg-emerald-50 border border-emerald-200 rounded-2xl p-6 flex items-center justify-between gap-4">
+          <div className="mt-10 bg-tl-teal-light/20 border border-tl-teal-light rounded-2xl p-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-tl-teal flex-shrink-0" />
               <div>
-                <p className="text-emerald-800 font-semibold text-sm">Your team has already submitted</p>
-                <p className="text-emerald-700/80 text-xs mt-0.5">
+                <p className="text-tl-teal font-semibold text-sm">Your team has already submitted</p>
+                <p className="text-tl-teal/70 text-xs mt-0.5">
                   Submitted {new Date(mySubmission.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — each team can submit only once.
                 </p>
               </div>

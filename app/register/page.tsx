@@ -52,7 +52,7 @@ function MemberAutocomplete({
         autoComplete="off"
         onChange={e => { onChange(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
-        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
       />
       {open && suggestions.length > 0 && (
         <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
@@ -61,7 +61,7 @@ function MemberAutocomplete({
               <button
                 type="button"
                 onMouseDown={e => { e.preventDefault(); onSelect(m); setOpen(false); }}
-                className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors"
+                className="w-full text-left px-4 py-2.5 hover:bg-tl-cream transition-colors"
               >
                 <p className="text-slate-900 text-sm font-medium leading-tight">{m.name}</p>
                 <p className="text-slate-400 text-xs">
@@ -215,12 +215,12 @@ export default function RegisterPage() {
 
   if (status === 'success') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+      <div className="min-h-screen tl-page-bg">
         <NavBar />
         <div className="max-w-xl mx-auto px-6 py-20 text-center">
           <div className="bg-white border border-gray-200 rounded-2xl p-10">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-8 h-8 text-emerald-600" />
+            <div className="w-16 h-16 rounded-full bg-tl-teal-light/30 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-8 h-8 text-tl-teal" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Team Registered!</h2>
             <p className="text-slate-500 mb-8">
@@ -228,7 +228,7 @@ export default function RegisterPage() {
             </p>
             <div className="flex flex-col gap-3">
               <a href={`/submit?teamId=${teamId}`}
-                className="block bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition-all">
+                className="block bg-tl-red hover:bg-tl-burgundy text-white font-semibold py-3 rounded-xl transition-all">
                 Next: Submit Project Profile →
               </a>
               <a href="/" className="block bg-gray-100 hover:bg-gray-200 text-slate-900 font-semibold py-3 rounded-xl transition-all">
@@ -244,16 +244,16 @@ export default function RegisterPage() {
   // Logged-in user is already on a team — show summary instead of form
   if (existingChecked && existingTeam) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+      <div className="min-h-screen tl-page-bg">
         <NavBar />
         <div className="max-w-xl mx-auto px-6 py-16">
           <div className="bg-white border border-gray-200 rounded-2xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <ShieldCheck className="w-6 h-6 text-emerald-600" />
+              <div className="w-12 h-12 rounded-xl bg-tl-teal-light/30 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-6 h-6 text-tl-teal" />
               </div>
               <div>
-                <p className="text-emerald-600 text-xs uppercase tracking-widest font-semibold">Already Registered</p>
+                <p className="text-tl-teal text-xs uppercase tracking-widest font-semibold">Already Registered</p>
                 <h1 className="text-xl font-bold text-slate-900">You&apos;re on <span className="text-red-600">{existingTeam.teamName}</span></h1>
               </div>
             </div>
@@ -279,7 +279,7 @@ export default function RegisterPage() {
 
             <div className="flex flex-col gap-3">
               <a href={`/submit?teamId=${existingTeam.id}`}
-                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition-all">
+                className="flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white font-semibold py-3 rounded-xl transition-all">
                 Submit Project Profile <ArrowRight className="w-4 h-4" />
               </a>
               <a href="/" className="block text-center bg-gray-100 hover:bg-gray-200 text-slate-900 font-semibold py-3 rounded-xl transition-all">
@@ -293,13 +293,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen tl-page-bg">
       <NavBar />
       <div className="max-w-2xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-tl-red to-tl-burgundy flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -325,7 +325,7 @@ export default function RegisterPage() {
                   <span className="flex items-center gap-1 text-slate-400 text-xs"><Loader2 className="w-3 h-3 animate-spin" /> Checking…</span>
                 )}
                 {nameStatus === 'available' && (
-                  <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium"><CheckCircle className="w-3.5 h-3.5" /> Available</span>
+                  <span className="flex items-center gap-1 text-tl-teal text-xs font-medium"><CheckCircle className="w-3.5 h-3.5" /> Available</span>
                 )}
                 {nameStatus === 'taken' && (
                   <span className="flex items-center gap-1 text-red-500 text-xs font-medium"><AlertCircle className="w-3.5 h-3.5" /> Already taken</span>
@@ -334,9 +334,9 @@ export default function RegisterPage() {
               <input type="text" required value={teamName} onChange={e => setTeamName(e.target.value)}
                 placeholder="e.g., Ctrl + AI + Del"
                 className={`w-full bg-white border rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none transition-colors ${
-                  nameStatus === 'taken' ? 'border-red-400 focus:border-red-500' :
-                  nameStatus === 'available' ? 'border-emerald-400 focus:border-emerald-500' :
-                  'border-gray-200 focus:border-red-500'
+                  nameStatus === 'taken' ? 'border-red-400 focus:border-tl-teal' :
+                  nameStatus === 'available' ? 'border-tl-teal focus:border-tl-teal' :
+                  'border-gray-200 focus:border-tl-teal'
                 }`} />
             </div>
 
@@ -344,7 +344,7 @@ export default function RegisterPage() {
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-slate-600 text-sm">Squad <span className="text-red-400">*</span></label>
                 {squadLocked && (
-                  <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium">
+                  <span className="flex items-center gap-1 text-tl-teal text-xs font-medium">
                     <UserCheck className="w-3.5 h-3.5" /> From your profile
                   </span>
                 )}
@@ -364,7 +364,7 @@ export default function RegisterPage() {
                   value={squad}
                   onChange={e => setSquad(e.target.value)}
                   placeholder="Enter your squad name"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-500 transition-colors"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
                 />
               )}
             </div>
@@ -452,7 +452,7 @@ export default function RegisterPage() {
           )}
 
           <button type="submit" disabled={status === 'loading' || nameStatus === 'taken'}
-            className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all">
+            className="w-full flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all">
             {status === 'loading'
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Registering...</>
               : 'Register Team'}

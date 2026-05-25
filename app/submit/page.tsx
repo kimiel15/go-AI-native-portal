@@ -60,7 +60,7 @@ function ConfirmSubmitDialog({
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-tl-red hover:bg-tl-burgundy text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
@@ -79,8 +79,8 @@ function SubmittedView({ sub }: { sub: ExistingSubmission }) {
   return (
     <div className="max-w-xl mx-auto px-6 py-20 text-center">
       <div className="bg-white border border-gray-200 rounded-2xl p-10">
-        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-8 h-8 text-emerald-600" />
+        <div className="w-16 h-16 rounded-full bg-tl-teal-light/30 flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-8 h-8 text-tl-teal" />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Project Submitted</h2>
         <p className="text-slate-500 text-sm mb-1">Your submission is locked and under review.</p>
@@ -95,7 +95,7 @@ function SubmittedView({ sub }: { sub: ExistingSubmission }) {
               href={sub.gitRepoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-rose-500 hover:text-rose-600 text-sm font-medium break-all transition-colors"
+              className="flex items-center gap-2 text-tl-red hover:text-tl-burgundy text-sm font-medium break-all transition-colors"
             >
               <GitBranch className="w-3.5 h-3.5 flex-shrink-0" />
               {sub.gitRepoUrl}
@@ -235,11 +235,11 @@ function SubmitForm() {
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-tl-red to-tl-burgundy flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-rose-400 text-xs uppercase tracking-widest">Step 02</p>
+              <p className="text-tl-red text-xs uppercase tracking-widest">Step 02</p>
               <h1 className="text-2xl font-bold text-slate-900">Project Submission</h1>
             </div>
           </div>
@@ -263,7 +263,7 @@ function SubmitForm() {
             className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-rose-400 flex-shrink-0" />
+              <BookOpen className="w-4 h-4 text-tl-red flex-shrink-0" />
               <span className="text-slate-900 font-semibold text-sm">README.md Structure Guide</span>
               <span className="text-slate-400 text-xs hidden sm:inline">— what judges look for</span>
             </div>
@@ -334,7 +334,7 @@ command 3
                 required
                 value={teamId}
                 onChange={e => setTeamId(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-rose-500 transition-colors"
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-tl-teal transition-colors"
               >
                 <option value="">-- Select your registered team --</option>
                 {teams.map(t => <option key={t.id} value={t.id}>{t.teamName}</option>)}
@@ -349,7 +349,7 @@ command 3
           {/* Git Repo URL */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6">
             <div className="flex items-start gap-2 mb-3">
-              <GitBranch className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+              <GitBranch className="w-4 h-4 text-tl-red flex-shrink-0 mt-0.5" />
               <div>
                 <label className="block text-slate-900 font-semibold text-sm">
                   Git Repository URL <span className="text-red-400">*</span>
@@ -365,14 +365,14 @@ command 3
               value={gitRepoUrl}
               onChange={e => setGitRepoUrl(e.target.value)}
               placeholder="https://github.com/your-org/your-repo"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors font-mono text-sm"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors font-mono text-sm"
             />
           </div>
 
           {/* Headline Result */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6">
             <div className="flex items-start gap-2 mb-3">
-              <BarChart2 className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+              <BarChart2 className="w-4 h-4 text-tl-red flex-shrink-0 mt-0.5" />
               <div>
                 <label className="block text-slate-900 font-semibold text-sm">
                   Headline Result <span className="text-red-400">*</span>
@@ -388,15 +388,15 @@ command 3
               value={measuredResults}
               onChange={e => setMeasuredResults(e.target.value)}
               placeholder="e.g., 87 tickets deflected out of 240 (36% deflection rate) over 5 days — saving ~14 engineer-hours per week."
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors resize-none leading-relaxed text-sm"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors resize-none leading-relaxed text-sm"
             />
           </div>
 
           {/* Feedback banners */}
           {status === 'saved' && (
-            <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-              <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-              <p className="text-emerald-700 text-sm">{savedMsg}</p>
+            <div className="flex items-start gap-3 bg-tl-teal-light/20 border border-tl-teal-light rounded-xl px-4 py-3">
+              <CheckCircle className="w-5 h-5 text-tl-teal flex-shrink-0 mt-0.5" />
+              <p className="text-tl-teal text-sm">{savedMsg}</p>
             </div>
           )}
           {status === 'error' && (
@@ -427,7 +427,7 @@ command 3
               type="button"
               disabled={!canSubmit || isWorking}
               onClick={() => { setSavedMsg(''); setErrorMsg(''); setShowConfirm(true); }}
-              className="flex-1 flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all shadow-md shadow-rose-500/20"
+              className="flex-1 flex items-center justify-center gap-2 bg-tl-red hover:bg-tl-burgundy disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all shadow-md shadow-rose-500/20"
             >
               <Lock className="w-4 h-4" /> Submit for Review
             </button>
@@ -444,7 +444,7 @@ command 3
 
 export default function SubmitPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen tl-page-bg">
       <NavBar />
       <Suspense fallback={<div className="text-slate-500 text-center py-20">Loading...</div>}>
         <SubmitForm />
