@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import {
   Gavel, LogOut, Loader2, Trophy, Medal, ExternalLink,
   ChevronDown, ChevronUp, Users, AlertCircle, MessageSquare,
-  LayoutList, Table2, X,
+  LayoutList, Table2, X, Download,
 } from 'lucide-react';
 
 interface JudgeScoreDetail {
@@ -391,6 +391,70 @@ function ScoreTable({ rankings, judges, onNotesClick }: {
   );
 }
 
+// ─── CSV Export ───────────────────────────────────────────────────────────────
+
+function exportCSV(data: RankingsData) {
+  const { judges, rankings } = data;
+
+  // Header row
+  const headers = [
+    'Rank',
+    'Team',
+    'Git Repo',
+    'Measured Results',
+    ...judges.map(j => judgeName(j)),
+    ...judges.map(j => `${judgeName(j)} – BV`),
+    ...judges.map(j => `${judgeName(j)} – SE`),
+    ...judges.map(j => `${judgeName(j)} – PE`),
+    ...judges.map(j => `${judgeName(j)} – PC`),
+    ...judges.map(j => `${judgeName(j)} – AI`),
+    'Avg Total',
+    'Avg BV', 'Avg SE', 'Avg PE', 'Avg PC', 'Avg AI',
+    'Judges Scored',
+  ];
+
+  const escape = (v: string | number | null | undefined) => {
+    const s = v == null ? '' : String(v);
+    // Wrap in quotes if contains comma, newline or quote; escape inner quotes
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const rows = rankings.map((sub, i) => {
+    const scoreMap = Object.fromEntries(sub.scores.map(s => [s.judgeId, s]));
+    return [
+      i + 1,
+      sub.teamName,
+      sub.gitRepoUrl,
+      sub.measuredResults,
+      // Total score per judge
+      ...judges.map(j => scoreMap[j]?.totalScore ?? ''),
+      // Per-criterion per-judge
+      ...judges.map(j => scoreMap[j]?.businessValue ?? ''),
+      ...judges.map(j => scoreMap[j]?.solutionEffectiveness ?? ''),
+      ...judges.map(j => scoreMap[j]?.productionEvidence ?? ''),
+      ...judges.map(j => scoreMap[j]?.problemClarity ?? ''),
+      ...judges.map(j => scoreMap[j]?.aiIntegration ?? ''),
+      // Averages
+      sub.judgeCount > 0 ? sub.avgTotal : '',
+      sub.judgeCount > 0 ? sub.avgBusinessValue : '',
+      sub.judgeCount > 0 ? sub.avgSolutionEffectiveness : '',
+      sub.judgeCount > 0 ? sub.avgProductionEvidence : '',
+      sub.judgeCount > 0 ? sub.avgProblemClarity : '',
+      sub.judgeCount > 0 ? sub.avgAiIntegration : '',
+      sub.judgeCount,
+    ].map(escape);
+  });
+
+  const csv = [headers.map(escape), ...rows].map(r => r.join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `hackathon-scores-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 type ViewMode = 'list' | 'table';
@@ -457,7 +521,7 @@ export default function RankingsPage() {
       </nav>
 
       <div className="max-w-5xl mx-auto px-6 py-10">
-        {/* Header + view toggle */}
+        {/* Header + controls */}
         <div className="flex items-start justify-between mb-8 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 mb-1">Live Rankings</h1>
@@ -468,24 +532,37 @@ export default function RankingsPage() {
             </p>
           </div>
 
-          {/* Toggle */}
-          <div className="flex-shrink-0 flex items-center bg-gray-100 rounded-xl p-1 gap-1">
-            <button
-              onClick={() => setView('list')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                view === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              <LayoutList className="w-3.5 h-3.5" />Ranked
-            </button>
-            <button
-              onClick={() => setView('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                view === 'table' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              <Table2 className="w-3.5 h-3.5" />Table
-            </button>
+          <div className="flex-shrink-0 flex items-center gap-2">
+            {/* Export CSV */}
+            {data && rankings.length > 0 && (
+              <button
+                onClick={() => exportCSV(data)}
+                title="Export scores to CSV"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />Export CSV
+              </button>
+            )}
+
+            {/* View toggle */}
+            <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-1">
+              <button
+                onClick={() => setView('list')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  view === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <LayoutList className="w-3.5 h-3.5" />Ranked
+              </button>
+              <button
+                onClick={() => setView('table')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  view === 'table' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <Table2 className="w-3.5 h-3.5" />Table
+              </button>
+            </div>
           </div>
         </div>
 
