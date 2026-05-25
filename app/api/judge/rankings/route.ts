@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getJudgeSession } from '@/lib/judge-auth';
 import prisma from '@/lib/prisma';
 
+// Keep in sync with ALLOWED_JUDGES in app/api/judge/login/route.ts
+const JUDGE_ROSTER = ['ribenitor', 'karens', 'jezriela', 'michaell'];
+
 export async function GET() {
   const judgeId = await getJudgeSession();
   if (!judgeId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -71,5 +74,9 @@ export async function GET() {
     return b.avgTotal - a.avgTotal;
   });
 
-  return NextResponse.json(rankings);
+  // Merge roster with any extra judges who already scored (e.g. 5th judge added later)
+  const extraJudges = [...new Set(scores.map(s => s.judgeId))].filter(id => !JUDGE_ROSTER.includes(id));
+  const judges = [...JUDGE_ROSTER, ...extraJudges];
+
+  return NextResponse.json({ judges, rankings });
 }
