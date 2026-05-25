@@ -2,7 +2,18 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1A1A1A;
+
+  /* ── TrendLife brand tokens (source: marketing-harness/design/tokens.css) ── */
+  --tl-red:        #E31E2D;
+  --tl-logo-red:   #d71920;
+  --tl-teal:       #0F6272;
+  --tl-sky:        #00859B;
+  --tl-teal-light: #A2D4DF;
+  --tl-cream:      #F4EFEA;
+  --tl-cream-warm: #FFF8F2;
+  --tl-orange:     #F66F00;
+  --tl-burgundy:   #BA1A26;
 }
 
 @theme inline {
@@ -10,19 +21,23 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Expose TrendLife tokens as Tailwind utilities (bg-tl-red, text-tl-teal, etc.) */
+  --color-tl-red:        var(--tl-red);
+  --color-tl-logo-red:   var(--tl-logo-red);
+  --color-tl-teal:       var(--tl-teal);
+  --color-tl-sky:        var(--tl-sky);
+  --color-tl-teal-light: var(--tl-teal-light);
+  --color-tl-cream:      var(--tl-cream);
+  --color-tl-cream-warm: var(--tl-cream-warm);
+  --color-tl-orange:     var(--tl-orange);
+  --color-tl-burgundy:   var(--tl-burgundy);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }
 
 .gradient-text {

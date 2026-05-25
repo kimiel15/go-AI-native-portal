@@ -2,7 +2,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Gavel, LogOut, Loader2, CheckCircle2, Clock, ExternalLink, ChevronDown, ChevronUp, Star, Trophy } from 'lucide-react';
+import { LogOut, Loader2, CheckCircle2, Clock, ExternalLink, ChevronDown, ChevronUp, Star, Trophy } from 'lucide-react';
+
+function TLMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 133.91 122.64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M132.07,30.67c-1.84-7.9-5.5-15.32-11.17-21.12-25.65-26.27-60.08,6.57-68.61,38.85h0c-5.15,17.62-7.08,38.58,4.11,54.59-15.78-.09-37.51-3.93-43.7-20.4-4.14-17.3,16.12-29.21,30.77-32.61.6-2.33,1.29-4.73,2.11-7C-25.65,55.51-6.93,122.31,57.21,122.6c58.67,1.72,84.05-52.55,74.86-91.92ZM112.31,47.68c-1.41,13.28-11.89,47.54-33.33,51.77-2.59.51-5.27.41-7.78-.4-17.94-5.83-18.06-35.94-12.19-51.02,29.97-.12,40.99,16.13,40.99,16.13,1.35-3.59,2.44-7.34,3.24-11.18-16.52-12.08-41.66-11.28-41.66-11.28C76.94,7.26,117.59.11,112.31,47.68Z" fill="currentColor"/>
+    </svg>
+  );
+}
 
 interface Submission {
   id: string;
@@ -112,8 +120,8 @@ function SubmissionCard({ sub, judgeId, onScored }: { sub: Submission; judgeId: 
         className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${scored ? 'bg-emerald-100' : 'bg-gray-100'}`}>
-            {scored ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Clock className="w-4 h-4 text-slate-400" />}
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${scored ? 'bg-tl-teal-light/30' : 'bg-gray-100'}`}>
+            {scored ? <CheckCircle2 className="w-4 h-4 text-tl-teal" /> : <Clock className="w-4 h-4 text-slate-400" />}
           </div>
           <div className="min-w-0">
             <p className="text-slate-900 font-semibold text-sm truncate">{sub.teamName}</p>
@@ -178,7 +186,7 @@ function SubmissionCard({ sub, judgeId, onScored }: { sub: Submission; judgeId: 
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all"
+            className="w-full flex items-center justify-center gap-2 bg-tl-teal hover:bg-tl-sky disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all"
           >
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> :
              saved  ? <><CheckCircle2 className="w-4 h-4" /> Saved!</> :
@@ -224,15 +232,13 @@ export default function JudgeDashboard() {
   const total   = submissions.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, var(--tl-cream) 0%, #ffffff 60%, #f0f8fa 100%)' }}>
       {/* Nav */}
       <nav className="border-b border-red-100 bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
-                <Gavel className="w-4 h-4 text-white" />
-              </div>
+              <TLMark className="w-7 h-7 text-tl-logo-red" />
               <div>
                 <p className="text-slate-900 font-bold text-sm leading-tight">Judges&apos; Corner</p>
                 <p className="text-slate-400 text-xs leading-tight">Go AI-Native Hackathon</p>
@@ -276,7 +282,7 @@ export default function JudgeDashboard() {
               <span className="text-slate-900 font-bold text-sm">{scored} / {total}</span>
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-red-500 to-rose-400 rounded-full transition-all"
+              <div className="h-full bg-gradient-to-r from-tl-red to-tl-orange rounded-full transition-all"
                 style={{ width: `${total ? (scored / total) * 100 : 0}%` }} />
             </div>
           </div>
@@ -289,7 +295,7 @@ export default function JudgeDashboard() {
           </div>
         ) : submissions.length === 0 ? (
           <div className="text-center py-20 text-slate-400">
-            <Gavel className="w-8 h-8 mx-auto mb-3 opacity-30" />
+            <TLMark className="w-8 h-8 mx-auto mb-3 opacity-30" />
             <p className="text-sm">No submitted projects yet.</p>
           </div>
         ) : (

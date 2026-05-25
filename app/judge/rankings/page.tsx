@@ -2,10 +2,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Gavel, LogOut, Loader2, Trophy, Medal, ExternalLink,
+  LogOut, Loader2, Trophy, Medal, ExternalLink,
   ChevronDown, ChevronUp, Users, AlertCircle, MessageSquare,
   LayoutList, Table2, X, Download,
 } from 'lucide-react';
+
+function TLMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 133.91 122.64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M132.07,30.67c-1.84-7.9-5.5-15.32-11.17-21.12-25.65-26.27-60.08,6.57-68.61,38.85h0c-5.15,17.62-7.08,38.58,4.11,54.59-15.78-.09-37.51-3.93-43.7-20.4-4.14-17.3,16.12-29.21,30.77-32.61.6-2.33,1.29-4.73,2.11-7C-25.65,55.51-6.93,122.31,57.21,122.6c58.67,1.72,84.05-52.55,74.86-91.92ZM112.31,47.68c-1.41,13.28-11.89,47.54-33.33,51.77-2.59.51-5.27.41-7.78-.4-17.94-5.83-18.06-35.94-12.19-51.02,29.97-.12,40.99,16.13,40.99,16.13,1.35-3.59,2.44-7.34,3.24-11.18-16.52-12.08-41.66-11.28-41.66-11.28C76.94,7.26,117.59.11,112.31,47.68Z" fill="currentColor"/>
+    </svg>
+  );
+}
 
 interface JudgeScoreDetail {
   judgeId: string;
@@ -63,7 +71,7 @@ function judgeName(id: string) {
 }
 
 function scoreColor(score: number) {
-  return score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-500' : 'text-red-500';
+  return score >= 80 ? 'text-tl-teal' : score >= 60 ? 'text-tl-orange' : 'text-tl-red';
 }
 
 // ─── Score Bar ────────────────────────────────────────────────────────────────
@@ -71,10 +79,10 @@ function scoreColor(score: number) {
 function ScoreBar({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   const color =
-    pct >= 80 ? 'from-emerald-500 to-emerald-400' :
-    pct >= 60 ? 'from-amber-500 to-amber-400' :
-    pct >= 40 ? 'from-orange-500 to-orange-400' :
-                'from-red-500 to-red-400';
+    pct >= 80 ? 'from-tl-teal to-tl-sky' :
+    pct >= 60 ? 'from-tl-orange to-amber-400' :
+    pct >= 40 ? 'from-tl-red to-rose-400' :
+                'from-red-400 to-red-300';
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -184,7 +192,7 @@ function RankedCard({ sub, rank, onNotesClick }: {
           {sub.scores.some(s => s.notes) && (
             <button
               onClick={e => { e.stopPropagation(); onNotesClick(); }}
-              className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+              className="p-1 rounded-lg text-slate-300 hover:text-tl-teal hover:bg-tl-teal-light/20 transition-colors"
               title="View judges' comments"
             >
               <MessageSquare className="w-3.5 h-3.5" />
@@ -302,7 +310,7 @@ function ScoreTable({ rankings, judges, onNotesClick }: {
             const hasAnyNote = sub.scores.some(s => s.notes);
 
             return (
-              <tr key={sub.id} className={`border-b border-gray-100 last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'} hover:bg-red-50/30 transition-colors`}>
+              <tr key={sub.id} className={`border-b border-gray-100 last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'} hover:bg-tl-teal-light/10 transition-colors`}>
 
                 {/* Team cell */}
                 <td className="px-5 py-3">
@@ -373,7 +381,7 @@ function ScoreTable({ rankings, judges, onNotesClick }: {
                     title={hasAnyNote ? "View judges' comments" : sub.scores.length === 0 ? 'Not yet scored' : 'No comments left'}
                     className={`mx-auto flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
                       hasAnyNote
-                        ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                        ? 'text-tl-teal bg-tl-teal-light/20 hover:bg-tl-teal-light/40'
                         : sub.scores.length > 0
                           ? 'text-slate-300 bg-gray-50 hover:bg-gray-100'
                           : 'text-slate-200 cursor-not-allowed'
@@ -487,15 +495,13 @@ export default function RankingsPage() {
   const total    = rankings.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, var(--tl-cream) 0%, #ffffff 60%, #f0f8fa 100%)' }}>
       {/* Nav */}
       <nav className="border-b border-red-100 bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
-                <Gavel className="w-4 h-4 text-white" />
-              </div>
+              <TLMark className="w-7 h-7 text-tl-logo-red" />
               <div>
                 <p className="text-slate-900 font-bold text-sm leading-tight">Judges&apos; Corner</p>
                 <p className="text-slate-400 text-xs leading-tight">Go AI-Native Hackathon</p>
@@ -538,7 +544,7 @@ export default function RankingsPage() {
               <button
                 onClick={() => exportCSV(data)}
                 title="Export scores to CSV"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-slate-500 hover:text-tl-teal hover:border-tl-teal-light hover:bg-tl-teal-light/20 transition-all"
               >
                 <Download className="w-3.5 h-3.5" />Export CSV
               </button>
