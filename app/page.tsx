@@ -209,7 +209,7 @@ export default function Home() {
                 <td className="px-6 py-4 text-sm font-semibold text-tl-teal align-top">Measure &amp; Document</td>
                 <td className="px-6 py-4 align-top">
                   <ul className="space-y-1.5">
-                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Measure results and update documentation in GitHub for results</li>
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Complete results &amp; documentation and upload in Github EMU</li>
                     <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Run assessment (starting June 22)</li>
                   </ul>
                 </td>
@@ -227,7 +227,7 @@ export default function Home() {
               {/* Main Event */}
               <tr className="bg-yellow-50">
                 <td className="px-6 py-4 text-sm font-semibold text-slate-700 font-mono align-top">June 27</td>
-                <td className="px-6 py-4 text-sm font-semibold text-yellow-700 align-top">Event 🎉</td>
+                <td className="px-6 py-4 text-sm font-semibold text-yellow-700 align-top">Go AI-Native Day! 🎉</td>
                 <td className="px-6 py-4 align-top">
                   <ul className="space-y-1.5">
                     <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Recap event and recognize winners</li>
