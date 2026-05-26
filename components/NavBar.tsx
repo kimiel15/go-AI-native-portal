@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { Home, LogOut } from 'lucide-react';
+import { Home, LogOut, ClipboardList } from 'lucide-react';
 
 function TLMark({ className }: { className?: string }) {
   return (
@@ -44,6 +44,10 @@ export default function NavBar() {
               </button>
             </div>
           )}
+          <Link href="/squad-lead" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-tl-teal transition-colors">
+            <ClipboardList className="w-4 h-4" />
+            <span className="hidden sm:inline">My Squad</span>
+          </Link>
           <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
             <Home className="w-4 h-4" />
             <span className="hidden sm:inline">Home</span>
