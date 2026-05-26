@@ -5,13 +5,21 @@ import NavBar from '@/components/NavBar';
 import {
   Users, ShieldCheck, AlertTriangle, Loader2, ThumbsUp,
   ArrowUp, ArrowDown, ChevronDown, Sparkles, CheckCircle2,
-  ClipboardList,
+  ClipboardList, Lock,
 } from 'lucide-react';
 import { Assessment } from '@/types';
+import { SquadDef } from '@/lib/squad-hierarchy';
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-interface SquadOption { name: string; count: number; }
+// ── Role types ─────────────────────────────────────────────────────────────────
+type AccessRole = 'manager' | 'squad-lead' | 'none';
 
+interface AccessResult {
+  role: AccessRole;
+  name: string;
+  squads: SquadDef[];
+}
+
+// ── Constants ──────────────────────────────────────────────────────────────────
 const LEVELS = [
   'Level 1 – Prompt Creator',
   'Level 2 – Tool Builder',
@@ -24,7 +32,7 @@ function levelBadge(level: string) {
   return 'border-rose-300 bg-rose-50 text-rose-600';
 }
 
-// ── Validation Card ────────────────────────────────────────────────────────────
+// ── Assessment Card ────────────────────────────────────────────────────────────
 function AssessmentCard({
   assessment,
   defaultValidatedBy,
@@ -190,7 +198,7 @@ function AssessmentCard({
             <p className="text-slate-500 text-xs">
               {validated.action.charAt(0).toUpperCase() + validated.action.slice(1)}d by {validated.validatedBy}
             </p>
-            <p className="text-slate-400 text-xs leading-relaxed">"{validated.reason}"</p>
+            <p className="text-slate-400 text-xs leading-relaxed">&ldquo;{validated.reason}&rdquo;</p>
           </div>
         </div>
       )}
@@ -212,9 +220,9 @@ function AssessmentCard({
               {/* Action buttons */}
               <div className="flex gap-2">
                 {([
-                  { id: 'confirm'   as const, icon: ThumbsUp,  label: 'Confirm',    color: 'border-tl-teal bg-tl-teal-light/20 text-tl-teal' },
-                  { id: 'upgrade'   as const, icon: ArrowUp,   label: 'Upgrade',    color: 'border-tl-sky bg-tl-teal-light/30 text-tl-sky' },
-                  { id: 'downgrade' as const, icon: ArrowDown, label: 'Downgrade',  color: 'border-tl-orange/60 bg-orange-50 text-tl-orange' },
+                  { id: 'confirm'   as const, icon: ThumbsUp,  label: 'Confirm',   color: 'border-tl-teal bg-tl-teal-light/20 text-tl-teal' },
+                  { id: 'upgrade'   as const, icon: ArrowUp,   label: 'Upgrade',   color: 'border-tl-sky bg-tl-teal-light/30 text-tl-sky' },
+                  { id: 'downgrade' as const, icon: ArrowDown, label: 'Downgrade', color: 'border-tl-orange/60 bg-orange-50 text-tl-orange' },
                 ] as const).map(({ id, icon: Icon, label, color }) => (
                   <button
                     key={id}
@@ -237,7 +245,7 @@ function AssessmentCard({
                   <label className="block text-slate-600 text-sm mb-1.5">Final Level</label>
                   <select
                     value={finalLevel}
-                    onChange={e => setFinalLevel(e.target.value)}
+                    onChange={ev => setFinalLevel(ev.target.value)}
                     className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-tl-teal transition-colors"
                   >
                     {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
@@ -252,7 +260,7 @@ function AssessmentCard({
                 <textarea
                   rows={2}
                   value={reason}
-                  onChange={e => setReason(e.target.value)}
+                  onChange={ev => setReason(ev.target.value)}
                   placeholder="Brief reason for your decision (e.g. 'Observed this person building production tools')"
                   className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal resize-none transition-colors"
                 />
@@ -265,7 +273,7 @@ function AssessmentCard({
                 <input
                   type="text"
                   value={validatedBy}
-                  onChange={e => setValidatedBy(e.target.value)}
+                  onChange={ev => setValidatedBy(ev.target.value)}
                   placeholder="Your name"
                   className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal transition-colors"
                 />
@@ -292,42 +300,160 @@ function AssessmentCard({
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────────
-export default function SquadLeadPage() {
-  const { data: session, status } = useSession();
-  const [squads, setSquads] = useState<SquadOption[]>([]);
-  const [selectedSquad, setSelectedSquad] = useState('');
+// ── Squad Panel (shared by both roles) ────────────────────────────────────────
+function SquadPanel({
+  squad,
+  validatedByDefault,
+}: {
+  squad: SquadDef;
+  validatedByDefault: string;
+}) {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [loadingAssessments, setLoadingAssessments] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Load squad list from participants
-  useEffect(() => {
-    fetch('/api/squad-lead/squads').then(r => r.json()).then(setSquads).catch(() => {});
-  }, []);
+  const handleValidated = useCallback(() => setRefreshKey(k => k + 1), []);
 
-  // Load assessments for selected squad
   useEffect(() => {
-    if (!selectedSquad) { setAssessments([]); return; }
-    setLoadingAssessments(true);
-    fetch(`/api/squad-lead/assessments?squad=${encodeURIComponent(selectedSquad)}`)
+    setLoading(true);
+    const url = new URL('/api/squad-lead/assessments', window.location.origin);
+    url.searchParams.set('squad', squad.name);
+    if (squad.leadEmail) url.searchParams.set('leadEmail', squad.leadEmail);
+    fetch(url.toString())
       .then(r => r.json())
       .then(setAssessments)
       .catch(() => setAssessments([]))
-      .finally(() => setLoadingAssessments(false));
-  }, [selectedSquad, refreshKey]);
-
-  const handleValidated = useCallback(() => setRefreshKey(k => k + 1), []);
+      .finally(() => setLoading(false));
+  }, [squad.name, squad.leadEmail, refreshKey]);
 
   const pending   = assessments.filter(a => !a.validation && a.preliminaryLevel).length;
   const validated = assessments.filter(a => !!a.validation).length;
   const notScored = assessments.filter(a => !a.preliminaryLevel).length;
 
-  const selectedSquadInfo = squads.find(s => s.name === selectedSquad);
-  const managerName = session?.user?.name ?? '';
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-slate-400">
+        <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading assessments…
+      </div>
+    );
+  }
 
-  // ── Unauthenticated ────────────────────────────────────────────────────────
-  if (status === 'loading') {
+  if (assessments.length === 0) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+        <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
+          <ClipboardList className="w-7 h-7 text-amber-300" />
+        </div>
+        <p className="text-slate-700 font-semibold mb-1">No assessments yet</p>
+        <p className="text-slate-400 text-sm">
+          No members in <strong>{squad.name}</strong> have completed the assessment yet.
+          The assessment window opens June 22.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3 mb-2">
+        {[
+          { label: 'Pending Validation', value: pending,   color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
+          { label: 'Validated',          value: validated, color: 'text-tl-teal',   bg: 'bg-tl-teal-light/20 border-tl-teal-light' },
+          { label: 'Not Yet Scored',     value: notScored, color: 'text-slate-400', bg: 'bg-gray-50 border-gray-200' },
+        ].map(({ label, value, color, bg }) => (
+          <div key={label} className={`border rounded-2xl p-4 text-center ${bg}`}>
+            <p className={`text-2xl font-black ${color}`}>{value}</p>
+            <p className="text-slate-500 text-xs mt-0.5">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* All validated banner */}
+      {pending === 0 && notScored === 0 && (
+        <div className="flex items-center gap-3 bg-tl-teal-light/20 border border-tl-teal-light rounded-2xl px-6 py-4">
+          <CheckCircle2 className="w-5 h-5 text-tl-teal flex-shrink-0" />
+          <p className="text-tl-teal text-sm font-semibold">
+            All {validated} assessments validated — great work!
+          </p>
+        </div>
+      )}
+
+      {/* Pending first */}
+      {assessments
+        .filter(a => !a.validation && a.preliminaryLevel)
+        .map(a => (
+          <AssessmentCard
+            key={a.id}
+            assessment={a}
+            defaultValidatedBy={validatedByDefault}
+            onValidated={handleValidated}
+          />
+        ))}
+
+      {/* Not scored */}
+      {assessments
+        .filter(a => !a.preliminaryLevel)
+        .map(a => (
+          <AssessmentCard
+            key={a.id}
+            assessment={a}
+            defaultValidatedBy={validatedByDefault}
+            onValidated={handleValidated}
+          />
+        ))}
+
+      {/* Already validated */}
+      {validated > 0 && (
+        <>
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest pt-2 px-1">
+            Already Validated
+          </p>
+          {assessments
+            .filter(a => !!a.validation)
+            .map(a => (
+              <AssessmentCard
+                key={a.id}
+                assessment={a}
+                defaultValidatedBy={validatedByDefault}
+                onValidated={handleValidated}
+              />
+            ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
+export default function SquadLeadPage() {
+  const { data: session, status } = useSession();
+  const [access, setAccess] = useState<AccessResult | null>(null);
+  const [loadingAccess, setLoadingAccess] = useState(false);
+  const [activeSquadName, setActiveSquadName] = useState('');
+
+  // Fetch role-based access once the user is authenticated
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    setLoadingAccess(true);
+    fetch('/api/squad-lead/access')
+      .then(r => r.json())
+      .then((data: AccessResult) => {
+        setAccess(data);
+        // Auto-select the first squad for squad leads (they only have one)
+        if (data.role === 'squad-lead' && data.squads.length > 0) {
+          setActiveSquadName(data.squads[0].name);
+        }
+        if (data.role === 'manager' && data.squads.length > 0) {
+          setActiveSquadName(data.squads[0].name);
+        }
+      })
+      .catch(() => setAccess({ role: 'none', name: '', squads: [] }))
+      .finally(() => setLoadingAccess(false));
+  }, [status]);
+
+  // ── Loading spinner ────────────────────────────────────────────────────────
+  if (status === 'loading' || loadingAccess) {
     return (
       <div className="min-h-screen tl-page-bg">
         <NavBar />
@@ -338,6 +464,7 @@ export default function SquadLeadPage() {
     );
   }
 
+  // ── Unauthenticated ────────────────────────────────────────────────────────
   if (!session) {
     return (
       <div className="min-h-screen tl-page-bg">
@@ -363,153 +490,95 @@ export default function SquadLeadPage() {
     );
   }
 
-  // ── Authenticated ──────────────────────────────────────────────────────────
+  // ── No access ──────────────────────────────────────────────────────────────
+  if (access?.role === 'none') {
+    return (
+      <div className="min-h-screen tl-page-bg">
+        <NavBar />
+        <div className="max-w-md mx-auto px-6 py-24 text-center">
+          <div className="bg-white border border-gray-200 rounded-2xl p-10">
+            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5">
+              <Lock className="w-8 h-8 text-red-400" />
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Access Restricted</h1>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              This portal is only available to squad leads and people managers. If you believe you should have access, please contact your manager.
+            </p>
+            <p className="text-slate-400 text-xs mt-4">{session.user?.email}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const role   = access?.role;
+  const squads = access?.squads ?? [];
+  const activeSquad = squads.find(s => s.name === activeSquadName) ?? squads[0];
+
+  // ── Authenticated & authorised ─────────────────────────────────────────────
   return (
     <div className="min-h-screen tl-page-bg">
       <NavBar />
 
       <div className="max-w-3xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-10">
+        {/* Page header */}
+        <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-tl-teal to-tl-sky flex items-center justify-center shadow-lg">
               <ClipboardList className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-tl-teal text-xs uppercase tracking-widest">Squad Lead</p>
+              <p className="text-tl-teal text-xs uppercase tracking-widest">
+                {role === 'manager' ? 'People Manager' : 'Squad Lead'}
+              </p>
               <h1 className="text-2xl font-bold text-slate-900">Assessment Validation</h1>
             </div>
           </div>
           <p className="text-slate-500 text-sm leading-relaxed ml-[52px]">
-            Review your squad&apos;s AI proficiency results and confirm, upgrade, or downgrade the AI-assigned levels.
+            {role === 'manager'
+              ? `Hi ${access?.name?.split(' ')[0] ?? ''}! Review and validate AI proficiency assessments across your squads.`
+              : "Review your squad's AI proficiency results and confirm, upgrade, or downgrade the AI-assigned levels."}
           </p>
         </div>
 
-        {/* Squad selector */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-          <label className="block text-slate-600 text-sm font-medium mb-2">
-            Select your squad
-          </label>
-          <div className="relative">
-            <select
-              value={selectedSquad}
-              onChange={e => setSelectedSquad(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-tl-teal transition-colors appearance-none pr-10"
-            >
-              <option value="">-- Choose a squad --</option>
-              {squads.map(s => (
-                <option key={s.name} value={s.name}>
-                  {s.name} ({s.count} member{s.count !== 1 ? 's' : ''})
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* Stats row */}
-        {selectedSquad && !loadingAssessments && assessments.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {[
-              { label: 'Pending Validation', value: pending,   color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
-              { label: 'Validated',          value: validated, color: 'text-tl-teal',   bg: 'bg-tl-teal-light/20 border-tl-teal-light' },
-              { label: 'Not Yet Scored',     value: notScored, color: 'text-slate-400', bg: 'bg-gray-50 border-gray-200' },
-            ].map(({ label, value, color, bg }) => (
-              <div key={label} className={`border rounded-2xl p-4 text-center ${bg}`}>
-                <p className={`text-2xl font-black ${color}`}>{value}</p>
-                <p className="text-slate-500 text-xs mt-0.5">{label}</p>
-              </div>
+        {/* Squad tabs (managers see multiple squads; squad leads see just their one) */}
+        {squads.length > 1 && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-2 mb-6 flex flex-wrap gap-1">
+            {squads.map(s => (
+              <button
+                key={s.name}
+                type="button"
+                onClick={() => setActiveSquadName(s.name)}
+                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  activeSquadName === s.name
+                    ? 'bg-tl-teal text-white shadow-sm'
+                    : 'text-slate-500 hover:bg-gray-50 hover:text-slate-700'
+                }`}
+              >
+                {s.name}
+              </button>
             ))}
           </div>
         )}
 
-        {/* Loading */}
-        {loadingAssessments && (
-          <div className="flex items-center justify-center py-16 text-slate-400">
-            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading assessments…
-          </div>
-        )}
-
-        {/* Empty — no squad selected */}
-        {!selectedSquad && !loadingAssessments && (
-          <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
-            <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-7 h-7 text-slate-300" />
-            </div>
-            <p className="text-slate-500 text-sm">Select your squad above to view assessment results.</p>
-          </div>
-        )}
-
-        {/* Empty — squad has no assessments yet */}
-        {selectedSquad && !loadingAssessments && assessments.length === 0 && (
-          <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
-            <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
-              <ClipboardList className="w-7 h-7 text-amber-300" />
-            </div>
-            <p className="text-slate-700 font-semibold mb-1">No assessments yet</p>
-            <p className="text-slate-400 text-sm">
-              None of the {selectedSquadInfo?.count ?? ''} members in <strong>{selectedSquad}</strong> have completed the assessment yet.
-              The assessment window opens June 22.
-            </p>
-          </div>
-        )}
-
-        {/* All validated banner */}
-        {selectedSquad && !loadingAssessments && assessments.length > 0 && pending === 0 && notScored === 0 && (
-          <div className="flex items-center gap-3 bg-tl-teal-light/20 border border-tl-teal-light rounded-2xl px-6 py-4 mb-6">
-            <CheckCircle2 className="w-5 h-5 text-tl-teal flex-shrink-0" />
-            <p className="text-tl-teal text-sm font-semibold">
-              All {validated} assessments validated — great work!
-            </p>
-          </div>
-        )}
-
-        {/* Assessment cards */}
-        {selectedSquad && !loadingAssessments && assessments.length > 0 && (
-          <div className="space-y-4">
-            {/* Pending first */}
-            {assessments
-              .filter(a => !a.validation && a.preliminaryLevel)
-              .map(a => (
-                <AssessmentCard
-                  key={a.id}
-                  assessment={a}
-                  defaultValidatedBy={managerName}
-                  onValidated={handleValidated}
-                />
-              ))}
-
-            {/* Not scored */}
-            {assessments
-              .filter(a => !a.preliminaryLevel)
-              .map(a => (
-                <AssessmentCard
-                  key={a.id}
-                  assessment={a}
-                  defaultValidatedBy={managerName}
-                  onValidated={handleValidated}
-                />
-              ))}
-
-            {/* Already validated */}
-            {validated > 0 && (
-              <>
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest pt-2 px-1">
-                  Already Validated
-                </p>
-                {assessments
-                  .filter(a => !!a.validation)
-                  .map(a => (
-                    <AssessmentCard
-                      key={a.id}
-                      assessment={a}
-                      defaultValidatedBy={managerName}
-                      onValidated={handleValidated}
-                    />
-                  ))}
-              </>
+        {/* Active squad label (squad leads & single-squad view) */}
+        {squads.length === 1 && activeSquad && (
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-1 w-4 rounded-full bg-tl-teal" />
+            <p className="text-sm font-semibold text-slate-700">{activeSquad.name}</p>
+            {activeSquad.leadName && (
+              <p className="text-xs text-slate-400">— led by {activeSquad.leadName}</p>
             )}
           </div>
+        )}
+
+        {/* Active squad panel */}
+        {activeSquad && (
+          <SquadPanel
+            key={activeSquad.name}
+            squad={activeSquad}
+            validatedByDefault={access?.name ?? session.user?.name ?? ''}
+          />
         )}
       </div>
     </div>
