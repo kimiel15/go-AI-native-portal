@@ -1,29 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTeams, getAssessments } from '@/lib/data';
+import { getParticipants, getAssessments } from '@/lib/data';
 
-// GET /api/squad-lead/assessments?teamId=xxx
-// Returns all assessments for members of the given hackathon team,
-// matched by participant email against the team's members list.
+// GET /api/squad-lead/assessments?squad=Squad+Kimiel
+// 1. Finds all participants whose teamName matches the squad name
+// 2. Returns all assessments whose participantEmail matches those participants
 export async function GET(req: NextRequest) {
   try {
-    const teamId = req.nextUrl.searchParams.get('teamId');
-    if (!teamId) return NextResponse.json([], { status: 400 });
+    const squad = req.nextUrl.searchParams.get('squad');
+    if (!squad) return NextResponse.json([], { status: 400 });
 
-    const [teams, allAssessments] = await Promise.all([getTeams(), getAssessments()]);
+    const [participants, allAssessments] = await Promise.all([
+      getParticipants(),
+      getAssessments(),
+    ]);
 
-    const team = teams.find(t => t.id === teamId);
-    if (!team) return NextResponse.json([], { status: 404 });
-
-    // Build a set of member emails (lowercase) for fast lookup
-    const memberEmails = new Set(
-      team.members.map(m => m.email?.toLowerCase()).filter(Boolean)
+    // Build a set of emails belonging to this squad
+    const squadEmails = new Set(
+      participants
+        .filter(p => p.teamName === squad)
+        .map(p => p.email?.toLowerCase())
+        .filter(Boolean)
     );
 
-    const teamAssessments = allAssessments.filter(
-      a => memberEmails.has(a.participantEmail?.toLowerCase())
+    const squadAssessments = allAssessments.filter(
+      a => squadEmails.has(a.participantEmail?.toLowerCase())
     );
 
-    return NextResponse.json(teamAssessments);
+    return NextResponse.json(squadAssessments);
   } catch {
     return NextResponse.json([], { status: 500 });
   }

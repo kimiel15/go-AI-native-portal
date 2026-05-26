@@ -10,7 +10,7 @@ import {
 import { Assessment } from '@/types';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-interface TeamOption { id: string; teamName: string; department: string; }
+interface SquadOption { name: string; count: number; }
 
 const LEVELS = [
   'Level 1 – Prompt Creator',
@@ -295,27 +295,27 @@ function AssessmentCard({
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function SquadLeadPage() {
   const { data: session, status } = useSession();
-  const [teams, setTeams] = useState<TeamOption[]>([]);
-  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [squads, setSquads] = useState<SquadOption[]>([]);
+  const [selectedSquad, setSelectedSquad] = useState('');
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loadingAssessments, setLoadingAssessments] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Load teams
+  // Load squad list from participants
   useEffect(() => {
-    fetch('/api/register').then(r => r.json()).then(setTeams).catch(() => {});
+    fetch('/api/squad-lead/squads').then(r => r.json()).then(setSquads).catch(() => {});
   }, []);
 
-  // Load assessments for selected team
+  // Load assessments for selected squad
   useEffect(() => {
-    if (!selectedTeamId) { setAssessments([]); return; }
+    if (!selectedSquad) { setAssessments([]); return; }
     setLoadingAssessments(true);
-    fetch(`/api/squad-lead/assessments?teamId=${selectedTeamId}`)
+    fetch(`/api/squad-lead/assessments?squad=${encodeURIComponent(selectedSquad)}`)
       .then(r => r.json())
       .then(setAssessments)
       .catch(() => setAssessments([]))
       .finally(() => setLoadingAssessments(false));
-  }, [selectedTeamId, refreshKey]);
+  }, [selectedSquad, refreshKey]);
 
   const handleValidated = useCallback(() => setRefreshKey(k => k + 1), []);
 
@@ -323,8 +323,8 @@ export default function SquadLeadPage() {
   const validated = assessments.filter(a => !!a.validation).length;
   const notScored = assessments.filter(a => !a.preliminaryLevel).length;
 
-  const selectedTeam = teams.find(t => t.id === selectedTeamId);
-  const managerName  = session?.user?.name ?? '';
+  const selectedSquadInfo = squads.find(s => s.name === selectedSquad);
+  const managerName = session?.user?.name ?? '';
 
   // ── Unauthenticated ────────────────────────────────────────────────────────
   if (status === 'loading') {
@@ -392,14 +392,14 @@ export default function SquadLeadPage() {
           </label>
           <div className="relative">
             <select
-              value={selectedTeamId}
-              onChange={e => setSelectedTeamId(e.target.value)}
+              value={selectedSquad}
+              onChange={e => setSelectedSquad(e.target.value)}
               className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-tl-teal transition-colors appearance-none pr-10"
             >
               <option value="">-- Choose a squad --</option>
-              {teams.map(t => (
-                <option key={t.id} value={t.id}>
-                  {t.teamName} {t.department ? `· ${t.department}` : ''}
+              {squads.map(s => (
+                <option key={s.name} value={s.name}>
+                  {s.name} ({s.count} member{s.count !== 1 ? 's' : ''})
                 </option>
               ))}
             </select>
@@ -408,7 +408,7 @@ export default function SquadLeadPage() {
         </div>
 
         {/* Stats row */}
-        {selectedTeamId && !loadingAssessments && assessments.length > 0 && (
+        {selectedSquad && !loadingAssessments && assessments.length > 0 && (
           <div className="grid grid-cols-3 gap-3 mb-6">
             {[
               { label: 'Pending Validation', value: pending,   color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
@@ -431,7 +431,7 @@ export default function SquadLeadPage() {
         )}
 
         {/* Empty — no squad selected */}
-        {!selectedTeamId && !loadingAssessments && (
+        {!selectedSquad && !loadingAssessments && (
           <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
             <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
               <Users className="w-7 h-7 text-slate-300" />
@@ -441,21 +441,21 @@ export default function SquadLeadPage() {
         )}
 
         {/* Empty — squad has no assessments yet */}
-        {selectedTeamId && !loadingAssessments && assessments.length === 0 && (
+        {selectedSquad && !loadingAssessments && assessments.length === 0 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
             <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
               <ClipboardList className="w-7 h-7 text-amber-300" />
             </div>
             <p className="text-slate-700 font-semibold mb-1">No assessments yet</p>
             <p className="text-slate-400 text-sm">
-              None of the members in <strong>{selectedTeam?.teamName}</strong> have completed the assessment yet.
+              None of the {selectedSquadInfo?.count ?? ''} members in <strong>{selectedSquad}</strong> have completed the assessment yet.
               The assessment window opens June 22.
             </p>
           </div>
         )}
 
         {/* All validated banner */}
-        {selectedTeamId && !loadingAssessments && assessments.length > 0 && pending === 0 && notScored === 0 && (
+        {selectedSquad && !loadingAssessments && assessments.length > 0 && pending === 0 && notScored === 0 && (
           <div className="flex items-center gap-3 bg-tl-teal-light/20 border border-tl-teal-light rounded-2xl px-6 py-4 mb-6">
             <CheckCircle2 className="w-5 h-5 text-tl-teal flex-shrink-0" />
             <p className="text-tl-teal text-sm font-semibold">
@@ -465,7 +465,7 @@ export default function SquadLeadPage() {
         )}
 
         {/* Assessment cards */}
-        {!loadingAssessments && assessments.length > 0 && (
+        {selectedSquad && !loadingAssessments && assessments.length > 0 && (
           <div className="space-y-4">
             {/* Pending first */}
             {assessments
