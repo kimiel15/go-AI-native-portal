@@ -154,92 +154,76 @@ export default function Home() {
         <h2 className="text-center text-slate-400 text-xs font-semibold uppercase tracking-widest mb-10">
           Calendar of Activities
         </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+          {/* Header */}
+          <div className="grid grid-cols-12 bg-tl-red px-6 py-3">
+            <p className="col-span-3 text-white text-xs font-semibold uppercase tracking-wide">Important Date/s</p>
+            <p className="col-span-3 text-white text-xs font-semibold uppercase tracking-wide">Phase</p>
+            <p className="col-span-6 text-white text-xs font-semibold uppercase tracking-wide">Task</p>
+          </div>
+          {/* Rows */}
           {[
             {
-              phase: 'Preparation',
-              dates: 'May 14–27',
-              color: 'border-tl-red/30 bg-tl-cream',
-              dateColor: 'text-tl-red/70',
+              dates: 'May 14 – 27',
+              phase: 'Preparation Phase',
               tasks: [
-                'Plan discussion with Go AI-Native committee',
+                'Plan discussion with Go AI-Native committee – end-to-end timeline and who\'s who',
                 'Squad Leads introduce C4E and GitHub EMU to Squad',
               ],
             },
             {
-              phase: 'Kick Off',
               dates: 'May 28',
-              color: 'border-tl-orange/40 bg-orange-50',
-              dateColor: 'text-tl-orange',
-              tasks: [
-                'Announce & share details during Town Hall Session',
-              ],
+              phase: 'Kick Off',
+              tasks: ['Announce & share details during Town Hall Session'],
             },
             {
-              phase: 'Build & Registration',
-              dates: 'Jun 1–7',
-              color: 'border-tl-orange/30 bg-amber-50',
-              dateColor: 'text-tl-orange',
-              tasks: [
-                'Start building Claude projects',
-                'Complete team registration',
-              ],
+              dates: 'June 1 – 7',
+              phase: 'Build & Registration Phase',
+              tasks: ['Start building Claude projects and complete team registration'],
+              rowSpanLabel: true,
             },
             {
-              phase: 'Build & Registration',
-              dates: 'Jun 8–14',
-              color: 'border-tl-orange/30 bg-amber-50',
-              dateColor: 'text-tl-orange',
-              tasks: [
-                'Test and validate results',
-                'Launch to production',
-              ],
+              dates: 'June 8 – 14',
+              phase: null,
+              tasks: ['Test and validate results then launch to production'],
             },
             {
+              dates: 'June 15 – 21',
               phase: 'Run Phase',
-              dates: 'Jun 15–21',
-              color: 'border-tl-teal/40 bg-tl-teal-light/15',
-              dateColor: 'text-tl-teal',
-              tasks: [
-                'Run projects in production',
-              ],
+              tasks: ['Run projects in production'],
             },
             {
+              dates: 'June 22 – 24',
               phase: 'Measure & Document',
-              dates: 'Jun 22–24',
-              color: 'border-tl-sky/40 bg-tl-teal-light/20',
-              dateColor: 'text-tl-sky',
               tasks: [
-                'Measure results and update documentation in GitHub',
-                'Run individual AI assessment (starting Jun 22)',
+                'Measure results and update documentation in GitHub for results',
+                'Run assessment (starting June 22)',
               ],
             },
             {
+              dates: 'June 25 – 26',
               phase: 'Validation',
-              dates: 'Jun 25–26',
-              color: 'border-amber-200 bg-amber-50',
-              dateColor: 'text-amber-600',
-              tasks: [
-                'Deliberate results and identify winners',
-              ],
+              tasks: ['Deliberate results and identify winners'],
             },
             {
-              phase: 'Main Event 🎉',
-              dates: 'Jun 27',
-              color: 'border-yellow-300 bg-yellow-50',
-              dateColor: 'text-yellow-600',
-              tasks: [
-                'Recap event and recognize winners',
-              ],
+              dates: 'June 27',
+              phase: 'Event 🎉',
+              tasks: ['Recap event and recognize winners'],
+              highlight: true,
             },
-          ].map(({ phase, dates, tasks, color, dateColor }) => (
-            <div key={`${phase}-${dates}`} className={`border ${color} rounded-2xl p-5`}>
-              <p className="text-slate-900 font-bold text-sm mb-1">{phase}</p>
-              <p className={`text-xs font-mono mb-3 ${dateColor}`}>{dates}</p>
-              <ul className="space-y-1.5">
+          ].map(({ dates, phase, tasks, highlight }, i, arr) => (
+            <div
+              key={dates}
+              className={`grid grid-cols-12 px-6 py-4 items-start ${i < arr.length - 1 ? 'border-b border-gray-100' : ''} ${highlight ? 'bg-yellow-50' : ''}`}
+            >
+              <p className="col-span-3 text-sm font-semibold text-slate-700 font-mono">{dates}</p>
+              <p className={`col-span-3 text-sm font-semibold ${phase === null ? 'text-slate-300' : highlight ? 'text-yellow-700' : 'text-tl-teal'}`}>
+                {phase ?? '↑'}
+              </p>
+              <ul className="col-span-6 space-y-1.5">
                 {tasks.map(t => (
-                  <li key={t} className="text-slate-500 text-xs leading-relaxed flex gap-1.5">
-                    <span className="mt-1 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
+                  <li key={t} className="text-slate-500 text-sm leading-relaxed flex gap-2">
+                    <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
                     {t}
                   </li>
                 ))}
