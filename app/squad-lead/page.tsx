@@ -541,8 +541,8 @@ export default function SquadLeadPage() {
           </p>
         </div>
 
-        {/* Squad tabs (managers see multiple squads; squad leads see just their one) */}
-        {squads.length > 1 && (
+        {/* Squad tabs — only visible to people managers */}
+        {role === 'manager' && squads.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-2 mb-6 flex flex-wrap gap-1">
             {squads.map(s => (
               <button
@@ -561,8 +561,8 @@ export default function SquadLeadPage() {
           </div>
         )}
 
-        {/* Active squad label (squad leads & single-squad view) */}
-        {squads.length === 1 && activeSquad && (
+        {/* Active squad label — shown for squad leads (managers use the tab bar instead) */}
+        {role === 'squad-lead' && activeSquad && (
           <div className="flex items-center gap-2 mb-6">
             <div className="h-1 w-4 rounded-full bg-tl-teal" />
             <p className="text-sm font-semibold text-slate-700">{activeSquad.name}</p>
