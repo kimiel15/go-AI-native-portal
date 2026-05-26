@@ -16,12 +16,13 @@ model Team {
 }
 
 model Submission {
-  id              String @id
-  teamId          String @unique
+  id              String  @id
+  teamId          String  @unique
   teamName        String
   gitRepoUrl      String
   measuredResults String
-  status          String @default("draft")  // "draft" | "submitted"
+  businessValue   String? // "revenue-growth" | "ai-containment"
+  status          String  @default("draft")  // "draft" | "submitted"
   submittedAt     String
 }
 

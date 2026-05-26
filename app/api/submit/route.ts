@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!submissionsOpen) return NextResponse.json({ error: CLOSED_MSG }, { status: 403 });
 
     const body = await req.json();
-    const { teamId, gitRepoUrl, measuredResults } = body;
+    const { teamId, gitRepoUrl, measuredResults, businessValue } = body;
 
     if (!teamId || !gitRepoUrl || !measuredResults) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       impactMath:          '',
       aiUsage:             '',
       teamContributions:   '',
+      businessValue:       businessValue ?? undefined,
       status:              'draft',
       submittedAt:         new Date().toISOString(),
     };
@@ -68,7 +69,7 @@ export async function PATCH(req: NextRequest) {
     if (!submissionsOpen) return NextResponse.json({ error: CLOSED_MSG }, { status: 403 });
 
     const body = await req.json();
-    const { teamId, gitRepoUrl, measuredResults } = body;
+    const { teamId, gitRepoUrl, measuredResults, businessValue } = body;
 
     if (!teamId || !gitRepoUrl || !measuredResults) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -97,6 +98,7 @@ export async function PATCH(req: NextRequest) {
       impactMath:          '',
       aiUsage:             '',
       teamContributions:   '',
+      businessValue:       businessValue ?? undefined,
       status:              'submitted',
       submittedAt:         new Date().toISOString(),
     };

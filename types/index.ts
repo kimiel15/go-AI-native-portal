@@ -58,6 +58,7 @@ export interface ProjectSubmission {
   impactMath: string;               // baseline, delta, calculation walkthrough
   aiUsage: string;                  // AI-USAGE.md — how Claude was used throughout
   teamContributions: string;        // CONTRIBUTORS.md — who did what
+  businessValue?: 'revenue-growth' | 'ai-containment'; // judging criteria category
   status: 'draft' | 'submitted';   // draft = editable; submitted = locked for review
   submittedAt: string;
 }

@@ -5,7 +5,7 @@ import NavBar from '@/components/NavBar';
 import {
   FileText, CheckCircle, AlertCircle, Loader2, GitBranch,
   BarChart2, BookOpen, ChevronDown, Save, Lock, AlertTriangle,
-  ExternalLink,
+  ExternalLink, TrendingUp, Shield,
 } from 'lucide-react';
 
 type Status = 'idle' | 'saving' | 'submitting' | 'saved' | 'submitted' | 'error';
@@ -134,6 +134,7 @@ function SubmitForm() {
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [gitRepoUrl, setGitRepoUrl] = useState('');
   const [measuredResults, setMeasuredResults] = useState('');
+  const [businessValue, setBusinessValue] = useState<'revenue-growth' | 'ai-containment' | ''>('');
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [savedMsg, setSavedMsg] = useState('');
@@ -149,7 +150,7 @@ function SubmitForm() {
 
   // Load existing submission when team is selected
   useEffect(() => {
-    if (!teamId) { setExisting(null); setGitRepoUrl(''); setMeasuredResults(''); return; }
+    if (!teamId) { setExisting(null); setGitRepoUrl(''); setMeasuredResults(''); setBusinessValue(''); return; }
     setLoadingExisting(true);
     fetch(`/api/submit?teamId=${teamId}`)
       .then(r => r.json())
@@ -158,9 +159,11 @@ function SubmitForm() {
         if (data) {
           setGitRepoUrl(data.gitRepoUrl);
           setMeasuredResults(data.measuredResults);
+          setBusinessValue((data as ExistingSubmission & { businessValue?: string }).businessValue as 'revenue-growth' | 'ai-containment' | '' ?? '');
         } else {
           setGitRepoUrl('');
           setMeasuredResults('');
+          setBusinessValue('');
         }
       })
       .catch(() => {})
@@ -181,7 +184,7 @@ function SubmitForm() {
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId, gitRepoUrl, measuredResults }),
+        body: JSON.stringify({ teamId, gitRepoUrl, measuredResults, businessValue: businessValue || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed.');
@@ -203,7 +206,7 @@ function SubmitForm() {
       const res = await fetch('/api/submit', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId, gitRepoUrl, measuredResults }),
+        body: JSON.stringify({ teamId, gitRepoUrl, measuredResults, businessValue: businessValue || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
@@ -344,6 +347,68 @@ command 3
               Not registered yet?{' '}
               <a href="/register" className="text-red-400 hover:underline">Register your team first</a>.
             </p>
+          </div>
+
+          {/* Business Value Category */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-6">
+            <div className="flex items-start gap-2 mb-4">
+              <BarChart2 className="w-4 h-4 text-tl-red flex-shrink-0 mt-0.5" />
+              <div>
+                <label className="block text-slate-900 font-semibold text-sm">
+                  Business Value Category <span className="text-red-400">*</span>
+                </label>
+                <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">
+                  Choose the primary value your solution delivers to the business.
+                </p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {/* Revenue Growth */}
+              <button
+                type="button"
+                onClick={() => setBusinessValue('revenue-growth')}
+                className={`text-left p-4 rounded-xl border-2 transition-all ${
+                  businessValue === 'revenue-growth'
+                    ? 'border-tl-teal bg-tl-teal-light/15'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${businessValue === 'revenue-growth' ? 'bg-tl-teal text-white' : 'bg-gray-100 text-slate-500'}`}>
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <span className={`text-sm font-semibold ${businessValue === 'revenue-growth' ? 'text-tl-teal' : 'text-slate-700'}`}>
+                    Revenue Growth
+                  </span>
+                </div>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  Your tool directly contributes to generating more revenue — e.g. faster case resolution, upsell enablement, or improved customer retention.
+                </p>
+              </button>
+
+              {/* AI Containment */}
+              <button
+                type="button"
+                onClick={() => setBusinessValue('ai-containment')}
+                className={`text-left p-4 rounded-xl border-2 transition-all ${
+                  businessValue === 'ai-containment'
+                    ? 'border-tl-teal bg-tl-teal-light/15'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${businessValue === 'ai-containment' ? 'bg-tl-teal text-white' : 'bg-gray-100 text-slate-500'}`}>
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <span className={`text-sm font-semibold ${businessValue === 'ai-containment' ? 'text-tl-teal' : 'text-slate-700'}`}>
+                    AI Containment
+                  </span>
+                </div>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  Your tool reduces support volume or operational cost — e.g. ticket deflection, automation of repetitive tasks, or reduced handle time.
+                </p>
+              </button>
+            </div>
           </div>
 
           {/* Git Repo URL */}

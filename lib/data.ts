@@ -102,6 +102,7 @@ export async function saveSubmission(sub: ProjectSubmission): Promise<void> {
     update: {
       gitRepoUrl:      sub.gitRepoUrl,
       measuredResults: sub.measuredResults,
+      businessValue:   sub.businessValue ?? null,
       status:          sub.status,
       submittedAt:     sub.submittedAt,
     },
@@ -111,6 +112,7 @@ export async function saveSubmission(sub: ProjectSubmission): Promise<void> {
       teamName:        sub.teamName,
       gitRepoUrl:      sub.gitRepoUrl,
       measuredResults: sub.measuredResults,
+      businessValue:   sub.businessValue ?? null,
       status:          sub.status,
       submittedAt:     sub.submittedAt,
     },
