@@ -155,81 +155,87 @@ export default function Home() {
           Calendar of Activities
         </h2>
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          {/* Header */}
-          <div className="grid grid-cols-12 bg-tl-red px-6 py-3">
-            <p className="col-span-3 text-white text-xs font-semibold uppercase tracking-wide">Important Date/s</p>
-            <p className="col-span-3 text-white text-xs font-semibold uppercase tracking-wide">Phase</p>
-            <p className="col-span-6 text-white text-xs font-semibold uppercase tracking-wide">Task</p>
-          </div>
-          {/* Rows */}
-          {[
-            {
-              dates: 'May 14 – 27',
-              phase: 'Preparation Phase',
-              tasks: [
-                'Plan discussion with Go AI-Native committee – end-to-end timeline and who\'s who',
-                'Squad Leads introduce C4E and GitHub EMU to Squad',
-              ],
-            },
-            {
-              dates: 'May 28',
-              phase: 'Kick Off',
-              tasks: ['Announce & share details during Town Hall Session'],
-            },
-            {
-              dates: 'June 1 – 7',
-              phase: 'Build & Registration Phase',
-              tasks: ['Start building Claude projects and complete team registration'],
-              rowSpanLabel: true,
-            },
-            {
-              dates: 'June 8 – 14',
-              phase: null,
-              tasks: ['Test and validate results then launch to production'],
-            },
-            {
-              dates: 'June 15 – 21',
-              phase: 'Run Phase',
-              tasks: ['Run projects in production'],
-            },
-            {
-              dates: 'June 22 – 24',
-              phase: 'Measure & Document',
-              tasks: [
-                'Measure results and update documentation in GitHub for results',
-                'Run assessment (starting June 22)',
-              ],
-            },
-            {
-              dates: 'June 25 – 26',
-              phase: 'Validation',
-              tasks: ['Deliberate results and identify winners'],
-            },
-            {
-              dates: 'June 27',
-              phase: 'Event 🎉',
-              tasks: ['Recap event and recognize winners'],
-              highlight: true,
-            },
-          ].map(({ dates, phase, tasks, highlight }, i, arr) => (
-            <div
-              key={dates}
-              className={`grid grid-cols-12 px-6 py-4 items-start ${i < arr.length - 1 ? 'border-b border-gray-100' : ''} ${highlight ? 'bg-yellow-50' : ''}`}
-            >
-              <p className="col-span-3 text-sm font-semibold text-slate-700 font-mono">{dates}</p>
-              <p className={`col-span-3 text-sm font-semibold ${phase === null ? 'text-slate-300' : highlight ? 'text-yellow-700' : 'text-tl-teal'}`}>
-                {phase ?? '↑'}
-              </p>
-              <ul className="col-span-6 space-y-1.5">
-                {tasks.map(t => (
-                  <li key={t} className="text-slate-500 text-sm leading-relaxed flex gap-2">
-                    <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-tl-red">
+                <th className="text-left text-white text-xs font-semibold uppercase tracking-wide px-6 py-3 w-[25%]">Important Date/s</th>
+                <th className="text-left text-white text-xs font-semibold uppercase tracking-wide px-6 py-3 w-[25%]">Phase</th>
+                <th className="text-left text-white text-xs font-semibold uppercase tracking-wide px-6 py-3 w-[50%]">Task</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Kick Off */}
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-sm font-semibold text-slate-700 font-mono align-top">May 28</td>
+                <td className="px-6 py-4 text-sm font-semibold text-tl-teal align-top">Kick Off</td>
+                <td className="px-6 py-4 align-top">
+                  <ul className="space-y-1.5">
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Announce &amp; share details during Town Hall Session</li>
+                  </ul>
+                </td>
+              </tr>
+              {/* Build & Registration — June 1–7 (phase cell spans 2 rows) */}
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-sm font-semibold text-slate-700 font-mono align-top">June 1 – 7</td>
+                <td className="px-6 py-4 text-sm font-semibold text-tl-teal align-middle" rowSpan={2}>Build &amp; Registration Phase</td>
+                <td className="px-6 py-4 align-top">
+                  <ul className="space-y-1.5">
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Start building Claude projects and complete team registration</li>
+                  </ul>
+                </td>
+              </tr>
+              {/* Build & Registration — June 8–14 (no phase cell, spanned above) */}
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-sm font-semibold text-slate-700 font-mono align-top">June 8 – 14</td>
+                <td className="px-6 py-4 align-top">
+                  <ul className="space-y-1.5">
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Test and validate results then launch to production</li>
+                  </ul>
+                </td>
+              </tr>
+              {/* Run Phase */}
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-sm font-semibold text-slate-700 font-mono align-top">June 15 – 21</td>
+                <td className="px-6 py-4 text-sm font-semibold text-tl-teal align-top">Run Phase</td>
+                <td className="px-6 py-4 align-top">
+                  <ul className="space-y-1.5">
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Run projects in production</li>
+                  </ul>
+                </td>
+              </tr>
+              {/* Measure & Document */}
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-sm font-semibold text-slate-700 font-mono align-top">June 22 – 24</td>
+                <td className="px-6 py-4 text-sm font-semibold text-tl-teal align-top">Measure &amp; Document</td>
+                <td className="px-6 py-4 align-top">
+                  <ul className="space-y-1.5">
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Measure results and update documentation in GitHub for results</li>
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Run assessment (starting June 22)</li>
+                  </ul>
+                </td>
+              </tr>
+              {/* Validation */}
+              <tr className="border-b border-gray-100">
+                <td className="px-6 py-4 text-sm font-semibold text-slate-700 font-mono align-top">June 25 – 26</td>
+                <td className="px-6 py-4 text-sm font-semibold text-tl-teal align-top">Validation</td>
+                <td className="px-6 py-4 align-top">
+                  <ul className="space-y-1.5">
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Deliberate results and identify winners</li>
+                  </ul>
+                </td>
+              </tr>
+              {/* Main Event */}
+              <tr className="bg-yellow-50">
+                <td className="px-6 py-4 text-sm font-semibold text-slate-700 font-mono align-top">June 27</td>
+                <td className="px-6 py-4 text-sm font-semibold text-yellow-700 align-top">Event 🎉</td>
+                <td className="px-6 py-4 align-top">
+                  <ul className="space-y-1.5">
+                    <li className="text-slate-500 text-sm leading-relaxed flex gap-2"><span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />Recap event and recognize winners</li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
