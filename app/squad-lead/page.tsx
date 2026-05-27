@@ -474,7 +474,7 @@ export default function SquadLeadPage() {
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-tl-teal to-tl-sky flex items-center justify-center mx-auto mb-5">
               <Users className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-slate-900 mb-2">Squad Lead Portal</h1>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Managers&apos; View</h1>
             <p className="text-slate-500 text-sm leading-relaxed mb-8">
               Sign in with your Trend Micro account to view your squad&apos;s assessment results and validate AI scores.
             </p>
@@ -529,7 +529,7 @@ export default function SquadLeadPage() {
             </div>
             <div>
               <p className="text-tl-teal text-xs uppercase tracking-widest">
-                {role === 'manager' ? 'People Manager' : 'Squad Lead'}
+                {role === 'manager' ? "Managers' View" : 'Squad Lead'}
               </p>
               <h1 className="text-2xl font-bold text-slate-900">Assessment Validation</h1>
             </div>

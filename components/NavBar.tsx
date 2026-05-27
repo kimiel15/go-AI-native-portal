@@ -46,7 +46,7 @@ export default function NavBar() {
           )}
           <Link href="/squad-lead" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-tl-teal transition-colors">
             <ClipboardList className="w-4 h-4" />
-            <span className="hidden sm:inline">My Squad</span>
+            <span className="hidden sm:inline">Managers&apos; View</span>
           </Link>
           <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
             <Home className="w-4 h-4" />

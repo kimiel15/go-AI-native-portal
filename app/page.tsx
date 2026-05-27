@@ -64,7 +64,7 @@ export default function Home() {
           <div className="flex-shrink-0 flex items-center gap-3">
             <Link href="/squad-lead" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-tl-teal transition-colors">
               <ClipboardList className="w-4 h-4" />
-              <span className="hidden sm:inline">Squad Lead</span>
+              <span className="hidden sm:inline">Managers&apos; View</span>
             </Link>
             <Link href="/admin" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-700 transition-colors">
               <LayoutDashboard className="w-4 h-4" />
