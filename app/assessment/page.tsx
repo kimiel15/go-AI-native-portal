@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import NavBar from '@/components/NavBar';
-import { Brain, CheckCircle, AlertCircle, Loader2, ChevronRight, Sparkles, Trophy, UserCheck, Lock } from 'lucide-react';
+import { Brain, CheckCircle, AlertCircle, Loader2, ChevronRight, Sparkles, Trophy, UserCheck, ShieldCheck } from 'lucide-react';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -20,14 +20,15 @@ function getLevel(label: string) {
 interface SubmitResult {
   mcScore: number;
   essayTotal: number | null;
-  totalScore: number;
-  totalPercent: number;
-  preliminaryLevel: string;
-  categoryRecommendation: string;
+  totalScore: number | null;
+  totalPercent: number | null;
+  preliminaryLevel: string | null;
+  categoryRecommendation: string | null;
   overallExplanation: string | null;
   squadLeadNote: string | null;
   essayScoringFailed: boolean;
   essayScoringError: string | null;
+  validation?: { finalLevel?: string; [key: string]: unknown } | null;
 }
 
 function ScoreBar({ label, score, max }: { label: string; score: number; max: number }) {
@@ -93,6 +94,7 @@ function AssessmentForm() {
   const [q7, setQ7] = useState('');
 
   const [alreadySubmitted, setAlreadySubmitted] = useState<boolean | null>(null);
+  const [existingResult, setExistingResult] = useState<SubmitResult | null>(null);
 
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
@@ -104,7 +106,14 @@ function AssessmentForm() {
     if (!participantEmail) return;
     fetch(`/api/assessment?email=${encodeURIComponent(participantEmail)}`)
       .then(r => r.json())
-      .then(d => setAlreadySubmitted(!!d.submitted))
+      .then(d => {
+        if (d.submitted) {
+          setAlreadySubmitted(true);
+          setExistingResult(d);
+        } else {
+          setAlreadySubmitted(false);
+        }
+      })
       .catch(() => setAlreadySubmitted(false));
   }, [participantEmail]);
 
@@ -151,31 +160,109 @@ function AssessmentForm() {
     );
   }
 
-  // ── Already-submitted screen ────────────────────────────────────────────────
+  // ── Already-submitted screen — show full results ────────────────────────────
   if (alreadySubmitted === true && status !== 'success') {
+    const d = existingResult;
+    const finalLevel = d?.validation?.finalLevel;
+    const displayLevel = finalLevel ?? d?.preliminaryLevel ?? '';
+    const colors = getLevel(displayLevel);
     return (
       <div className="max-w-2xl mx-auto px-6 py-12">
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-10 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto">
-            <Lock className="w-7 h-7 text-slate-400" />
+        <div className={`border ${colors.border} ${colors.bg} rounded-2xl p-8 mb-6`}>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-tl-red to-tl-burgundy flex items-center justify-center">
+              <Trophy className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-slate-500 text-sm">Assessment Complete</p>
+              <h2 className="text-slate-900 font-bold text-xl">Your Results</h2>
+            </div>
           </div>
-          <h2 className="text-slate-900 font-bold text-xl">Assessment Already Submitted</h2>
-          <p className="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">
-            You have already completed this assessment. Only one submission is allowed per participant.
-            If you need to retake it, ask your squad lead or admin to reset your attempt.
+
+          {finalLevel ? (
+            <>
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-3 ${getLevel(finalLevel).badge}`}>
+                <ShieldCheck className="w-4 h-4" />
+                {finalLevel} — Confirmed
+              </div>
+              <p className={`text-sm font-medium mb-1 ${getLevel(finalLevel).text}`}>
+                {getLevel(finalLevel).sublabel}
+              </p>
+              {d?.preliminaryLevel && d.preliminaryLevel !== finalLevel && (
+                <p className="text-slate-400 text-xs mb-2">Preliminary: {d.preliminaryLevel}</p>
+              )}
+            </>
+          ) : (
+            <>
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-3 ${colors.badge}`}>
+                <Sparkles className="w-4 h-4" />
+                {d?.preliminaryLevel ?? '—'} — Preliminary
+              </div>
+              <p className={`text-sm font-medium mb-1 ${colors.text}`}>{colors.sublabel}</p>
+            </>
+          )}
+
+          <p className="text-slate-400 text-xs mb-2">
+            Category: <span className="text-slate-500">{d?.categoryRecommendation}</span>
           </p>
-          <a href="/"
-            className="inline-block mt-2 bg-gray-100 hover:bg-gray-200 text-slate-800 font-semibold px-6 py-2.5 rounded-xl transition-all text-sm">
-            Back to Home
-          </a>
+
+          {d?.overallExplanation && (
+            <div className="mt-4 bg-white border border-gray-200 rounded-xl p-4 border-l-4 border-l-rose-400">
+              <p className="flex items-center gap-1.5 text-rose-600 text-xs font-semibold uppercase tracking-widest mb-2">
+                <Sparkles className="w-3.5 h-3.5" /> Claude Summary
+              </p>
+              <p className="text-slate-700 text-sm leading-relaxed">{d.overallExplanation}</p>
+            </div>
+          )}
+
+          {d?.squadLeadNote && (
+            <div className="mt-3 bg-white border border-gray-200 rounded-xl p-4 border-l-4 border-l-amber-400">
+              <p className="text-amber-700 text-xs font-semibold uppercase tracking-widest mb-2">Squad Lead Note</p>
+              <p className="text-slate-700 text-sm leading-relaxed">{d.squadLeadNote}</p>
+            </div>
+          )}
+
+          {d?.essayScoringFailed && (
+            <div className="mt-3 bg-white border border-gray-200 rounded-xl p-4 border-l-4 border-l-orange-400">
+              <p className="text-orange-700 text-xs font-semibold uppercase tracking-widest mb-1">Essay Scoring Unavailable</p>
+              <p className="text-slate-700 text-sm">Your squad lead will review essays manually.</p>
+            </div>
+          )}
         </div>
+
+        {d && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4 mb-6">
+            <h3 className="text-slate-900 font-semibold text-sm uppercase tracking-widest">Score Breakdown</h3>
+            <ScoreBar label="Multiple Choice (Sections 1–3)" score={d.mcScore} max={17} />
+            {d.essayTotal !== null && (
+              <ScoreBar label="Essays (Sections 2–4)" score={d.essayTotal} max={24} />
+            )}
+            {d.totalScore !== null && (
+              <div className="pt-2 border-t border-gray-200">
+                <ScoreBar label="Total Score" score={d.totalScore} max={41} />
+                {d.totalPercent !== null && (
+                  <p className="text-right text-slate-400 text-xs mt-1">{d.totalPercent}%</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!finalLevel && (
+          <p className="text-slate-400 text-sm text-center mb-6">
+            Your squad lead will review and confirm your final level before the event.
+          </p>
+        )}
+        <a href="/" className="block text-center bg-tl-red hover:bg-tl-burgundy text-white font-semibold py-3 rounded-xl transition-all">
+          Back to Home
+        </a>
       </div>
     );
   }
 
   // ── Success screen ──────────────────────────────────────────────────────────
   if (status === 'success' && result) {
-    const colors = getLevel(result.preliminaryLevel);
+    const colors = getLevel(result.preliminaryLevel ?? '');
     return (
       <div className="max-w-2xl mx-auto px-6 py-12">
         <div className={`border ${colors.border} ${colors.bg} rounded-2xl p-8 mb-6`}>
@@ -191,7 +278,7 @@ function AssessmentForm() {
 
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-3 ${colors.badge}`}>
             <Sparkles className="w-4 h-4" />
-            {result.preliminaryLevel}
+            {result.preliminaryLevel ?? '—'}
           </div>
           <p className={`text-sm font-medium mb-1 ${colors.text}`}>
             {colors.sublabel}
@@ -234,10 +321,14 @@ function AssessmentForm() {
           {result.essayTotal !== null && (
             <ScoreBar label="Essays (Sections 2–4)" score={result.essayTotal} max={24} />
           )}
-          <div className="pt-2 border-t border-gray-200">
-            <ScoreBar label="Total Score" score={result.totalScore} max={41} />
-            <p className="text-right text-slate-400 text-xs mt-1">{result.totalPercent}%</p>
-          </div>
+          {result.totalScore !== null && (
+            <div className="pt-2 border-t border-gray-200">
+              <ScoreBar label="Total Score" score={result.totalScore} max={41} />
+              {result.totalPercent !== null && (
+                <p className="text-right text-slate-400 text-xs mt-1">{result.totalPercent}%</p>
+              )}
+            </div>
+          )}
         </div>
 
         <p className="text-slate-400 text-sm text-center mb-6">

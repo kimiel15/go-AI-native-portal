@@ -5,12 +5,28 @@ import { Assessment, MC_POINTS, SKILL_LEVELS } from '@/types';
 import { randomUUID } from 'crypto';
 import prisma from '@/lib/prisma';
 
-// GET /api/assessment?email=x — check if participant already submitted
+// GET /api/assessment?email=x — check if participant already submitted; returns full data if so
 export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get('email');
   if (!email) return NextResponse.json({ submitted: false });
   const existing = await prisma.assessment.findUnique({ where: { participantEmail: email.toLowerCase() } });
-  return NextResponse.json({ submitted: !!existing });
+  if (!existing) return NextResponse.json({ submitted: false });
+
+  const scores = existing.essayScores as Record<string, unknown> | null;
+  return NextResponse.json({
+    submitted: true,
+    mcScore: existing.mcScore,
+    essayTotal: existing.essayTotal ?? null,
+    totalScore: existing.totalScore ?? null,
+    totalPercent: existing.totalPercent ?? null,
+    preliminaryLevel: existing.preliminaryLevel ?? null,
+    categoryRecommendation: existing.categoryRecommendation ?? null,
+    overallExplanation: (scores?.overall_explanation as string) ?? null,
+    squadLeadNote: (scores?.squad_lead_note as string) ?? null,
+    essayScoringFailed: !scores,
+    essayScoringError: null,
+    validation: existing.validation ?? null,
+  });
 }
 
 function calcMcScore(q1: string, q2: string, q3: string, q5: string): number {
