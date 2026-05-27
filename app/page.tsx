@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Calendar, ClipboardList } from 'lucide-react';
+import GetStartedModal from '@/components/GetStartedModal';
 
 function TLMark({ className }: { className?: string }) {
   return (
@@ -113,10 +114,7 @@ export default function Home() {
         </p>
 
         <div className="flex flex-wrap gap-4 justify-center">
-          <Link href="/register"
-            className="flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-tl-red/25 hover:shadow-tl-red/40">
-            Get Started <ArrowRight className="w-4 h-4" />
-          </Link>
+          <GetStartedModal />
           <Link href="/submissions"
             className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-slate-900 font-semibold px-8 py-3.5 rounded-xl transition-all border border-gray-200">
             <FileText className="w-4 h-4" /> View Submissions
