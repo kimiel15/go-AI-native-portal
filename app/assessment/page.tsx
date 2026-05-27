@@ -215,13 +215,6 @@ function AssessmentForm() {
             </div>
           )}
 
-          {d?.squadLeadNote && (
-            <div className="mt-3 bg-white border border-gray-200 rounded-xl p-4 border-l-4 border-l-amber-400">
-              <p className="text-amber-700 text-xs font-semibold uppercase tracking-widest mb-2">Squad Lead Note</p>
-              <p className="text-slate-700 text-sm leading-relaxed">{d.squadLeadNote}</p>
-            </div>
-          )}
-
           {d?.essayScoringFailed && (
             <div className="mt-3 bg-white border border-gray-200 rounded-xl p-4 border-l-4 border-l-orange-400">
               <p className="text-orange-700 text-xs font-semibold uppercase tracking-widest mb-1">Essay Scoring Unavailable</p>
@@ -293,13 +286,6 @@ function AssessmentForm() {
                 <Sparkles className="w-3.5 h-3.5" /> Claude Summary
               </p>
               <p className="text-slate-700 text-sm leading-relaxed">{result.overallExplanation}</p>
-            </div>
-          )}
-
-          {result.squadLeadNote && (
-            <div className="mt-3 bg-white border border-gray-200 rounded-xl p-4 border-l-4 border-l-amber-400">
-              <p className="text-amber-700 text-xs font-semibold uppercase tracking-widest mb-2">Squad Lead Note</p>
-              <p className="text-slate-700 text-sm leading-relaxed">{result.squadLeadNote}</p>
             </div>
           )}
 
