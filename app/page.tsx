@@ -129,6 +129,63 @@ export default function Home() {
         <h2 className="text-center text-slate-400 text-xs font-semibold uppercase tracking-widest mb-10">
           Participant Portal
         </h2>
+
+        {/* Step 00 — Before You Start */}
+        <div className="bg-tl-cream border border-tl-teal-light rounded-2xl p-8 mb-6">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <span className="inline-block text-xs font-semibold text-tl-teal uppercase tracking-wider mb-2">Before You Start</span>
+              <h3 className="text-slate-900 font-bold text-lg leading-snug">Set up your tools</h3>
+              <p className="text-slate-500 text-sm mt-1">Two things to complete before the build phase begins.</p>
+            </div>
+            <span className="text-4xl font-black text-tl-teal/20 flex-shrink-0 ml-4">00</span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* C4E */}
+            <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-6 h-6 rounded-full bg-tl-red flex items-center justify-center text-white text-xs font-bold flex-shrink-0">1</div>
+                <p className="text-slate-900 font-semibold text-sm">Install Claude for Enterprise (C4E) via the Company Portal</p>
+              </div>
+              <p className="text-slate-500 text-xs leading-relaxed ml-8">
+                Search for <strong>Claude for Enterprise</strong> in the Company Portal and install from there. Do not install directly from the web.
+              </p>
+              <div className="mt-3 ml-8 bg-tl-cream border border-tl-teal-light/60 rounded-lg px-3 py-2">
+                <p className="text-tl-teal text-xs font-semibold mb-0.5">Previously installed C4E by bypassing admin?</p>
+                <p className="text-slate-500 text-xs leading-relaxed">Uninstall and reinstall via the Company Portal — some required components may be missing. Your existing chats will be saved.</p>
+              </div>
+            </div>
+
+            {/* GitHub EMU */}
+            <div className="bg-white border border-gray-200 rounded-xl p-5">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-6 h-6 rounded-full bg-tl-red flex items-center justify-center text-white text-xs font-bold flex-shrink-0">2</div>
+                <p className="text-slate-900 font-semibold text-sm">Request your GitHub EMU account via Jarvis</p>
+              </div>
+              <p className="text-slate-500 text-xs leading-relaxed ml-8 mb-3">Processing takes approximately 30 minutes. Request early.</p>
+              <div className="ml-8 space-y-2">
+                <div className="bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                  <p className="text-tl-red text-xs font-semibold uppercase tracking-wide mb-1">How to Request</p>
+                  <p className="text-slate-600 text-xs">Go to <strong>jarvis.trendmicro.com</strong> → Category: <strong>Systems &amp; Applications</strong> · Subcategory: <strong>RDSec</strong> · Service: <strong>GitHub</strong></p>
+                </div>
+                <div className="bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                  <p className="text-tl-red text-xs font-semibold uppercase tracking-wide mb-1">Select the Correct Action</p>
+                  <p className="text-slate-600 text-xs">New access → <strong>Request GitHub Cloud EMU Permission</strong><br />Suspended → <strong>Re-activate GitHub Cloud EMU Permission</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 border border-tl-teal-light bg-white rounded-xl px-5 py-3">
+            <p className="text-tl-teal text-xs font-semibold uppercase tracking-wide mb-1">Use Claude First — For Everything</p>
+            <p className="text-slate-500 text-xs leading-relaxed">
+              Before reaching for a search engine or a colleague, ask Claude. Research, brainstorming, drafting, debugging, writing your README, preparing your impact analysis — Claude should be your <strong>first move</strong> on every task. This is what working AI-Native looks like in practice.
+            </p>
+          </div>
+        </div>
+
+        {/* Steps 01–03 */}
         <div className="grid md:grid-cols-3 gap-6">
           {menuItems.map(({ icon: Icon, label, desc, href, color, badge }, i) => (
             <Link key={href} href={href} className="group block">
