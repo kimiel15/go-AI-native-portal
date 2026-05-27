@@ -124,7 +124,7 @@ function AssessmentCard({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            {validated ? (
+            {assessment.validation ? (
               <span className="flex items-center gap-1.5 text-xs text-tl-teal bg-tl-teal-light/20 border border-tl-teal-light px-3 py-1.5 rounded-full">
                 <ShieldCheck className="w-3.5 h-3.5" /> Validated
               </span>
@@ -151,7 +151,7 @@ function AssessmentCard({
           <div className="flex items-center gap-2 flex-wrap">
             {assessment.preliminaryLevel ? (
               <span className={`text-xs border px-2.5 py-1 rounded-full font-medium ${levelBadge(assessment.preliminaryLevel)}`}>
-                {validated ? '→ ' : ''}{validated ? validated.finalLevel : assessment.preliminaryLevel}
+                {assessment.validation ? '→ ' : ''}{assessment.validation ? assessment.validation.finalLevel : assessment.preliminaryLevel}
               </span>
             ) : (
               <span className="text-slate-400 text-xs">Not yet scored</span>
@@ -159,9 +159,9 @@ function AssessmentCard({
             {assessment.categoryRecommendation && (
               <span className="text-slate-400 text-xs">· {assessment.categoryRecommendation}</span>
             )}
-            {validated && validated.action !== 'confirm' && (
+            {assessment.validation && assessment.validation.action !== 'confirm' && (
               <span className="text-xs text-amber-600 font-medium">
-                ({validated.action}d from {assessment.preliminaryLevel})
+                ({assessment.validation.action}d from {assessment.preliminaryLevel})
               </span>
             )}
           </div>
@@ -213,16 +213,16 @@ function AssessmentCard({
       )}
 
       {/* Already validated summary */}
-      {validated && (
+      {assessment.validation && (
         <div className="px-6 pb-5">
           <div className="bg-tl-teal-light/15 border border-tl-teal-light/50 rounded-xl p-4 space-y-1">
             <p className="text-tl-teal text-sm font-semibold flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" /> Final: {validated.finalLevel}
+              <ShieldCheck className="w-4 h-4" /> Final: {assessment.validation.finalLevel}
             </p>
             <p className="text-slate-500 text-xs">
-              {validated.action.charAt(0).toUpperCase() + validated.action.slice(1)}d by {validated.validatedBy}
+              {assessment.validation.action.charAt(0).toUpperCase() + assessment.validation.action.slice(1)}d by {assessment.validation.validatedBy}
             </p>
-            <p className="text-slate-400 text-xs leading-relaxed">&ldquo;{validated.reason}&rdquo;</p>
+            <p className="text-slate-400 text-xs leading-relaxed">&ldquo;{assessment.validation.reason}&rdquo;</p>
           </div>
         </div>
       )}
@@ -235,7 +235,7 @@ function AssessmentCard({
             onClick={() => setExpanded(v => !v)}
             className="w-full flex items-center justify-between px-6 py-3.5 text-sm font-medium text-slate-600 hover:bg-gray-50 transition-colors"
           >
-            <span>{validated ? 'Edit Validation' : 'Validate Assessment'}</span>
+            <span>{assessment.validation ? 'Edit Validation' : 'Validate Assessment'}</span>
             <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </button>
 
