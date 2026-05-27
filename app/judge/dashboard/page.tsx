@@ -241,7 +241,7 @@ export default function JudgeDashboard() {
               <TLMark className="w-7 h-7 text-tl-logo-red" />
               <div>
                 <p className="text-slate-900 font-bold text-sm leading-tight">Judges&apos; Corner</p>
-                <p className="text-slate-400 text-xs leading-tight">Go AI-Native Hackathon</p>
+                <p className="text-slate-400 text-xs leading-tight">Go AI-Native Tech Challenge</p>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-1 text-xs">

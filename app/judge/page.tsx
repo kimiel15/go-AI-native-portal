@@ -114,7 +114,7 @@ export default function JudgeLoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-slate-400 mt-6">Trend Micro · Go AI-Native Hackathon 2026</p>
+        <p className="text-center text-xs text-slate-400 mt-6">Trend Micro · Go AI-Native Tech Challenge 2026</p>
       </div>
     </div>
   );

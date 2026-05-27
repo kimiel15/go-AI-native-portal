@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Go AI-Native Portal',
-  description: 'RoW Support AI Acceleration Hackathon — 40% efficiency. 20% added value. 100% AI-Native.',
+  description: 'RoW Support AI Acceleration Tech Challenge — 40% efficiency. 20% added value. 100% AI-Native.',
 };
 
 export default async function RootLayout({

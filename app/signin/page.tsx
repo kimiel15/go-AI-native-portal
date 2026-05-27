@@ -39,7 +39,7 @@ function SignInContent() {
             <TLMark className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Go AI-Native</h1>
-          <p className="text-slate-400 text-sm mt-1">RoW Support · AI Hackathon Portal</p>
+          <p className="text-slate-400 text-sm mt-1">RoW Support · AI Tech Challenge Portal</p>
         </div>
 
         {/* Error message */}

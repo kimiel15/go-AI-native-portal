@@ -1227,7 +1227,7 @@ function ParticipantFormModal({
               {existingSquadNames.map(n => <option key={n} value={n} />)}
               {teams.map(t => <option key={t.id} value={t.teamName} />)}
             </datalist>
-            <p className="text-slate-400 text-xs mt-1">Free-text squad name (e.g. Squad Kimiel) or a registered hackathon team. Existing entries autocomplete.</p>
+            <p className="text-slate-400 text-xs mt-1">Free-text squad name (e.g. Squad Kimiel) or a registered Tech Challenge team. Existing entries autocomplete.</p>
           </div>
           <div>
             <label className="block text-slate-600 text-sm mb-1.5">Siebel ID <span className="text-slate-400 font-normal">(optional)</span></label>

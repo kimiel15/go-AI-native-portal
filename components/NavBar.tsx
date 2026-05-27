@@ -22,7 +22,7 @@ export default function NavBar() {
           <TLMark className="w-7 h-7 text-tl-logo-red" />
           <div>
             <span className="text-slate-900 font-bold text-sm tracking-tight leading-none">Go AI-Native</span>
-            <span className="block text-slate-400 text-xs leading-none">AI Hackathon Portal</span>
+            <span className="block text-slate-400 text-xs leading-none">AI Tech Challenge Portal</span>
           </div>
         </Link>
 

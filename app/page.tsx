@@ -93,7 +93,7 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
         <div className="inline-flex items-center gap-2 bg-tl-cream border border-tl-teal-light/60 rounded-full px-4 py-1.5 mb-4">
           <span className="w-2 h-2 rounded-full bg-tl-red animate-pulse" />
-          <span className="text-tl-teal text-sm font-medium">RoW Support · AI Acceleration Hackathon</span>
+          <span className="text-tl-teal text-sm font-medium">RoW Support · AI Acceleration Tech Challenge</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-4 leading-tight tracking-tight">
@@ -328,7 +328,7 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-gray-200 py-8 text-center text-slate-400 text-sm">
-        Go AI-Native · RoW Support AI Acceleration Hackathon · June 27, 2026
+        Go AI-Native · RoW Support AI Acceleration Tech Challenge · June 27, 2026
       </footer>
     </div>
   );

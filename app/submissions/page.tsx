@@ -34,7 +34,7 @@ export default async function SubmissionsPage() {
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-tl-teal text-xs uppercase tracking-widest">Hackathon</p>
+                <p className="text-tl-teal text-xs uppercase tracking-widest">Tech Challenge</p>
                 <h1 className="text-2xl font-bold text-slate-900">Project Submissions</h1>
               </div>
             </div>

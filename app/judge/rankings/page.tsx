@@ -458,7 +458,7 @@ function exportCSV(data: RankingsData) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `hackathon-scores-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `tech-challenge-scores-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -504,7 +504,7 @@ export default function RankingsPage() {
               <TLMark className="w-7 h-7 text-tl-logo-red" />
               <div>
                 <p className="text-slate-900 font-bold text-sm leading-tight">Judges&apos; Corner</p>
-                <p className="text-slate-400 text-xs leading-tight">Go AI-Native Hackathon</p>
+                <p className="text-slate-400 text-xs leading-tight">Go AI-Native Tech Challenge</p>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-1 text-xs">
