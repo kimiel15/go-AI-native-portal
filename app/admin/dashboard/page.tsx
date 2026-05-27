@@ -1512,6 +1512,50 @@ export default function AdminDashboard() {
   const [deletingParticipantId, setDeletingParticipantId] = useState<string | null>(null);
   const [deletingParticipantName, setDeletingParticipantName] = useState('');
 
+  // ── Excel exports ────────────────────────────────────────────────────────────
+  const exportTeamsXLSX = () => {
+    const rows = teams.flatMap(t =>
+      t.members.map((m, i) => ({
+        'Team Name': t.teamName,
+        'Department': t.department,
+        'Member #': i + 1,
+        'Member Name': m.name,
+        'Member Email': m.email ?? '',
+        'Member Role': m.role ?? '',
+        'Registered At': t.registeredAt ? new Date(t.registeredAt).toLocaleString() : '',
+      }))
+    );
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Teams');
+    XLSX.writeFile(wb, `registrations-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const exportAssessmentsXLSX = () => {
+    const rows = assessments.map(a => ({
+      'Name': a.participantName,
+      'Email': a.participantEmail,
+      'MC Score': a.mcScore ?? '',
+      'MC Max': a.mcMax ?? '',
+      'Essay Total': a.essayTotal ?? '',
+      'Essay Max': a.essayMax ?? '',
+      'Total Score': a.totalScore ?? '',
+      'Total Max': a.totalMax ?? '',
+      'Total %': a.totalPercent != null ? `${a.totalPercent}%` : '',
+      'Preliminary Level': a.preliminaryLevel ?? '',
+      'Category Recommendation': a.categoryRecommendation ?? '',
+      'Validated': a.validation ? 'Yes' : 'No',
+      'Final Level': a.validation?.finalLevel ?? '',
+      'Validation Action': a.validation?.action ?? '',
+      'Validated By': a.validation?.validatedBy ?? '',
+      'Submitted At': a.submittedAt ? new Date(a.submittedAt).toLocaleString() : '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Assessments');
+    XLSX.writeFile(wb, `assessments-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -1868,12 +1912,22 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-slate-900 font-bold text-lg">Registered Teams ({teams.length})</h2>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
-              >
-                <Plus className="w-4 h-4" />Add Team
-              </button>
+              <div className="flex items-center gap-2">
+                {teams.length > 0 && (
+                  <button
+                    onClick={exportTeamsXLSX}
+                    className="flex items-center gap-2 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-slate-700 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+                  >
+                    <Download className="w-4 h-4" />Export Excel
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-2 bg-tl-red hover:bg-tl-burgundy text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-red-500/20"
+                >
+                  <Plus className="w-4 h-4" />Add Team
+                </button>
+              </div>
             </div>
             {teams.length === 0 ? (
               <div className="text-center py-20 text-slate-400">
@@ -1907,7 +1961,17 @@ export default function AdminDashboard() {
 
         {tab === 'assessments' && (
           <div className="space-y-3">
-            <h2 className="text-slate-900 font-bold text-lg mb-4">Assessment Responses ({assessments.length})</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-slate-900 font-bold text-lg">Assessment Responses ({assessments.length})</h2>
+              {assessments.length > 0 && (
+                <button
+                  onClick={exportAssessmentsXLSX}
+                  className="flex items-center gap-2 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-slate-700 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+                >
+                  <Download className="w-4 h-4" />Export Excel
+                </button>
+              )}
+            </div>
             {assessments.length === 0 ? <div className="text-center py-16 text-slate-400">No assessments yet.</div>
               : assessments.map(a => <AssessmentReadCard key={a.id} assessment={a} onReset={fetchData} />)}
           </div>

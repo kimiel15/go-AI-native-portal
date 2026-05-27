@@ -12,6 +12,7 @@ import { SquadDef } from '@/lib/squad-hierarchy';
 
 // ── Role types ─────────────────────────────────────────────────────────────────
 type AccessRole = 'manager' | 'squad-lead' | 'none';
+interface SquadSummary { squadName: string; totalParticipants: number; assessedCount: number; }
 
 interface AccessResult {
   role: AccessRole;
@@ -304,9 +305,11 @@ function AssessmentCard({
 function SquadPanel({
   squad,
   validatedByDefault,
+  totalParticipants = 0,
 }: {
   squad: SquadDef;
   validatedByDefault: string;
+  totalParticipants?: number;
 }) {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -353,8 +356,36 @@ function SquadPanel({
     );
   }
 
+  const total = totalParticipants || assessments.length;
+  const assessedPct = total > 0 ? Math.round((assessments.length / total) * 100) : 0;
+  const notAssessed = Math.max(0, total - assessments.length);
+
   return (
     <div className="space-y-4">
+      {/* Completion tracker */}
+      {total > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl px-6 py-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-slate-700 text-sm font-semibold">Assessment Completion</p>
+            <span className={`text-sm font-bold ${assessedPct === 100 ? 'text-tl-teal' : 'text-slate-500'}`}>
+              {assessments.length} / {total} members
+            </span>
+          </div>
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${assessedPct === 100 ? 'bg-tl-teal' : 'bg-gradient-to-r from-tl-red to-tl-orange'}`}
+              style={{ width: `${assessedPct}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between mt-1.5">
+            <span className="text-xs text-slate-400">{assessedPct}% assessed</span>
+            {notAssessed > 0 && (
+              <span className="text-xs text-amber-600 font-medium">{notAssessed} not yet assessed</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 mb-2">
         {[
@@ -431,6 +462,7 @@ export default function SquadLeadPage() {
   const [access, setAccess] = useState<AccessResult | null>(null);
   const [loadingAccess, setLoadingAccess] = useState(false);
   const [activeSquadName, setActiveSquadName] = useState('');
+  const [summary, setSummary] = useState<SquadSummary[]>([]);
 
   // Fetch role-based access once the user is authenticated
   useEffect(() => {
@@ -446,6 +478,12 @@ export default function SquadLeadPage() {
         }
         if (data.role === 'manager' && data.squads.length > 0) {
           setActiveSquadName(data.squads[0].name);
+          // Fetch completion summary for all squads
+          const squadNames = data.squads.map((s: SquadDef) => s.name).join(',');
+          fetch(`/api/squad-lead/summary?squads=${encodeURIComponent(squadNames)}`)
+            .then(r => r.json())
+            .then(setSummary)
+            .catch(() => {});
         }
       })
       .catch(() => setAccess({ role: 'none', name: '', squads: [] }))
@@ -544,20 +582,36 @@ export default function SquadLeadPage() {
         {/* Squad tabs — only visible to people managers */}
         {role === 'manager' && squads.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-2 mb-6 flex flex-wrap gap-1">
-            {squads.map(s => (
-              <button
-                key={s.name}
-                type="button"
-                onClick={() => setActiveSquadName(s.name)}
-                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeSquadName === s.name
-                    ? 'bg-tl-teal text-white shadow-sm'
-                    : 'text-slate-500 hover:bg-gray-50 hover:text-slate-700'
-                }`}
-              >
-                {s.name}
-              </button>
-            ))}
+            {squads.map(s => {
+              const sq = summary.find(x => x.squadName === s.name);
+              const pct = sq && sq.totalParticipants > 0
+                ? Math.round((sq.assessedCount / sq.totalParticipants) * 100)
+                : null;
+              const isActive = activeSquadName === s.name;
+              return (
+                <button
+                  key={s.name}
+                  type="button"
+                  onClick={() => setActiveSquadName(s.name)}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-tl-teal text-white shadow-sm'
+                      : 'text-slate-500 hover:bg-gray-50 hover:text-slate-700'
+                  }`}
+                >
+                  {s.name}
+                  {sq && (
+                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                      isActive
+                        ? pct === 100 ? 'bg-white/30 text-white' : 'bg-white/20 text-white'
+                        : pct === 100 ? 'bg-tl-teal/10 text-tl-teal' : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {sq.assessedCount}/{sq.totalParticipants}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -578,6 +632,7 @@ export default function SquadLeadPage() {
             key={activeSquad.name}
             squad={activeSquad}
             validatedByDefault={access?.name ?? session.user?.name ?? ''}
+            totalParticipants={summary.find(x => x.squadName === activeSquad.name)?.totalParticipants ?? 0}
           />
         )}
       </div>
