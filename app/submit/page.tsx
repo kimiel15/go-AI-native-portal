@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 
 type Status = 'idle' | 'saving' | 'submitting' | 'saved' | 'submitted' | 'error';
-interface TeamOption { id: string; teamName: string; }
 interface ExistingSubmission {
   id: string;
   gitRepoUrl: string;
@@ -127,11 +126,14 @@ function SubmittedView({ sub }: { sub: ExistingSubmission }) {
   );
 }
 
+interface MyTeam { id: string; teamName: string; department: string; members: { name: string; email?: string }[]; }
+
 // ── Main form ──────────────────────────────────────────────────────────────
 function SubmitForm() {
   const searchParams = useSearchParams();
   const [teamId, setTeamId] = useState(searchParams.get('teamId') || '');
-  const [teams, setTeams] = useState<TeamOption[]>([]);
+  const [myTeam, setMyTeam] = useState<MyTeam | null>(null);
+  const [loadingMyTeam, setLoadingMyTeam] = useState(true);
   const [gitRepoUrl, setGitRepoUrl] = useState('');
   const [measuredResults, setMeasuredResults] = useState('');
   const [businessValue, setBusinessValue] = useState<'revenue-growth' | 'ai-containment' | ''>('');
@@ -143,9 +145,16 @@ function SubmitForm() {
   const [existing, setExisting] = useState<ExistingSubmission | null>(null);
   const [loadingExisting, setLoadingExisting] = useState(false);
 
-  // Load teams
+  // Resolve the signed-in user's team and auto-set teamId
   useEffect(() => {
-    fetch('/api/register').then(r => r.json()).then(setTeams).catch(() => {});
+    fetch('/api/my-team')
+      .then(r => r.json())
+      .then((team: MyTeam | null) => {
+        setMyTeam(team);
+        if (team) setTeamId(team.id);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMyTeam(false));
   }, []);
 
   // Load existing submission when team is selected
@@ -169,6 +178,16 @@ function SubmitForm() {
       .catch(() => {})
       .finally(() => setLoadingExisting(false));
   }, [teamId]);
+
+  // Still resolving the user's team — show a spinner
+  if (loadingMyTeam) {
+    return (
+      <div className="flex items-center justify-center py-32 gap-3 text-slate-400">
+        <Loader2 className="w-5 h-5 animate-spin" />
+        <span className="text-sm">Loading your team…</span>
+      </div>
+    );
+  }
 
   // If team already has a submitted (locked) submission, show locked view
   if (existing?.status === 'submitted') {
@@ -222,7 +241,7 @@ function SubmitForm() {
   };
 
   const isWorking = status === 'saving' || status === 'submitting';
-  const canSubmit = !!teamId && !!gitRepoUrl && !!measuredResults;
+  const canSubmit = !!myTeam && !!teamId && !!gitRepoUrl && !!measuredResults;
 
   return (
     <>
@@ -323,30 +342,31 @@ command 3
         </div>
 
         <div className="space-y-5">
-          {/* Team selector */}
+          {/* Team — auto-filled from session */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6">
-            <label className="block text-slate-600 text-sm mb-1.5">
-              Team <span className="text-red-400">*</span>
+            <label className="block text-slate-600 text-sm mb-2">
+              Team
             </label>
-            {loadingExisting ? (
-              <div className="flex items-center gap-2 text-slate-400 text-sm py-2">
-                <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+            {myTeam ? (
+              <div className="flex items-center gap-3 bg-tl-teal-light/15 border border-tl-teal-light rounded-xl px-4 py-3">
+                <CheckCircle className="w-4 h-4 text-tl-teal flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-slate-900 font-semibold text-sm">{myTeam.teamName}</p>
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    {myTeam.members.map(m => m.name).join(' · ')}
+                  </p>
+                </div>
+                <span className="text-tl-teal text-xs font-medium flex-shrink-0">Your team</span>
               </div>
             ) : (
-              <select
-                required
-                value={teamId}
-                onChange={e => setTeamId(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-tl-teal transition-colors"
-              >
-                <option value="">-- Select your registered team --</option>
-                {teams.map(t => <option key={t.id} value={t.id}>{t.teamName}</option>)}
-              </select>
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <p className="text-amber-700 text-sm">
+                  You&apos;re not registered on any team yet.{' '}
+                  <a href="/register" className="font-semibold underline hover:text-amber-800">Register first →</a>
+                </p>
+              </div>
             )}
-            <p className="text-slate-400 text-xs mt-2">
-              Not registered yet?{' '}
-              <a href="/register" className="text-red-400 hover:underline">Register your team first</a>.
-            </p>
           </div>
 
           {/* Business Value Category */}
