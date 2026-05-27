@@ -27,16 +27,16 @@ export default function GetStartedModal() {
             onClick={() => setOpen(false)}
           />
 
-          {/* Panel */}
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col">
+          {/* Panel — wider so content fits without scrolling */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col">
 
             {/* Header */}
-            <div className="px-7 pt-7 pb-5 border-b border-gray-100">
+            <div className="px-8 pt-6 pb-4 border-b border-gray-100">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <span className="text-tl-teal text-xs font-semibold uppercase tracking-widest">Before You Start</span>
                   <h2 className="text-slate-900 font-bold text-xl mt-0.5">Set up your tools</h2>
-                  <p className="text-slate-400 text-sm mt-1">Complete both before the build phase begins.</p>
+                  <p className="text-slate-400 text-sm mt-0.5">Complete both before the build phase begins.</p>
                 </div>
                 <button
                   type="button"
@@ -49,7 +49,7 @@ export default function GetStartedModal() {
             </div>
 
             {/* Steps */}
-            <div className="px-7 py-6 space-y-5 flex-1">
+            <div className="px-8 py-5 space-y-4">
 
               {/* Step 1 */}
               <div className="flex gap-4">
@@ -60,12 +60,14 @@ export default function GetStartedModal() {
                   <p className="text-slate-900 font-semibold text-sm mb-1">
                     Install Claude for Enterprise (C4E) via the Company Portal
                   </p>
-                  <p className="text-slate-500 text-xs leading-relaxed mb-3">
-                    Search for <strong className="text-slate-700">Claude for Enterprise</strong> in the Company Portal and install from there. Do not install directly from the web.
-                  </p>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                    <p className="text-amber-700 text-xs font-semibold mb-0.5">Previously installed C4E by bypassing admin?</p>
-                    <p className="text-amber-600 text-xs leading-relaxed">Uninstall and reinstall via the Company Portal — some required components may be missing. Your existing chats will be saved.</p>
+                  <div className="flex gap-3 items-start">
+                    <p className="text-slate-500 text-xs leading-relaxed flex-1">
+                      Search for <strong className="text-slate-700">Claude for Enterprise</strong> in the Company Portal and install from there. Do not install directly from the web.
+                    </p>
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex-1">
+                      <p className="text-amber-700 text-xs font-semibold mb-0.5">Previously installed C4E by bypassing admin?</p>
+                      <p className="text-amber-600 text-xs leading-relaxed">Uninstall and reinstall via the Company Portal — your existing chats will be saved.</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -81,11 +83,12 @@ export default function GetStartedModal() {
                   <p className="text-slate-900 font-semibold text-sm mb-1">
                     Request your GitHub EMU account via Jarvis
                   </p>
-                  <p className="text-slate-500 text-xs leading-relaxed mb-3">
+                  <p className="text-slate-500 text-xs leading-relaxed mb-2">
                     Processing takes approximately <strong className="text-slate-700">30 minutes</strong> — request early.
                   </p>
-                  <div className="space-y-2">
-                    <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
+                  {/* Two callout boxes side-by-side */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl px-3 py-2.5">
                       <p className="text-tl-red text-xs font-semibold uppercase tracking-wide mb-1.5">How to Request</p>
                       <p className="text-slate-600 text-xs leading-relaxed">
                         Go to <strong>jarvis.trendmicro.com</strong><br />
@@ -93,7 +96,7 @@ export default function GetStartedModal() {
                         Subcategory: <strong>RDSec</strong> · Service: <strong>GitHub</strong>
                       </p>
                     </div>
-                    <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl px-3 py-2.5">
                       <p className="text-tl-red text-xs font-semibold uppercase tracking-wide mb-1.5">Select the Correct Action</p>
                       <div className="space-y-1">
                         <p className="text-slate-600 text-xs">New access → <strong>Request GitHub Cloud EMU Permission</strong></p>
@@ -121,7 +124,7 @@ export default function GetStartedModal() {
             </div>
 
             {/* Footer CTA */}
-            <div className="px-7 pb-7 pt-2">
+            <div className="px-8 pb-6 pt-1">
               <button
                 type="button"
                 onClick={() => { setOpen(false); router.push('/register'); }}
