@@ -398,11 +398,11 @@ command 3
                     <TrendingUp className="w-4 h-4" />
                   </div>
                   <span className={`text-sm font-semibold ${businessValue === 'revenue-growth' ? 'text-tl-teal' : 'text-slate-700'}`}>
-                    Revenue Growth
+                    Revenue Contribution Growth
                   </span>
                 </div>
                 <p className="text-slate-500 text-xs leading-relaxed">
-                  Your tool directly contributes to generating more revenue — e.g. faster case resolution, upsell enablement, or improved customer retention.
+                  Uplift from upsell, retention, and high-value case handling across every channel.
                 </p>
               </button>
 
@@ -421,11 +421,11 @@ command 3
                     <Shield className="w-4 h-4" />
                   </div>
                   <span className={`text-sm font-semibold ${businessValue === 'ai-containment' ? 'text-tl-teal' : 'text-slate-700'}`}>
-                    AI Containment
+                    AI Containment Rate
                   </span>
                 </div>
                 <p className="text-slate-500 text-xs leading-relaxed">
-                  Your tool reduces support volume or operational cost — e.g. ticket deflection, automation of repetitive tasks, or reduced handle time.
+                  Contacts resolved before reaching an engineer — customers get what they need before the queue.
                 </p>
               </button>
             </div>
