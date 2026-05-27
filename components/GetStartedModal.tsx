@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, X, Building2, Github, Lightbulb } from 'lucide-react';
+import { ArrowRight, X, Building2, GitBranch, Lightbulb } from 'lucide-react';
 
 export default function GetStartedModal() {
   const [open, setOpen] = useState(false);
@@ -75,7 +75,7 @@ export default function GetStartedModal() {
               {/* Step 2 */}
               <div className="flex gap-4">
                 <div className="flex-shrink-0 w-9 h-9 rounded-full bg-tl-red flex items-center justify-center">
-                  <Github className="w-4 h-4 text-white" />
+                  <GitBranch className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-slate-900 font-semibold text-sm mb-1">
