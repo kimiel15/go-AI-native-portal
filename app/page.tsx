@@ -105,7 +105,7 @@ export default function Home() {
         <p className="text-lg font-semibold text-slate-500 mb-2 tracking-wide">
           40% efficiency · 20% added value · 100% AI-Native
         </p>
-        <p className="text-slate-400 text-sm mb-2">Build with Claude. Ship in Git.</p>
+        <p className="text-slate-400 text-sm mb-2">Build with Claude. Ship in GitHub.</p>
 
         <p className="text-slate-500 max-w-2xl mx-auto mb-12 leading-relaxed">
           Every team in RoW Support builds a Claude-powered tool, runs it on real production cases,
