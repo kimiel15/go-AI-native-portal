@@ -55,6 +55,29 @@ function AssessmentCard({
   const e = assessment.essayScores;
   const percent = assessment.totalPercent ?? 0;
 
+  // ── Compact view for already-validated members ────────────────────────────
+  if (validated) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 flex items-center gap-4">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-tl-teal to-tl-sky flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          {assessment.participantName.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-slate-900 font-semibold text-sm truncate">{assessment.participantName}</p>
+          <p className="text-slate-400 text-xs truncate">{assessment.participantEmail}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`text-xs border px-2.5 py-1 rounded-full font-semibold ${levelBadge(validated.finalLevel)}`}>
+            {validated.finalLevel}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-tl-teal">
+            <ShieldCheck className="w-3.5 h-3.5" /> Confirmed
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   const handleSave = async () => {
     if (!action || !finalLevel || !reason.trim() || !validatedBy.trim()) {
       setError('Please fill in all fields.');
@@ -434,22 +457,24 @@ function SquadPanel({
           />
         ))}
 
-      {/* Already validated */}
+      {/* Already validated — compact list */}
       {validated > 0 && (
         <>
           <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest pt-2 px-1">
-            Already Validated
+            Confirmed Levels
           </p>
-          {assessments
-            .filter(a => !!a.validation)
-            .map(a => (
-              <AssessmentCard
-                key={a.id}
-                assessment={a}
-                defaultValidatedBy={validatedByDefault}
-                onValidated={handleValidated}
-              />
-            ))}
+          <div className="space-y-2">
+            {assessments
+              .filter(a => !!a.validation)
+              .map(a => (
+                <AssessmentCard
+                  key={a.id}
+                  assessment={a}
+                  defaultValidatedBy={validatedByDefault}
+                  onValidated={handleValidated}
+                />
+              ))}
+          </div>
         </>
       )}
     </div>
