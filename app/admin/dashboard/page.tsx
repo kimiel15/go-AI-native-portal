@@ -1509,6 +1509,8 @@ export default function AdminDashboard() {
   const [togglingSubmissions, setTogglingSubmissions] = useState(false);
   const [assessmentOpen, setAssessmentOpen] = useState(false);
   const [togglingAssessment, setTogglingAssessment] = useState(false);
+  const [judgingVisible, setJudgingVisible] = useState(true);
+  const [togglingJudging, setTogglingJudging] = useState(false);
 
   // Announcements
   const [announcements, setAnnouncements] = useState<AnnouncementRow[]>([]);
@@ -1606,6 +1608,7 @@ export default function AdminDashboard() {
       setTeams(t); setSubmissions(s); setAssessments(a); setParticipants(p); setUsageMeta(u);
       setSubmissionsOpen(settings.submissionsOpen ?? true);
       setAssessmentOpen(settings.assessmentOpen ?? false);
+      setJudgingVisible(settings.judgingCriteriaVisible !== false);
     } finally { setLoading(false); }
     fetchAnnouncements();
   }, [fetchAnnouncements]);
@@ -1638,6 +1641,19 @@ export default function AdminDashboard() {
       const data = await res.json();
       setAssessmentOpen(data.assessmentOpen);
     } finally { setTogglingAssessment(false); }
+  };
+
+  const toggleJudging = async () => {
+    setTogglingJudging(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ judgingCriteriaVisible: !judgingVisible }),
+      });
+      const data = await res.json();
+      setJudgingVisible(data.judgingCriteriaVisible);
+    } finally { setTogglingJudging(false); }
   };
 
   const pendingValidation = assessments.filter(a => !a.validation).length;
@@ -1884,6 +1900,22 @@ export default function AdminDashboard() {
                     className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${assessmentOpen ? 'bg-emerald-500' : 'bg-gray-300'}`}
                   >
                     <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${assessmentOpen ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-900 font-medium text-sm">Judging Criteria</p>
+                    <p className="text-slate-400 text-xs mt-0.5">
+                      {judgingVisible ? 'Visible on homepage.' : 'Hidden from homepage.'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={toggleJudging}
+                    disabled={togglingJudging}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${judgingVisible ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${judgingVisible ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
               </div>
