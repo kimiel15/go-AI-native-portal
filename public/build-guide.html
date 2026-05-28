@@ -30,11 +30,9 @@
     background: var(--white); border-bottom: 1px solid var(--lgray);
     padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 54px;
   }
-  .nav-logo { display: flex; align-items: center; gap: 6px; }
-
-  .nav-trendlife { font-size: 13px; font-weight: 700; color: var(--black); }
-  .nav-sub { font-size: 13px; font-weight: 400; color: var(--mgray); }
-  .nav-divider { font-size: 13px; color: var(--lgray); }
+  .nav-logo { display: flex; align-items: center; gap: 8px; }
+  .nav-logo svg { width: 26px; height: 26px; color: #CC1418; flex-shrink: 0; }
+  .nav-logo-text { font-size: 15px; font-weight: 700; color: var(--black); letter-spacing: -0.01em; }
   .nav-links { display: flex; gap: 1.5rem; list-style: none; }
   .nav-links a { font-size: 12px; font-weight: 500; color: var(--mgray); text-decoration: none; transition: color 0.2s; }
   .nav-links a:hover { color: var(--red); }
@@ -286,9 +284,10 @@
 <!-- NAV -->
 <nav>
   <div class="nav-logo">
-    <span class="nav-trendlife">TrendLife™</span>
-    <span class="nav-divider">·</span>
-    <span class="nav-sub">Go AI-Native</span>
+    <svg viewBox="0 0 133.91 122.64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M132.07,30.67c-1.84-7.9-5.5-15.32-11.17-21.12-25.65-26.27-60.08,6.57-68.61,38.85h0c-5.15,17.62-7.08,38.58,4.11,54.59-15.78-.09-37.51-3.93-43.7-20.4-4.14-17.3,16.12-29.21,30.77-32.61.6-2.33,1.29-4.73,2.11-7C-25.65,55.51-6.93,122.31,57.21,122.6c58.67,1.72,84.05-52.55,74.86-91.92ZM112.31,47.68c-1.41,13.28-11.89,47.54-33.33,51.77-2.59.51-5.27.41-7.78-.4-17.94-5.83-18.06-35.94-12.19-51.02,29.97-.12,40.99,16.13,40.99,16.13,1.35-3.59,2.44-7.34,3.24-11.18-16.52-12.08-41.66-11.28-41.66-11.28C76.94,7.26,117.59.11,112.31,47.68Z" fill="currentColor"/>
+    </svg>
+    <span class="nav-logo-text">Go AI-Native</span>
   </div>
   <ul class="nav-links">
     <li><a href="#prereqs">Setup</a></li>
@@ -303,7 +302,7 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-inner">
-    <p class="hero-eyebrow">TrendLife™ · RoW Support · Go AI-Native</p>
+    <p class="hero-eyebrow">RoW Support · Go AI-Native</p>
     <h1 class="hero-title">The Build Guide</h1>
     <p class="hero-program">For Tech Challenge participants</p>
     <div class="hero-rule"></div>
