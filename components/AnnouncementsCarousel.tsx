@@ -126,7 +126,7 @@ export default function AnnouncementsCarousel({ initialAnnouncements }: Props) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block relative w-full overflow-hidden cursor-pointer"
-                      style={{ aspectRatio: '3 / 1' }}
+                      style={{ aspectRatio: '24 / 5' }}
                       aria-label={a.title || 'View announcement'}
                     >
                       <Image
@@ -142,7 +142,7 @@ export default function AnnouncementsCarousel({ initialAnnouncements }: Props) {
                     <Link
                       href={a.link}
                       className="block relative w-full overflow-hidden cursor-pointer"
-                      style={{ aspectRatio: '3 / 1' }}
+                      style={{ aspectRatio: '24 / 5' }}
                       aria-label={a.title || 'View announcement'}
                     >
                       <Image
@@ -158,7 +158,7 @@ export default function AnnouncementsCarousel({ initialAnnouncements }: Props) {
                 ) : (
                   <div
                     className="relative w-full overflow-hidden"
-                    style={{ aspectRatio: '3 / 1' }}
+                    style={{ aspectRatio: '24 / 5' }}
                   >
                     <Image
                       src={a.imageUrl}

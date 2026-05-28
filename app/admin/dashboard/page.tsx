@@ -1980,10 +1980,10 @@ export default function AdminDashboard() {
                     <div>
                       <label className="block text-slate-500 text-xs mb-1">
                         Banner image <span className="text-red-400">*</span>
-                        <span className="text-slate-300 ml-1">1200 × 400 px · JPG or PNG · max 500 KB</span>
+                        <span className="text-slate-300 ml-1">1200 × 250 px · JPG or PNG · max 500 KB</span>
                       </label>
                       {imagePreview ? (
-                        <div className="relative rounded-lg overflow-hidden border border-gray-200" style={{ aspectRatio: '3/1' }}>
+                        <div className="relative rounded-lg overflow-hidden border border-gray-200" style={{ aspectRatio: '24/5' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                           <button
