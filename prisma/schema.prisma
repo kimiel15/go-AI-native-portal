@@ -73,6 +73,7 @@ model Announcement {
   date      String
   link      String?
   linkLabel String?
+  imageUrl  String? // hosted image; when set, card renders full-bleed image
   external  Boolean @default(false)
   active    Boolean @default(true)
   order     Int     @default(0)

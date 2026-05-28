@@ -10,6 +10,7 @@ export interface AnnouncementRow {
   date: string;
   link: string | null;
   linkLabel: string | null;
+  imageUrl: string | null;
   external: boolean;
   active: boolean;
   order: number;

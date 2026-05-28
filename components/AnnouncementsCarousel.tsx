@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Info, Bell, Zap, ArrowRight } from 'lucide-react';
 import { AnnouncementRow } from '@/lib/data';
 
@@ -115,46 +116,104 @@ export default function AnnouncementsCarousel({ initialAnnouncements }: Props) {
             )}
 
             {/* Slide */}
-            <div key={`slide-${slideKey}`} className="announce-slide flex gap-5 p-7">
-              {/* Accent bar */}
-              <div className={`w-1 rounded-full flex-shrink-0 self-stretch min-h-[80px] ${cfg.bar}`} />
+            {a.imageUrl ? (
+              /* ── Image card ─────────────────────────────────────────── */
+              <div key={`slide-${slideKey}`} className="announce-slide">
+                {a.link ? (
+                  a.external ? (
+                    <a
+                      href={a.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block relative w-full overflow-hidden cursor-pointer"
+                      style={{ aspectRatio: '3 / 1' }}
+                      aria-label={a.title || 'View announcement'}
+                    >
+                      <Image
+                        src={a.imageUrl}
+                        alt={a.title || 'Announcement'}
+                        fill
+                        className="object-cover transition-transform duration-300 hover:scale-[1.01]"
+                        sizes="(max-width: 1152px) 100vw, 1152px"
+                        priority
+                      />
+                    </a>
+                  ) : (
+                    <Link
+                      href={a.link}
+                      className="block relative w-full overflow-hidden cursor-pointer"
+                      style={{ aspectRatio: '3 / 1' }}
+                      aria-label={a.title || 'View announcement'}
+                    >
+                      <Image
+                        src={a.imageUrl}
+                        alt={a.title || 'Announcement'}
+                        fill
+                        className="object-cover transition-transform duration-300 hover:scale-[1.01]"
+                        sizes="(max-width: 1152px) 100vw, 1152px"
+                        priority
+                      />
+                    </Link>
+                  )
+                ) : (
+                  <div
+                    className="relative w-full overflow-hidden"
+                    style={{ aspectRatio: '3 / 1' }}
+                  >
+                    <Image
+                      src={a.imageUrl}
+                      alt={a.title || 'Announcement'}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1152px) 100vw, 1152px"
+                      priority
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ── Text card ──────────────────────────────────────────── */
+              <div key={`slide-${slideKey}`} className="announce-slide flex gap-5 p-7">
+                {/* Accent bar */}
+                <div className={`w-1 rounded-full flex-shrink-0 self-stretch min-h-[80px] ${cfg.bar}`} />
 
-              <div className="flex-1 min-w-0">
-                {/* Tag */}
-                <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3 ${cfg.tag}`}>
-                  {cfg.icon}
-                  {a.tag}
-                </span>
+                <div className="flex-1 min-w-0">
+                  {/* Tag */}
+                  <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3 ${cfg.tag}`}>
+                    {cfg.icon}
+                    {a.tag}
+                  </span>
 
-                <h3 className="text-slate-900 font-bold text-base leading-snug mb-2">{a.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed max-w-2xl">{a.body}</p>
+                  <h3 className="text-slate-900 font-bold text-base leading-snug mb-2">{a.title}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed max-w-2xl">{a.body}</p>
 
-                <div className="flex items-center gap-4 mt-4">
-                  {a.link && (
-                    a.external ? (
-                      <a
-                        href={a.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-tl-red hover:text-tl-burgundy transition-colors group"
-                      >
-                        {a.linkLabel ?? 'Learn More'}
-                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </a>
-                    ) : (
-                      <Link
-                        href={a.link}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-tl-red hover:text-tl-burgundy transition-colors group"
-                      >
-                        {a.linkLabel ?? 'Learn More'}
-                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </Link>
-                    )
-                  )}
-                  <p className="text-slate-300 text-[11px]">{a.date}</p>
+                  <div className="flex items-center gap-4 mt-4">
+                    {a.link && (
+                      a.external ? (
+                        <a
+                          href={a.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-tl-red hover:text-tl-burgundy transition-colors group"
+                        >
+                          {a.linkLabel ?? 'Learn More'}
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </a>
+                      ) : (
+                        <Link
+                          href={a.link}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-tl-red hover:text-tl-burgundy transition-colors group"
+                        >
+                          {a.linkLabel ?? 'Learn More'}
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </Link>
+                      )
+                    )}
+                    <p className="text-slate-300 text-[11px]">{a.date}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Next arrow */}

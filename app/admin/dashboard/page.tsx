@@ -30,6 +30,7 @@ interface AnnouncementRow {
   date: string;
   link: string | null;
   linkLabel: string | null;
+  imageUrl: string | null;
   external: boolean;
   active: boolean;
   order: number;
@@ -1512,7 +1513,10 @@ export default function AdminDashboard() {
   // Announcements
   const [announcements, setAnnouncements] = useState<AnnouncementRow[]>([]);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
-  const [newAnn, setNewAnn] = useState({ type: 'reminder', tag: 'Reminder', title: '', body: '', link: '', linkLabel: '', external: false });
+  const [newAnn, setNewAnn] = useState({ type: 'reminder', tag: 'Reminder', title: '', body: '', link: '', linkLabel: '', external: false, imageUrl: '' });
+  const [annImageMode, setAnnImageMode] = useState<'text' | 'image'>('text');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState('');
   const [savingAnn, setSavingAnn] = useState(false);
   const [annError, setAnnError] = useState('');
   const [togglingAnn, setTogglingAnn] = useState<string | null>(null);
@@ -1658,8 +1662,30 @@ export default function AdminDashboard() {
     } finally { setDeletingAnn(null); }
   };
 
+  const handleAnnImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    setAnnError('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed.');
+      setNewAnn(p => ({ ...p, imageUrl: data.url }));
+      setImagePreview(data.url);
+    } catch (err: unknown) {
+      setAnnError(err instanceof Error ? err.message : 'Upload failed.');
+    } finally { setUploadingImage(false); }
+  };
+
   const saveNewAnnouncement = async () => {
-    if (!newAnn.title.trim() || !newAnn.body.trim()) {
+    if (annImageMode === 'image' && !newAnn.imageUrl) {
+      setAnnError('Please upload an image.');
+      return;
+    }
+    if (annImageMode === 'text' && (!newAnn.title.trim() || !newAnn.body.trim())) {
       setAnnError('Title and body are required.');
       return;
     }
@@ -1675,12 +1701,15 @@ export default function AdminDashboard() {
           date: `Posted ${today}`,
           link: newAnn.link.trim() || null,
           linkLabel: newAnn.linkLabel.trim() || null,
+          imageUrl: annImageMode === 'image' ? (newAnn.imageUrl || null) : null,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save.');
       setAnnouncements(prev => [...prev, data]);
-      setNewAnn({ type: 'reminder', tag: 'Reminder', title: '', body: '', link: '', linkLabel: '', external: false });
+      setNewAnn({ type: 'reminder', tag: 'Reminder', title: '', body: '', link: '', linkLabel: '', external: false, imageUrl: '' });
+      setImagePreview('');
+      setAnnImageMode('text');
       setShowAnnouncementForm(false);
     } catch (err: unknown) {
       setAnnError(err instanceof Error ? err.message : 'Failed to save.');
@@ -1879,57 +1908,112 @@ export default function AdminDashboard() {
               {/* Add form */}
               {showAnnouncementForm && (
                 <div className="mb-4 bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                  {/* Mode toggle */}
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden bg-white text-xs font-semibold">
+                    <button
+                      onClick={() => { setAnnImageMode('text'); setAnnError(''); }}
+                      className={`flex-1 py-2 transition-colors ${annImageMode === 'text' ? 'bg-tl-red text-white' : 'text-slate-500 hover:bg-gray-50'}`}
+                    >
+                      Text Card
+                    </button>
+                    <button
+                      onClick={() => { setAnnImageMode('image'); setAnnError(''); }}
+                      className={`flex-1 py-2 transition-colors ${annImageMode === 'image' ? 'bg-tl-red text-white' : 'text-slate-500 hover:bg-gray-50'}`}
+                    >
+                      Image Banner
+                    </button>
+                  </div>
+
+                  {annImageMode === 'text' ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-slate-500 text-xs mb-1">Type</label>
+                          <select
+                            value={newAnn.type}
+                            onChange={e => {
+                              const t = e.target.value;
+                              const tagMap: Record<string, string> = { tip: 'Build Guide', reminder: 'Reminder', update: 'Update' };
+                              setNewAnn(p => ({ ...p, type: t, tag: tagMap[t] ?? t }));
+                            }}
+                            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-tl-teal"
+                          >
+                            <option value="tip">Tip / Build Guide</option>
+                            <option value="reminder">Reminder</option>
+                            <option value="update">Update</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-slate-500 text-xs mb-1">Tag label</label>
+                          <input
+                            type="text"
+                            value={newAnn.tag}
+                            onChange={e => setNewAnn(p => ({ ...p, tag: e.target.value }))}
+                            placeholder="e.g. Reminder"
+                            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-slate-500 text-xs mb-1">Title <span className="text-red-400">*</span></label>
+                        <input
+                          type="text"
+                          value={newAnn.title}
+                          onChange={e => setNewAnn(p => ({ ...p, title: e.target.value }))}
+                          placeholder="Announcement title"
+                          className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-500 text-xs mb-1">Body <span className="text-red-400">*</span></label>
+                        <textarea
+                          rows={3}
+                          value={newAnn.body}
+                          onChange={e => setNewAnn(p => ({ ...p, body: e.target.value }))}
+                          placeholder="Announcement message..."
+                          className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal resize-none"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    /* Image mode */
+                    <div>
+                      <label className="block text-slate-500 text-xs mb-1">
+                        Banner image <span className="text-red-400">*</span>
+                        <span className="text-slate-300 ml-1">1200 × 400 px · JPG or PNG · max 500 KB</span>
+                      </label>
+                      {imagePreview ? (
+                        <div className="relative rounded-lg overflow-hidden border border-gray-200" style={{ aspectRatio: '3/1' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => { setImagePreview(''); setNewAnn(p => ({ ...p, imageUrl: '' })); }}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-8 cursor-pointer transition-colors ${uploadingImage ? 'border-tl-teal bg-tl-teal-light/10' : 'border-gray-200 hover:border-tl-teal hover:bg-gray-50'}`}>
+                          {uploadingImage
+                            ? <Loader2 className="w-6 h-6 text-tl-teal animate-spin" />
+                            : <Upload className="w-6 h-6 text-slate-300" />
+                          }
+                          <span className="text-slate-400 text-xs">{uploadingImage ? 'Uploading…' : 'Click to upload image'}</span>
+                          <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="sr-only" onChange={handleAnnImageUpload} disabled={uploadingImage} />
+                        </label>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Link — shared between both modes */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-slate-500 text-xs mb-1">Type</label>
-                      <select
-                        value={newAnn.type}
-                        onChange={e => {
-                          const t = e.target.value;
-                          const tagMap: Record<string, string> = { tip: 'Build Guide', reminder: 'Reminder', update: 'Update' };
-                          setNewAnn(p => ({ ...p, type: t, tag: tagMap[t] ?? t }));
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-tl-teal"
-                      >
-                        <option value="tip">Tip / Build Guide</option>
-                        <option value="reminder">Reminder</option>
-                        <option value="update">Update</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-slate-500 text-xs mb-1">Tag label</label>
-                      <input
-                        type="text"
-                        value={newAnn.tag}
-                        onChange={e => setNewAnn(p => ({ ...p, tag: e.target.value }))}
-                        placeholder="e.g. Reminder"
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-slate-500 text-xs mb-1">Title <span className="text-red-400">*</span></label>
-                    <input
-                      type="text"
-                      value={newAnn.title}
-                      onChange={e => setNewAnn(p => ({ ...p, title: e.target.value }))}
-                      placeholder="Announcement title"
-                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-500 text-xs mb-1">Body <span className="text-red-400">*</span></label>
-                    <textarea
-                      rows={3}
-                      value={newAnn.body}
-                      onChange={e => setNewAnn(p => ({ ...p, body: e.target.value }))}
-                      placeholder="Announcement message..."
-                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal resize-none"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-slate-500 text-xs mb-1">Link URL <span className="text-slate-300">(optional)</span></label>
+                      <label className="block text-slate-500 text-xs mb-1">
+                        Link URL
+                        {annImageMode === 'image' && <span className="text-red-400 ml-1">*</span>}
+                        {annImageMode === 'text' && <span className="text-slate-300 ml-1">(optional)</span>}
+                      </label>
                       <input
                         type="text"
                         value={newAnn.link}
@@ -1938,16 +2022,18 @@ export default function AdminDashboard() {
                         className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
                       />
                     </div>
-                    <div>
-                      <label className="block text-slate-500 text-xs mb-1">Button label</label>
-                      <input
-                        type="text"
-                        value={newAnn.linkLabel}
-                        onChange={e => setNewAnn(p => ({ ...p, linkLabel: e.target.value }))}
-                        placeholder="e.g. Register Now"
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
-                      />
-                    </div>
+                    {annImageMode === 'text' && (
+                      <div>
+                        <label className="block text-slate-500 text-xs mb-1">Button label</label>
+                        <input
+                          type="text"
+                          value={newAnn.linkLabel}
+                          onChange={e => setNewAnn(p => ({ ...p, linkLabel: e.target.value }))}
+                          placeholder="e.g. Register Now"
+                          className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -1962,14 +2048,14 @@ export default function AdminDashboard() {
                   {annError && <p className="text-red-500 text-xs">{annError}</p>}
                   <div className="flex gap-2 pt-1">
                     <button
-                      onClick={() => { setShowAnnouncementForm(false); setAnnError(''); }}
+                      onClick={() => { setShowAnnouncementForm(false); setAnnError(''); setImagePreview(''); setAnnImageMode('text'); }}
                       className="flex-1 py-2 rounded-lg border border-gray-200 text-slate-500 text-sm hover:bg-gray-50 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={saveNewAnnouncement}
-                      disabled={savingAnn}
+                      disabled={savingAnn || uploadingImage}
                       className="flex-1 flex items-center justify-center gap-1.5 bg-tl-red hover:bg-tl-burgundy disabled:opacity-50 text-white text-sm font-semibold py-2 rounded-lg transition-all"
                     >
                       {savingAnn ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
@@ -1987,16 +2073,30 @@ export default function AdminDashboard() {
                   {announcements.map(a => (
                     <div key={a.id} className={`flex items-start gap-3 px-4 py-3 rounded-xl border transition-colors ${a.active ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                            a.type === 'tip' ? 'text-tl-teal bg-teal-50 border-teal-200' :
-                            a.type === 'update' ? 'text-tl-red bg-red-50 border-red-200' :
-                            'text-amber-700 bg-amber-50 border-amber-200'
-                          }`}>{a.tag}</span>
-                          {!a.active && <span className="text-[9px] text-slate-400 font-medium">hidden</span>}
-                        </div>
-                        <p className="text-slate-900 text-sm font-semibold truncate">{a.title}</p>
-                        <p className="text-slate-400 text-xs leading-relaxed line-clamp-1">{a.body}</p>
+                        {a.imageUrl ? (
+                          <div className="flex items-center gap-3">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={a.imageUrl} alt={a.title || 'Image'} className="w-20 h-7 object-cover rounded-md flex-shrink-0 border border-gray-100" />
+                            <div className="min-w-0">
+                              <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border text-tl-red bg-red-50 border-red-200">Image Banner</span>
+                              {!a.active && <span className="text-[9px] text-slate-400 font-medium ml-2">hidden</span>}
+                              <p className="text-slate-500 text-xs mt-0.5 truncate">{a.link || 'No link'}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                                a.type === 'tip' ? 'text-tl-teal bg-teal-50 border-teal-200' :
+                                a.type === 'update' ? 'text-tl-red bg-red-50 border-red-200' :
+                                'text-amber-700 bg-amber-50 border-amber-200'
+                              }`}>{a.tag}</span>
+                              {!a.active && <span className="text-[9px] text-slate-400 font-medium">hidden</span>}
+                            </div>
+                            <p className="text-slate-900 text-sm font-semibold truncate">{a.title}</p>
+                            <p className="text-slate-400 text-xs leading-relaxed line-clamp-1">{a.body}</p>
+                          </>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
                         {/* Toggle visible */}
