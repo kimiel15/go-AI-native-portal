@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // GIFs are flattened to a static frame (sharp doesn't animate)
     const resizedBuffer = await sharp(rawBuffer)
       .resize(BANNER_W, BANNER_H, { fit: 'cover', position: 'centre' })
-      .jpeg({ quality: 90, mozjpeg: true })
+      .jpeg({ quality: 100 })
       .toBuffer();
 
     const blobName = `${randomUUID()}.jpg`;
