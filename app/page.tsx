@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Calendar, ClipboardList, BookOpen } from 'lucide-react';
 import GetStartedModal from '@/components/GetStartedModal';
+import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
 
 function TLMark({ className }: { className?: string }) {
   return (
@@ -135,6 +136,9 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      {/* Announcements */}
+      <AnnouncementsCarousel />
 
       {/* Menu Cards */}
       <section className="max-w-6xl mx-auto px-6 pb-16">

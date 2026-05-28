@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Build Guide · Go AI-Native</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #D71920;
+    --charcoal: #153241;
+    --cream: #F6EFE9;
+    --burgundy: #460002;
+    --white: #FFFFFF;
+    --black: #111111;
+    --gray: #555555;
+    --lgray: #E8E8E8;
+    --mgray: #888888;
+    --font: 'Geist', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font); background: var(--white); color: var(--black); line-height: 1.6; font-size: 16px; }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--white); border-bottom: 1px solid var(--lgray);
+    padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 54px;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 6px; }
+
+  .nav-trendlife { font-size: 13px; font-weight: 700; color: var(--black); }
+  .nav-sub { font-size: 13px; font-weight: 400; color: var(--mgray); }
+  .nav-divider { font-size: 13px; color: var(--lgray); }
+  .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+  .nav-links a { font-size: 12px; font-weight: 500; color: var(--mgray); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--red); }
+  @media (max-width: 680px) { .nav-links { display: none; } }
+
+  /* ── HERO ── */
+  .hero { background: var(--red); padding: 5rem 2rem 4.5rem; position: relative; overflow: hidden; }
+  .hero::before {
+    content: ''; position: absolute; top: -100px; right: -80px;
+    width: 380px; height: 380px; border-radius: 50%;
+    background: rgba(255,255,255,0.05); pointer-events: none;
+  }
+  .hero::after {
+    content: ''; position: absolute; bottom: -60px; left: 5%;
+    width: 220px; height: 220px; border-radius: 50%;
+    background: rgba(255,255,255,0.04); pointer-events: none;
+  }
+  .hero-inner { max-width: 820px; margin: 0 auto; position: relative; }
+
+  /* TrendLife logo in hero */
+
+  .hero-eyebrow { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; animation: fadeUp 0.5s ease 0.15s both; }
+  .hero-title { font-size: clamp(2.8rem, 6vw, 5rem); font-weight: 800; color: var(--white); line-height: 1.0; letter-spacing: -0.02em; margin-bottom: 0.5rem; animation: fadeUp 0.5s ease 0.25s both; }
+  .hero-program { font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 400; color: rgba(255,255,255,0.75); margin-bottom: 2rem; animation: fadeUp 0.5s ease 0.3s both; }
+  .hero-rule { width: 56px; height: 3px; background: rgba(255,255,255,0.4); border-radius: 2px; margin-bottom: 1.75rem; animation: fadeUp 0.5s ease 0.35s both; }
+  .hero-lead { font-size: 1rem; color: rgba(255,255,255,0.88); max-width: 580px; line-height: 1.75; animation: fadeUp 0.5s ease 0.45s both; }
+  .hero-lead strong { color: var(--white); font-weight: 600; }
+
+  /* ── TARGETS ── */
+  .targets { background: var(--charcoal); padding: 2.5rem 2rem; }
+  .targets-inner { max-width: 820px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 560px) { .targets-inner { grid-template-columns: 1fr; } }
+  .t-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 1.4rem; display: flex; align-items: flex-start; gap: 1.1rem; }
+  .t-num { font-size: 2.8rem; font-weight: 800; color: var(--white); line-height: 1; flex-shrink: 0; letter-spacing: -0.02em; }
+  .t-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; }
+  .t-desc { font-size: 0.92rem; color: rgba(255,255,255,0.85); line-height: 1.5; }
+
+  /* ── JOURNEY ── */
+  .journey { background: var(--cream); border-bottom: 1px solid var(--lgray); padding: 2.5rem 2rem; }
+  .journey-inner { max-width: 820px; margin: 0 auto; }
+  .j-eyebrow { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .j-title { font-size: 1.2rem; font-weight: 700; color: var(--black); margin-bottom: 1.75rem; }
+  .j-steps { display: flex; align-items: flex-start; gap: 0; overflow-x: auto; padding-bottom: 4px; }
+  .j-step { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 110px; text-align: center; }
+  .j-circle { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-bottom: 0.65rem; flex-shrink: 0; }
+  .j-red { background: var(--red); color: var(--white); }
+  .j-outline { background: var(--white); color: var(--mgray); border: 1.5px solid var(--lgray); }
+  .j-label { font-size: 11px; font-weight: 600; color: var(--black); line-height: 1.4; padding: 0 4px; }
+  .j-arrow { display: flex; align-items: center; padding-top: 13px; color: var(--red); font-size: 17px; flex-shrink: 0; }
+
+  /* ── CONTENT ── */
+  .content { max-width: 820px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── PART SECTIONS ── */
+  .part { padding: 3.5rem 0; border-bottom: 1px solid var(--lgray); }
+  .part:last-of-type { border-bottom: none; }
+  .part-hd { display: flex; align-items: flex-start; gap: 1.1rem; margin-bottom: 1.75rem; }
+  .part-badge { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px; line-height: 1.2; text-align: center; }
+  .pb-red { background: var(--red); color: var(--white); }
+  .pb-charcoal { background: var(--charcoal); color: var(--white); }
+  .pb-cream { background: var(--cream); color: var(--black); border: 1.5px solid var(--lgray); }
+  .part-meta {}
+  .part-num { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+  .part-title { font-size: 1.5rem; font-weight: 700; color: var(--black); line-height: 1.2; }
+  .part-job { font-size: 0.88rem; color: var(--mgray); margin-top: 3px; font-style: italic; }
+
+  /* ── SUB-SECTIONS ── */
+  .sub { margin-bottom: 2.25rem; }
+  .sub-title { font-size: 1rem; font-weight: 700; color: var(--black); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--lgray); }
+
+  .lead { font-size: 0.97rem; color: var(--gray); line-height: 1.75; margin-bottom: 1.25rem; }
+  .lead strong { color: var(--black); font-weight: 600; }
+
+  /* ── SIGNAL GROUPS ── */
+  .sig-group { margin-bottom: 1.5rem; }
+  .sig-label { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 0.1em; text-transform: uppercase; display: inline-block; border-bottom: 1.5px solid var(--red); padding-bottom: 4px; margin-bottom: 0.75rem; }
+  .sig-list { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+  .sig-list li { font-size: 0.93rem; color: var(--gray); padding-left: 1.1rem; position: relative; line-height: 1.5; }
+  .sig-list li::before { content: '·'; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+
+  /* ── CALLOUT ── */
+  .callout { background: var(--cream); border-left: 3px solid var(--red); border-radius: 0 8px 8px 0; padding: 1.1rem 1.4rem; margin: 1.25rem 0; }
+  .callout-label { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.35rem; }
+  .callout p { font-size: 0.93rem; color: var(--black); line-height: 1.6; }
+  .callout p + p { margin-top: 0.5rem; }
+  .callout em { display: block; font-size: 0.86rem; color: var(--mgray); margin-top: 0.35rem; font-style: italic; }
+
+  /* ── LANDSCAPE CARDS ── */
+  .level-cards { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+  .level-card { background: var(--white); border: 1px solid var(--lgray); border-radius: 8px; padding: 0.9rem 1.1rem; }
+  .lc-title { font-size: 0.85rem; font-weight: 600; color: var(--black); margin-bottom: 0.3rem; }
+  .lc-q { font-size: 0.88rem; color: var(--gray); font-style: italic; line-height: 1.5; }
+
+  .quad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 1rem; }
+  @media (max-width: 540px) { .quad-grid { grid-template-columns: 1fr; } }
+  .quad-card { border-radius: 8px; padding: 0.9rem 1.1rem; border: 1px solid transparent; }
+  .qc-o { background: #FFF8EE; border-color: #FAC775; }
+  .qc-g { background: #EAF3DE; border-color: #97C459; }
+  .qc-r { background: #FFF0F0; border-color: #F09595; }
+  .qc-b { background: #EEF4FF; border-color: #93C5FD; }
+  .qc-name { font-size: 0.8rem; font-weight: 700; color: var(--black); margin-bottom: 0.3rem; }
+  .qc-q { font-size: 0.86rem; color: var(--gray); font-style: italic; line-height: 1.5; }
+
+  /* ── CHANNEL TABS ── */
+  .ch-block { background: var(--white); border: 1px solid var(--lgray); border-radius: 10px; padding: 1.25rem; margin: 1.25rem 0; }
+  .ch-block-label { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+  .ch-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
+  .ch-tab { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--lgray); background: var(--white); font-size: 12px; font-weight: 600; color: var(--mgray); cursor: pointer; transition: all 0.2s; font-family: var(--font); }
+  .ch-tab:hover { border-color: var(--red); color: var(--red); }
+  .ch-tab.active { background: var(--red); border-color: var(--red); color: var(--white); }
+  .ch-panel { display: none; }
+  .ch-panel.active { display: block; }
+  .ch-intro { font-size: 0.88rem; color: var(--gray); margin-bottom: 0.65rem; font-style: italic; }
+  .ch-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+  .ch-list li { font-size: 0.88rem; color: var(--black); padding-left: 1.1rem; position: relative; line-height: 1.5; }
+  .ch-list li::before { content: '·'; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+  .ch-note { font-size: 0.82rem; color: var(--mgray); margin-top: 0.85rem; font-style: italic; padding-top: 0.75rem; border-top: 1px solid var(--lgray); }
+
+  /* ── CONV BOX ── */
+  .conv-box { background: var(--charcoal); border-radius: 10px; padding: 1.4rem 1.6rem; margin: 1.25rem 0; }
+  .conv-tag { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .conv-text { font-size: 0.97rem; color: var(--white); font-style: italic; line-height: 1.65; }
+
+  .reason-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
+  @media (max-width: 540px) { .reason-row { grid-template-columns: 1fr; } }
+  .reason-card { background: var(--cream); border-left: 3px solid var(--red); border-radius: 0 8px 8px 0; padding: 1rem 1.1rem; }
+  .rc-num { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.25rem; }
+  .rc-title { font-size: 0.88rem; font-weight: 600; color: var(--black); margin-bottom: 0.3rem; }
+  .rc-text { font-size: 0.86rem; color: var(--gray); line-height: 1.5; }
+
+  /* ── TEMPLATE ── */
+  .tmpl-box { background: var(--charcoal); border-radius: 12px; padding: 1.75rem; }
+  .tmpl-field { margin-bottom: 1.25rem; }
+  .tmpl-field:last-child { margin-bottom: 0; }
+  .tf-rule { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.1rem 0; }
+  .tf-lbl { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.35rem; }
+  .tf-val { font-size: 0.88rem; color: rgba(255,255,255,0.82); line-height: 1.6; font-style: italic; }
+  .t-pills { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.35rem; }
+  .t-pill { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 4px 12px; font-size: 0.86rem; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.2s; user-select: none; font-family: var(--font); }
+  .t-pill:hover { background: rgba(255,255,255,0.14); }
+  .t-pill.on { background: var(--red); border-color: var(--red); color: var(--white); }
+  .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+  .t-pill.on .pill-dot { opacity: 1; }
+
+  /* ── BASELINE GRID ── */
+  .bl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin: 1.1rem 0; }
+  @media (max-width: 540px) { .bl-grid { grid-template-columns: 1fr; } }
+  .bl-card { background: var(--white); border: 1px solid var(--lgray); border-radius: 8px; padding: 1rem 1.1rem; }
+  .bl-metric { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+  .bl-desc { font-size: 0.88rem; color: var(--black); font-weight: 600; margin-bottom: 0.25rem; }
+  .bl-how { font-size: 0.84rem; color: var(--gray); line-height: 1.45; }
+
+  /* ── TRACK TABS ── */
+  .track-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .track-tab { padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--lgray); background: var(--white); font-size: 12px; font-weight: 600; color: var(--mgray); cursor: pointer; transition: all 0.2s; font-family: var(--font); }
+  .track-tab:hover { border-color: var(--red); color: var(--red); }
+  .track-tab.active { background: var(--red); border-color: var(--red); color: var(--white); }
+  .track-panel { display: none; }
+  .track-panel.active { display: block; }
+
+  /* ── BUILD PRINCIPLES ── */
+  .principle-cards { display: flex; flex-direction: column; gap: 0.65rem; margin: 1.1rem 0; }
+  .pc { display: flex; gap: 1rem; background: var(--white); border: 1px solid var(--lgray); border-radius: 8px; padding: 1.1rem 1.25rem; align-items: flex-start; }
+  .pc-num { width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: var(--white); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .pc-title { font-size: 0.9rem; font-weight: 600; color: var(--black); margin-bottom: 0.3rem; }
+  .pc-text { font-size: 0.87rem; color: var(--gray); line-height: 1.55; }
+
+  /* ── LOG BOX ── */
+  .log-box { background: var(--charcoal); border-radius: 12px; padding: 1.5rem; margin: 1.1rem 0; }
+  .log-section-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.65rem; }
+  .log-fields { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+  .log-field { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.55rem 0.85rem; font-size: 0.86rem; color: rgba(255,255,255,0.75); font-style: italic; }
+  .log-rule { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 0.85rem 0; }
+
+  /* ── ANALYSIS STEPS ── */
+  .an-steps { display: flex; flex-direction: column; gap: 0.65rem; margin: 1.1rem 0; }
+  .an-step { display: flex; gap: 1rem; background: var(--white); border: 1px solid var(--lgray); border-radius: 8px; padding: 1.1rem 1.25rem; align-items: flex-start; }
+  .an-num { width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: var(--white); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .an-title { font-size: 0.9rem; font-weight: 600; color: var(--black); margin-bottom: 0.3rem; }
+  .an-desc { font-size: 0.87rem; color: var(--gray); line-height: 1.55; }
+  .an-formula { font-size: 0.84rem; font-family: 'Consolas', monospace; background: var(--cream); color: var(--charcoal); padding: 4px 10px; border-radius: 4px; margin-top: 0.4rem; display: inline-block; }
+
+  /* ── HONEST BOX ── */
+  .honest-box { background: var(--charcoal); border-radius: 10px; padding: 1.5rem; margin: 1.5rem 0; }
+  .honest-tag { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .honest-items { display: flex; flex-direction: column; gap: 0.6rem; }
+  .hi { display: flex; align-items: flex-start; gap: 0.75rem; }
+  .hi-icon { font-size: 13px; flex-shrink: 0; margin-top: 2px; }
+  .hi-text { font-size: 0.88rem; color: rgba(255,255,255,0.82); line-height: 1.55; }
+  .hi-text strong { color: var(--white); font-weight: 600; }
+
+  /* ── SUBMISSION ── */
+  .sub-items { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.1rem 0; }
+  .sub-item { display: flex; align-items: flex-start; gap: 1rem; background: var(--white); border: 1px solid var(--lgray); border-radius: 8px; padding: 1rem 1.25rem; }
+  .sub-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .sub-label { font-size: 0.9rem; font-weight: 600; color: var(--black); margin-bottom: 0.2rem; }
+  .sub-desc { font-size: 0.86rem; color: var(--gray); line-height: 1.5; }
+
+  .sl-box { background: var(--cream); border: 1.5px solid var(--red); border-radius: 10px; padding: 1.5rem; margin: 1.25rem 0; }
+  .sl-label { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .sl-list { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+  .sl-list li { font-size: 0.92rem; color: var(--black); padding-left: 1.3rem; position: relative; line-height: 1.5; }
+  .sl-list li::before { content: '✓'; position: absolute; left: 0; color: var(--red); font-weight: 700; font-size: 11px; top: 2px; }
+
+  /* ── TRAPS ── */
+  .traps { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.1rem; }
+  .trap { background: var(--white); border: 1px solid var(--lgray); border-radius: 8px; padding: 1.1rem 1.25rem; }
+  .trap-hd { display: flex; align-items: flex-start; gap: 0.7rem; margin-bottom: 0.5rem; }
+  .trap-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .trap-name { font-size: 0.9rem; font-weight: 600; color: var(--black); }
+  .trap-desc { font-size: 0.87rem; color: var(--gray); line-height: 1.6; margin-bottom: 0.5rem; padding-left: 1.6rem; }
+  .trap-fix { font-size: 0.87rem; color: var(--black); line-height: 1.5; padding: 0.5rem 1.1rem; background: var(--cream); border-radius: 6px; margin-left: 1.6rem; }
+  .trap-fix strong { color: var(--red); font-weight: 600; }
+
+  /* ── CLOSING ── */
+  .closing { background: var(--red); padding: 5rem 2rem; text-align: center; position: relative; overflow: hidden; }
+  .closing::before { content: ''; position: absolute; top: -80px; right: -60px; width: 280px; height: 280px; border-radius: 50%; background: rgba(255,255,255,0.05); pointer-events: none; }
+  .closing-inner { max-width: 620px; margin: 0 auto; position: relative; }
+
+  /* closing logo */
+
+  .closing-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; color: var(--white); line-height: 1.1; margin-bottom: 1.5rem; letter-spacing: -0.01em; }
+  .closing-body { font-size: 0.97rem; color: rgba(255,255,255,0.85); line-height: 1.8; margin-bottom: 2rem; }
+  .closing-rule { width: 40px; height: 2px; background: rgba(255,255,255,0.35); margin: 0 auto 1.5rem; border-radius: 2px; }
+  .closing-mantra { font-size: 0.84rem; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; font-weight: 500; }
+
+  footer { background: var(--charcoal); padding: 1.4rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  footer p { font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 0.03em; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* EXAMPLES */
+  .example-cards { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.1rem; }
+  .ex-card { background: var(--white); border: 1px solid var(--lgray); border-radius: 10px; padding: 1.4rem; }
+  .ex-track { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-bottom: 1rem; }
+  .ex-track-red { background: #FCEBEB; color: var(--red); border: 0.5px solid #F09595; }
+  .ex-track-green { background: #EAF3DE; color: #27500A; border: 0.5px solid #97C459; }
+  .ex-problem-label, .ex-tool-label, .ex-impact-label { font-size: 10px; font-weight: 700; color: var(--mgray); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; margin-top: 0.85rem; }
+  .ex-problem-label { margin-top: 0; }
+  .ex-text { font-size: 0.9rem; color: var(--gray); line-height: 1.65; }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <span class="nav-trendlife">TrendLife™</span>
+    <span class="nav-divider">·</span>
+    <span class="nav-sub">Go AI-Native</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#prereqs">Setup</a></li>
+    <li><a href="#part1">Problem</a></li>
+    <li><a href="#part2">Baseline</a></li>
+    <li><a href="#part3">Build</a></li>
+    <li><a href="#part4">Measure</a></li>
+    <li><a href="#part5">Submit</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">TrendLife™ · RoW Support · Go AI-Native</p>
+    <h1 class="hero-title">The Build Guide</h1>
+    <p class="hero-program">For Tech Challenge participants</p>
+    <div class="hero-rule"></div>
+    <p class="hero-lead">
+      From problem to submission — the full journey in one place.
+      <strong>Identify the problem. Lock the baseline. Build the tool. Measure the impact. Submit the evidence.</strong>
+      Use this as a thinking guide at every stage.
+    </p>
+  </div>
+</section>
+
+<!-- TARGETS -->
+<section class="targets">
+  <div class="targets-inner">
+    <div class="t-card">
+      <div class="t-num">40%</div>
+      <div>
+        <div class="t-label">AI Containment Rate</div>
+        <div class="t-desc">Contacts resolved before reaching an engineer — customers get what they need before the queue.</div>
+      </div>
+    </div>
+    <div class="t-card">
+      <div class="t-num">20%</div>
+      <div>
+        <div class="t-label">Revenue Contribution Growth</div>
+        <div class="t-desc">Uplift from upsell, retention, and high-value case handling across every channel.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JOURNEY -->
+<section class="journey">
+  <div class="journey-inner">
+    <p class="j-eyebrow">The full journey</p>
+    <p class="j-title">Six parts. One submission.</p>
+    <div class="j-steps">
+      <div class="j-step"><div class="j-circle j-outline">00</div><div class="j-label">Set up<br>your tools</div></div>
+      <div class="j-arrow">→</div>
+      <div class="j-step"><div class="j-circle j-red">01</div><div class="j-label">Identify the<br>problem</div></div>
+      <div class="j-arrow">→</div>
+      <div class="j-step"><div class="j-circle j-outline">02</div><div class="j-label">Lock the<br>baseline</div></div>
+      <div class="j-arrow">→</div>
+      <div class="j-step"><div class="j-circle j-outline">03</div><div class="j-label">Build the<br>tool</div></div>
+      <div class="j-arrow">→</div>
+      <div class="j-step"><div class="j-circle j-outline">04</div><div class="j-label">Measure the<br>impact</div></div>
+      <div class="j-arrow">→</div>
+      <div class="j-step"><div class="j-circle j-red">05</div><div class="j-label">Submit the<br>evidence</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTENT -->
+<div class="content">
+  <!-- PREREQUISITES -->
+  <section class="part" id="prereqs">
+    <div class="part-hd">
+      <div class="part-badge pb-cream">0</div>
+      <div class="part-meta">
+        <div class="part-num">Before you start</div>
+        <div class="part-title">Set up your tools</div>
+        <div class="part-job">Two things to complete before the build phase begins.</div>
+      </div>
+    </div>
+    <p class="lead">Both are required. Complete these during the enablement period so you are ready to build from day one.</p>
+
+    <div class="principle-cards">
+      <div class="pc">
+        <div class="pc-num" style="background:var(--charcoal)">1</div>
+        <div>
+          <div class="pc-title">Install Claude for Enterprise (C4E) via the Company Portal</div>
+          <div class="pc-text">Search for Claude for Enterprise in the Company Portal and install from there. Do not install directly from the web.</div>
+          <div class="pc-text" style="margin-top:0.5rem; padding:0.75rem 1rem; background:var(--cream); border-radius:6px; margin-top:0.6rem;">
+            <strong style="color:var(--black)">Previously installed C4E by bypassing the admin requirement?</strong><br>
+            Uninstall and reinstall via the Company Portal — some required components may be missing from the original install. Your existing chats will be saved.
+          </div>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="pc-num" style="background:var(--charcoal)">2</div>
+        <div>
+          <div class="pc-title">Request your GitHub EMU account via Jarvis</div>
+          <div class="pc-text">Processing takes approximately 30 minutes. Request early.</div>
+          <div style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem;">
+            <div style="background:var(--cream); border-radius:6px; padding:0.75rem 1rem;">
+              <div style="font-size:0.82rem; font-weight:700; color:var(--red); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:0.4rem;">How to request</div>
+              <div style="font-size:0.87rem; color:var(--black); line-height:1.6;">
+                Go to <strong>jarvis.trendmicro.com</strong> and submit a request with:<br>
+                · Category: <strong>Systems &amp; Applications</strong><br>
+                · Subcategory: <strong>RDSec</strong><br>
+                · Service / System: <strong>GitHub</strong>
+              </div>
+            </div>
+            <div style="background:var(--cream); border-radius:6px; padding:0.75rem 1rem;">
+              <div style="font-size:0.82rem; font-weight:700; color:var(--red); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:0.4rem;">Select the correct action</div>
+              <div style="font-size:0.87rem; color:var(--black); line-height:1.6;">
+                · New access → <strong>Request GitHub Cloud EMU Permission</strong><br>
+                · Account suspended due to inactivity → <strong>Re-activate GitHub Cloud EMU Permission</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Use Claude first — for everything</div>
+      <p>Before reaching for a search engine or a colleague, ask Claude. Research, brainstorming, drafting, debugging, writing your README, preparing your impact analysis — Claude should be your first move on every task. This is what working AI-Native looks like in practice. If Claude can't help, then look elsewhere.</p>
+      <em>Examples: research the problem space, brainstorm tool approaches, draft your prompts, review your logic, write your CONTRIBUTORS.md, prepare your impact story.</em>
+    </div>
+  </section>
+
+  <!-- PART 1 — IDENTIFY -->
+  <section class="part" id="part1">
+    <div class="part-hd">
+      <div class="part-badge pb-red">01</div>
+      <div class="part-meta">
+        <div class="part-num">Part 1</div>
+        <div class="part-title">Identify the problem</div>
+        <div class="part-job">Arrive at the build phase with a specific, data-backed problem your squad lead believes in.</div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <div class="sub-title">Look at the data</div>
+      <p class="lead">Your squad lead will share the data with you. When you sit with it, look for two types of signals. <strong>Write down the one or two numbers that surprise you most — those are your starting points.</strong></p>
+      <div class="sig-group">
+        <div class="sig-label">Containment signals</div>
+        <ul class="sig-list">
+          <li>Which contact reasons have the highest volume?</li>
+          <li>Which ones keep escalating from the chatbot to a human?</li>
+          <li>Which ones do customers almost always fail to resolve on their own?</li>
+          <li>Where is your squad's biggest containment gap?</li>
+        </ul>
+      </div>
+      <div class="sig-group">
+        <div class="sig-label">Revenue signals</div>
+        <ul class="sig-list">
+          <li>Where is the gap between your best and average engineer on upsell or save rate?</li>
+          <li>Which interaction types consistently miss the revenue moment?</li>
+          <li>Where are customers leaving without being retained or converted?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sub">
+      <div class="sub-title">Locate your problem in the landscape</div>
+      <p class="lead">You saw two landscapes at the kickoff. Now use them to find where your data sits.</p>
+
+      <div class="track-tabs">
+        <button class="track-tab active" onclick="switchTrack(this,'land-c')">Containment target</button>
+        <button class="track-tab" onclick="switchTrack(this,'land-r')">Revenue target</button>
+      </div>
+
+      <div class="track-panel active" id="land-c">
+        <p class="lead" style="margin-bottom:0.85rem">For each contact reason, ask:</p>
+        <div class="level-cards">
+          <div class="level-card"><div class="lc-title">At the prevention level</div><div class="lc-q">"Could a customer have found the answer themselves — if the right content or tool existed?"</div></div>
+          <div class="level-card"><div class="lc-title">At the chatbot level</div><div class="lc-q">"Could the chatbot handle this with better prompts and knowledge?"</div></div>
+          <div class="level-card"><div class="lc-title">At the self-service level</div><div class="lc-q">"Could a customer have resolved this themselves — if a clear tool or guided flow existed?"</div></div>
+        </div>
+        <div class="ch-block">
+          <div class="ch-block-label">Examples by channel</div>
+          <div class="ch-tabs">
+            <button class="ch-tab active" onclick="switchCh(this,'ch-chat')">💬 Chat</button>
+            <button class="ch-tab" onclick="switchCh(this,'ch-phones')">📞 Phones</button>
+            <button class="ch-tab" onclick="switchCh(this,'ch-email')">✉️ Email</button>
+          </div>
+          <div class="ch-panel active" id="ch-chat">
+            <p class="ch-intro">Chat contacts that customers could have resolved themselves:</p>
+            <ul class="ch-list">
+              <li>Customer asking if their subscription is still active</li>
+              <li>Customer asking when their renewal date is</li>
+              <li>Customer asking how to turn off auto-renewal</li>
+              <li>Customer asking what is included in their current plan</li>
+              <li>Customer asking how to install on a new device</li>
+              <li>Customer asking why they were charged a certain amount</li>
+            </ul>
+          </div>
+          <div class="ch-panel" id="ch-phones">
+            <p class="ch-intro">Phone calls that customers could have handled without calling:</p>
+            <ul class="ch-list">
+              <li>Call just to confirm their renewal date</li>
+              <li>Call asking how to remove a device from their account</li>
+              <li>Call asking if their antivirus is still running</li>
+              <li>Call asking how to update their billing information</li>
+              <li>Call asking if a specific website or file is safe</li>
+              <li>Call asking how to transfer their license to a new device</li>
+            </ul>
+          </div>
+          <div class="ch-panel" id="ch-email">
+            <p class="ch-intro">Email contacts that customers could have resolved without sending:</p>
+            <ul class="ch-list">
+              <li>Email asking whether a refund request qualifies</li>
+              <li>Email asking for a copy of their invoice or receipt</li>
+              <li>Email asking how to cancel auto-renewal before it charges</li>
+              <li>Email asking what the renewal price will be</li>
+              <li>Email asking how to transfer their license to a new device</li>
+              <li>Email asking what their current plan covers</li>
+            </ul>
+          </div>
+          <div class="ch-note">These are starting points — your squad data will surface the real opportunity.</div>
+        </div>
+        <div class="callout">
+          <div class="callout-label">Size it</div>
+          <p>Contact volume on that reason × expected containment improvement = weekly contacts deflected.</p>
+          <em>Example: 200 contacts per week × 50% containment = 100 contacts deflected per week.</em>
+        </div>
+      </div>
+
+      <div class="track-panel" id="land-r">
+        <p class="lead" style="margin-bottom:0.85rem">For each interaction type, ask:</p>
+        <div class="quad-grid">
+          <div class="quad-card qc-o"><div class="qc-name">Exploring Purchase</div><div class="qc-q">"Do engineers discover the need first — or jump straight to a product?"</div></div>
+          <div class="quad-card qc-g"><div class="qc-name">Upgrade Opportunity</div><div class="qc-q">"Is renewal or pricing turned into a value conversation — or treated as a transaction?"</div></div>
+          <div class="quad-card qc-r"><div class="qc-name">Support Recovery</div><div class="qc-q">"Do engineers leave customers retained and reassured — or just resolved?"</div></div>
+          <div class="quad-card qc-b"><div class="qc-name">Protection Gap</div><div class="qc-q">"Is the trust moment used to guide toward better protection — or just fix the issue?"</div></div>
+        </div>
+        <div class="callout">
+          <div class="callout-label">Size it</div>
+          <p>Interactions per week × conservative improvement in offer or save rate × average revenue value per outcome.</p>
+          <em>Example: 200 cancellations × +10pp save rate = 20 additional saves × $80 = $1,600 per week.</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <div class="sub-title">Talk to your squad lead</div>
+      <p class="lead"><strong>This is the most important step. Do not skip it.</strong></p>
+      <p class="lead">Your squad lead knows things the data doesn't show — which problems are more painful than their volume suggests, where revenue moments are being missed, and what a realistic improvement looks like.</p>
+      <div class="conv-box">
+        <div class="conv-tag">Start here</div>
+        <div class="conv-text">"I looked at the data. I think the biggest opportunity for us is [problem]. The number I'm seeing is [X]. Does this match what you see on the floor?"</div>
+      </div>
+      <p class="lead">Then listen. They will confirm, sharpen, or redirect. The output of that conversation is a problem statement both of you believe in.</p>
+      <div class="reason-row">
+        <div class="reason-card">
+          <div class="rc-num">First</div>
+          <div class="rc-title">Deployment authorization</div>
+          <div class="rc-text">Your squad lead needs to believe in the problem enough to authorize deployment. If they're not convinced, you'll hit friction at the worst moment.</div>
+        </div>
+        <div class="reason-card">
+          <div class="rc-num">Second</div>
+          <div class="rc-title">Specificity</div>
+          <div class="rc-text">Their domain knowledge turns a vague problem into a specific one — and specificity is what makes a tool buildable in two weeks.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <div class="sub-title">Write the problem statement</div>
+      <p class="lead">One paragraph. Five things in it. If you can write it and your squad lead signs off — you're ready for Part 2.</p>
+      <div class="tmpl-box">
+        <div class="tmpl-field">
+          <div class="tf-lbl">Squad</div>
+          <div class="tf-val">Your squad name</div>
+        </div>
+        <hr class="tf-rule">
+        <div class="tmpl-field">
+          <div class="tf-lbl">Target</div>
+          <div class="t-pills">
+            <div class="t-pill" onclick="this.classList.toggle('on')"><div class="pill-dot"></div>40% AI Containment</div>
+            <div class="t-pill" onclick="this.classList.toggle('on')"><div class="pill-dot"></div>20% Revenue Growth</div>
+          </div>
+        </div>
+        <hr class="tf-rule">
+        <div class="tmpl-field"><div class="tf-lbl">What's broken, for whom, and when</div><div class="tf-val">One paragraph describing exactly what's happening today.</div></div>
+        <hr class="tf-rule">
+        <div class="tmpl-field"><div class="tf-lbl">The number that proves it</div><div class="tf-val">Volume, rate, or gap — from the data your squad lead shared.</div></div>
+        <hr class="tf-rule">
+        <div class="tmpl-field"><div class="tf-lbl">Connection to the target</div><div class="tf-val">"If we solve this, we expect to move [metric] by [amount], contributing to the [containment / revenue] target because [reason]."</div></div>
+        <hr class="tf-rule">
+        <div class="tmpl-field"><div class="tf-lbl">What success looks like</div><div class="tf-val">The specific measurable outcome during the production run.</div></div>
+        <hr class="tf-rule">
+        <div class="tmpl-field"><div class="tf-lbl">Why it's solvable in the build window</div><div class="tf-val">One sentence — no system integrations needed, buildable in two weeks.</div></div>
+        <hr class="tf-rule">
+        <div class="tmpl-field"><div class="tf-lbl">Baseline locked</div><div class="tf-val">The current number, the reference period, confirmed by squad lead. See Part 2.</div></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Looking for inspiration?</div>
+      <p>See What's Possible — a separate page with six light examples across chat, phones, and email showing real problems, the tools built to address them, and the expected impact. Use them as a spark, not a template.</p>
+    </div>
+
+  </section>
+
+  <!-- PART 2 — BASELINE -->
+  <section class="part" id="part2">
+    <div class="part-hd">
+      <div class="part-badge pb-red">02</div>
+      <div class="part-meta">
+        <div class="part-num">Part 2</div>
+        <div class="part-title">Lock the baseline</div>
+        <div class="part-job">Record the current number before anything is built.</div>
+      </div>
+    </div>
+    <p class="lead">The baseline is the number that proves something changed. Without it, your production run data has no before-and-after — it's just a number. <strong>Lock it before you build. Not after. Not after you deploy. Now.</strong></p>
+    <p class="lead">Use the last four weeks as your reference window. Your squad lead confirms the number is accurate.</p>
+
+    <div class="track-tabs">
+      <button class="track-tab active" onclick="switchTrack(this,'bl-c')">Containment track</button>
+      <button class="track-tab" onclick="switchTrack(this,'bl-r')">Revenue track</button>
+    </div>
+
+    <div class="track-panel active" id="bl-c">
+      <div class="bl-grid">
+        <div class="bl-card"><div class="bl-metric">Primary metric</div><div class="bl-desc">Contact volume on the targeted reason</div><div class="bl-how">How many contacts per week does your squad receive on this specific reason? Average over the last four weeks.</div></div>
+        <div class="bl-card"><div class="bl-metric">Containment rate</div><div class="bl-desc">Current rate on this reason</div><div class="bl-how">What percentage of contacts on this reason are currently resolved without an engineer? Could be zero.</div></div>
+        <div class="bl-card"><div class="bl-metric">Channel context</div><div class="bl-desc">How does this contact arrive?</div><div class="bl-how">Chat, phones, or email — and whether it currently escalates from the chatbot or arrives directly.</div></div>
+        <div class="bl-card"><div class="bl-metric">Reference period</div><div class="bl-desc">Last four weeks</div><div class="bl-how">Use the same period consistently. Don't cherry-pick a low week as your baseline.</div></div>
+      </div>
+    </div>
+
+    <div class="track-panel" id="bl-r">
+      <div class="bl-grid">
+        <div class="bl-card"><div class="bl-metric">Primary metric</div><div class="bl-desc">Current rate on the targeted revenue moment</div><div class="bl-how">Save rate, conversion rate, or upsell offer rate — whichever your tool targets. Average over the last four weeks.</div></div>
+        <div class="bl-card"><div class="bl-metric">Best vs average gap</div><div class="bl-desc">Engineer performance spread</div><div class="bl-how">What does your best engineer achieve? What does the squad average? The gap is your opportunity.</div></div>
+        <div class="bl-card"><div class="bl-metric">Interaction volume</div><div class="bl-desc">Weekly count for this interaction type</div><div class="bl-how">How many cancellation chats, upsell moments, or renewal conversations does your squad handle per week?</div></div>
+        <div class="bl-card"><div class="bl-metric">Revenue value</div><div class="bl-desc">Average value per positive outcome</div><div class="bl-how">Average subscription value or upsell revenue per save or conversion. Your squad lead helps confirm this.</div></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Write it down and keep it visible</div>
+      <p>Once locked, this number does not change. It's the reference point for everything that follows. The whole team should know what it is before the build starts.</p>
+    </div>
+  </section>
+
+  <!-- PART 3 — BUILD -->
+  <section class="part" id="part3">
+    <div class="part-hd">
+      <div class="part-badge pb-charcoal">03</div>
+      <div class="part-meta">
+        <div class="part-num">Part 3</div>
+        <div class="part-title">Build the tool</div>
+        <div class="part-job">Build something that addresses the specific problem — ready to deploy before the production run starts.</div>
+      </div>
+    </div>
+    <p class="lead">May enablement covered the mechanics. This part frames the intent. Three principles matter most during the build.</p>
+    <div class="principle-cards">
+      <div class="pc">
+        <div class="pc-num">1</div>
+        <div>
+          <div class="pc-title">Build for the problem, not for the demo</div>
+          <div class="pc-text">The tool should do one thing well — address the specific gap you identified in Part 1. Not the most impressive thing you can build with Claude. The most useful thing for your problem.</div>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="pc-num">2</div>
+        <div>
+          <div class="pc-title">Every team member commits</div>
+          <div class="pc-text">Building is a team activity. Each member should have at least one meaningful contribution — prompts, code, testing, validation, or documentation. All of it counts.</div>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="pc-num">3</div>
+        <div>
+          <div class="pc-title">Test before you deploy</div>
+          <div class="pc-text">Run the tool on sample or historical cases before it goes live. Edge cases — customers who don't fit the pattern, incomplete inputs, unexpected contact types — should be handled gracefully. A tool that breaks during the production run hurts both the result and the submission.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Squad lead authorization</div>
+      <p>Before the tool goes live, the squad lead reviews and authorizes the production run. They're not just approving software — they're attesting that the tool is ready to run on real customer interactions and that the measurement methodology is sound.</p>
+    </div>
+  </section>
+
+  <!-- PART 4 — MEASURE -->
+  <section class="part" id="part4">
+    <div class="part-hd">
+      <div class="part-badge pb-red">04</div>
+      <div class="part-meta">
+        <div class="part-num">Part 4</div>
+        <div class="part-title">Measure the impact</div>
+        <div class="part-job">One week. The team captures daily. The squad lead validates at the end.</div>
+      </div>
+    </div>
+    <p class="lead"><strong>Numbers and analysis are the evidence.</strong> Numbers without analysis are just data. Analysis makes them evidence.</p>
+
+    <div class="sub">
+      <div class="sub-title">Capture daily</div>
+      <p class="lead">One week goes fast. Log your numbers every day — not at the end of the week from memory. Daily capture gives you a real picture of how the tool performed.</p>
+
+      <div class="track-tabs">
+        <button class="track-tab active" onclick="switchTrack(this,'cap-c')">Containment track</button>
+        <button class="track-tab" onclick="switchTrack(this,'cap-r')">Revenue track</button>
+      </div>
+
+      <div class="track-panel active" id="cap-c">
+        <div class="log-box">
+          <div class="log-section-label">Log each day</div>
+          <div class="log-fields">
+            <div class="log-field">Total contacts received on the targeted reason</div>
+            <div class="log-field">Contacts deflected — resolved without reaching an engineer through your tool</div>
+            <div class="log-field">Tool sessions or completions (if portal-deployed)</div>
+            <div class="log-field">Any issues, edge cases, or tool failures</div>
+          </div>
+          <div class="log-rule"></div>
+          <div class="log-section-label">Total at end of week</div>
+          <div class="log-fields">
+            <div class="log-field">Total contacts on targeted reason across the week</div>
+            <div class="log-field">Total deflected contacts across the week</div>
+            <div class="log-field">Containment rate: deflected ÷ total on this reason × 100</div>
+            <div class="log-field">Comparison to baseline</div>
+          </div>
+        </div>
+        <div class="callout" style="margin-top:1rem">
+          <div class="callout-label">What counts as deflected</div>
+          <p>A contact is deflected when a customer resolves their issue through your tool without reaching an engineer. Portal session completed = deflected. Chatbot handled end-to-end = deflected. Customer still escalates = not deflected.</p>
+        </div>
+      </div>
+
+      <div class="track-panel" id="cap-r">
+        <div class="log-box">
+          <div class="log-section-label">Log each day</div>
+          <div class="log-fields">
+            <div class="log-field">Total targeted interactions handled</div>
+            <div class="log-field">Interactions where the tool was used</div>
+            <div class="log-field">Outcomes achieved — saves, conversions, or upsells</div>
+            <div class="log-field">Whether the tool recommendation was used, modified, or not used</div>
+          </div>
+          <div class="log-rule"></div>
+          <div class="log-section-label">Total at end of week</div>
+          <div class="log-fields">
+            <div class="log-field">Total targeted interactions across the week</div>
+            <div class="log-field">Total positive outcomes</div>
+            <div class="log-field">Rate: positive outcomes ÷ total targeted interactions × 100</div>
+            <div class="log-field">Comparison to baseline rate</div>
+          </div>
+        </div>
+        <div class="callout" style="margin-top:1rem">
+          <div class="callout-label">What counts as tool-influenced</div>
+          <p>An outcome is tool-influenced when the engineer invoked the tool and it shaped their approach. The engineer doesn't have to follow the recommendation exactly — but it should have contributed to the result.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <div class="sub-title">Analyse at the end of the week</div>
+      <div class="track-tabs">
+        <button class="track-tab active" onclick="switchTrack(this,'an-c')">Containment track</button>
+        <button class="track-tab" onclick="switchTrack(this,'an-r')">Revenue track</button>
+      </div>
+
+      <div class="track-panel active" id="an-c">
+        <div class="an-steps">
+          <div class="an-step"><div class="an-num">1</div><div><div class="an-title">Calculate the containment rate</div><div class="an-desc">How many contacts were deflected during the production run week?</div><div class="an-formula">Containment rate = contacts deflected ÷ total contacts on reason × 100</div></div></div>
+          <div class="an-step"><div class="an-num">2</div><div><div class="an-title">Calculate the improvement</div><div class="an-desc">Production run rate versus baseline rate. This is your headline number.</div><div class="an-formula">Improvement = production run rate − baseline rate</div></div></div>
+          <div class="an-step"><div class="an-num">3</div><div><div class="an-title">Calculate the weekly capacity freed</div><div class="an-desc">Contacts deflected multiplied by average handle time on this reason.</div><div class="an-formula">Capacity freed = deflected contacts × avg handle time (minutes)</div></div></div>
+          <div class="an-step"><div class="an-num">4</div><div><div class="an-title">Project the annual impact</div><div class="an-desc">Weekly deflection multiplied by 52. Label clearly as a projection based on the measured week.</div><div class="an-formula">Annual projection = weekly deflected contacts × 52</div></div></div>
+          <div class="an-step"><div class="an-num">5</div><div><div class="an-title">Explain the trend</div><div class="an-desc">Did the containment rate improve as you refined the tool? Were certain contact types easier to deflect? What would v1.1 address?</div></div></div>
+        </div>
+      </div>
+
+      <div class="track-panel" id="an-r">
+        <div class="an-steps">
+          <div class="an-step"><div class="an-num">1</div><div><div class="an-title">Calculate the production run rate</div><div class="an-desc">Save rate, conversion rate, or upsell offer rate during the production run week.</div><div class="an-formula">Rate = positive outcomes ÷ total targeted interactions × 100</div></div></div>
+          <div class="an-step"><div class="an-num">2</div><div><div class="an-title">Calculate the improvement</div><div class="an-desc">Production run rate versus baseline rate. This is your headline number.</div><div class="an-formula">Improvement = production run rate − baseline rate</div></div></div>
+          <div class="an-step"><div class="an-num">3</div><div><div class="an-title">Calculate the weekly revenue impact</div><div class="an-desc">Additional positive outcomes per week multiplied by average revenue value per outcome.</div><div class="an-formula">Weekly revenue impact = additional outcomes × avg revenue value</div></div></div>
+          <div class="an-step"><div class="an-num">4</div><div><div class="an-title">Project the annual impact</div><div class="an-desc">Weekly revenue impact multiplied by 52. Label as a projection based on the measured week.</div><div class="an-formula">Annual projection = weekly revenue impact × 52</div></div></div>
+          <div class="an-step"><div class="an-num">5</div><div><div class="an-title">Explain what drove the change</div><div class="an-desc">Did engineers use the tool consistently? Did recommendation quality improve over the week? Which interaction types responded best?</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="honest-box">
+      <div class="honest-tag">Be honest about the numbers</div>
+      <div class="honest-items">
+        <div class="hi"><div class="hi-icon">✓</div><div class="hi-text"><strong>If the result is smaller than expected</strong> — report it accurately. A modest result with clean evidence is stronger than an inflated result with weak methodology.</div></div>
+        <div class="hi"><div class="hi-icon">✓</div><div class="hi-text"><strong>If the tool didn't work on certain interaction types</strong> — say so in the analysis. Explain what you would improve next. That's a better story than pretending it worked perfectly.</div></div>
+        <div class="hi"><div class="hi-icon">✓</div><div class="hi-text"><strong>If the baseline week was atypically high or low</strong> — note it and explain why.</div></div>
+        <div class="hi"><div class="hi-icon">✓</div><div class="hi-text"><strong>Projections are projections</strong> — always label annualised estimates as projections based on the measured week. Never present them as confirmed outcomes.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PART 5 — SUBMIT -->
+  <section class="part" id="part5">
+    <div class="part-hd">
+      <div class="part-badge pb-charcoal">05</div>
+      <div class="part-meta">
+        <div class="part-num">Part 5</div>
+        <div class="part-title">Submit the evidence</div>
+        <div class="part-job">Everything goes in your GitHub team folder when the production run ends.</div>
+      </div>
+    </div>
+    <p class="lead">The submission is the tool and the evidence together — uploaded to your team folder in the <strong>ai-tech-challenge</strong> GitHub repository. Both are required. A tool without evidence does not compete.</p>
+
+    <div class="sub-items">
+      <div class="sub-item"><div class="sub-icon">🛠️</div><div><div class="sub-label">The tool</div><div class="sub-desc">Built with C4E skills, Claude Code, or Cowork. Uploaded to your team folder in GitHub. README that explains the problem, the solution, and how to run it.</div></div></div>
+      <div class="sub-item"><div class="sub-icon">📊</div><div><div class="sub-label">The baseline</div><div class="sub-desc">The metric, the reference period, how it was calculated. One paragraph. Enough for a judge to verify.</div></div></div>
+      <div class="sub-item"><div class="sub-icon">📋</div><div><div class="sub-label">The daily log</div><div class="sub-desc">Seven days of data. Numbers per day, not just the weekly total. Shows the trend and makes the result auditable.</div></div></div>
+      <div class="sub-item"><div class="sub-icon">📈</div><div><div class="sub-label">The improvement</div><div class="sub-desc">Production run rate or volume compared to the baseline. The headline number. Simple, clean, honest.</div></div></div>
+      <div class="sub-item"><div class="sub-icon">🧮</div><div><div class="sub-label">The impact calculation</div><div class="sub-desc">Weekly impact from the improvement. Annual projection labelled as a projection. Methodology shown step by step.</div></div></div>
+      <div class="sub-item"><div class="sub-icon">📝</div><div><div class="sub-label">The analysis</div><div class="sub-desc">What happened, why it happened, what the trend looked like, and what you would improve next.</div></div></div>
+      <div class="sub-item"><div class="sub-icon">👥</div><div><div class="sub-label">CONTRIBUTORS.md</div><div class="sub-desc">One line per team member describing their specific contribution to the build.</div></div></div>
+      <div class="sub-item"><div class="sub-icon">🤖</div><div><div class="sub-label">AI-USAGE.md</div><div class="sub-desc">Where Claude was used across the team's workflow — building, prompting, writing, testing.</div></div></div>
+    </div>
+
+    <div class="sl-box">
+      <div class="sl-label">Squad lead validation — before submission</div>
+      <ul class="sl-list">
+        <li>Baseline is accurate — reflects the squad's actual pre-tool performance</li>
+        <li>Production run was real — tool ran on live interactions or live portal traffic</li>
+        <li>Daily log is complete — no days missing, numbers are as reported</li>
+        <li>Impact calculation is correct — methodology is sound, projections are labelled</li>
+        <li>Analysis is honest — results reported accurately including any limitations</li>
+        <li>Every team member contributed meaningfully</li>
+      </ul>
+    </div>
+
+
+  </section>
+
+  <!-- TRAPS -->
+  <section class="part">
+    <div class="part-hd">
+      <div class="part-badge pb-cream">!</div>
+      <div class="part-meta">
+        <div class="part-num">For reference</div>
+        <div class="part-title">Common traps</div>
+      </div>
+    </div>
+    <p class="lead">Things that derail builds before they start — or submissions before they land.</p>
+    <div class="traps">
+      <div class="trap"><div class="trap-hd"><div class="trap-icon">⚠️</div><div class="trap-name">The solution in search of a problem</div></div><div class="trap-desc">Starting with the technology — "I want to build a chatbot" — instead of the problem produces tools nobody uses.</div><div class="trap-fix"><strong>Fix:</strong> Let the data lead. The technology is the last decision, not the first.</div></div>
+      <div class="trap"><div class="trap-hd"><div class="trap-icon">⚠️</div><div class="trap-name">The unmeasurable problem</div></div><div class="trap-desc">If you can't measure the current state and the improvement, you can't prove your tool made a difference.</div><div class="trap-fix"><strong>Fix:</strong> Every problem needs a before-and-after metric. Name it before you build.</div></div>
+      <div class="trap"><div class="trap-hd"><div class="trap-icon">⚠️</div><div class="trap-name">The too-big problem</div></div><div class="trap-desc">Problems that span multiple contact reasons or channels produce unfocused tools that don't do anything particularly well.</div><div class="trap-fix"><strong>Fix:</strong> One contact reason, one channel, one gap. Narrower is stronger.</div></div>
+      <div class="trap"><div class="trap-hd"><div class="trap-icon">⚠️</div><div class="trap-name">The orphaned build</div></div><div class="trap-desc">No squad lead buy-in means no deployment authorization, no evidence, and no submission.</div><div class="trap-fix"><strong>Fix:</strong> The squad lead conversation in Part 1 is not optional.</div></div>
+      <div class="trap"><div class="trap-hd"><div class="trap-icon">⚠️</div><div class="trap-name">The missing baseline</div></div><div class="trap-desc">Trying to establish the baseline after the tool has already run makes the before-and-after unprovable.</div><div class="trap-fix"><strong>Fix:</strong> Lock it in Part 2. Before the build. Not after.</div></div>
+      <div class="trap"><div class="trap-hd"><div class="trap-icon">⚠️</div><div class="trap-name">The projection without evidence</div></div><div class="trap-desc">Estimates without a measured baseline won't hold up. Judges verify the numbers and the methodology behind them.</div><div class="trap-fix"><strong>Fix:</strong> Know your baseline before you build. Show your working in the impact calculation.</div></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- CLOSING -->
+<section class="closing">
+  <div class="closing-inner">
+    <h2 class="closing-title">Build something that moves a number.</h2>
+    <p class="closing-body">
+      The best submissions won't be the most technically impressive.
+      They'll be the ones that identified a real problem, built something specific to it,
+      measured it honestly, and told the story clearly.
+      That's the guide.
+    </p>
+    <div class="closing-rule"></div>
+    <p class="closing-mantra">Go AI-Native · RoW Support · Build with Claude · Ship in GitHub</p>
+  </div>
+</section>
+
+<footer>
+  <p>©2026 TrendLife, Consumer Brand of Trend Micro Inc. · Go AI-Native · The Build Guide</p>
+</footer>
+
+<script>
+  function switchTrack(btn, panelId) {
+    const section = btn.closest('.part') || btn.closest('.sub') || document;
+    section.querySelectorAll('.track-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    section.querySelectorAll('.track-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById(panelId);
+    if (panel) panel.classList.add('active');
+  }
+  function switchCh(btn, panelId) {
+    const block = btn.closest('.ch-block');
+    block.querySelectorAll('.ch-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    block.querySelectorAll('.ch-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(panelId).classList.add('active');
+  }
+</script>
+</body>
+</html>
