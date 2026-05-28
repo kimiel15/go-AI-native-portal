@@ -439,9 +439,6 @@ command 3
                 <label className="block text-slate-900 font-semibold text-sm">
                   Git Repository URL <span className="text-red-400">*</span>
                 </label>
-                <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">
-                  Link to your repo tagged <code className="bg-gray-100 px-1 rounded text-rose-600">v1.0</code>. README must cover problem, solution, production evidence, results, and impact math.
-                </p>
               </div>
             </div>
             <input
