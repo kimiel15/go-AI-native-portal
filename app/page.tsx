@@ -57,14 +57,14 @@ export default function Home() {
           </div>
 
           {/* Primary menu */}
-          <div className="hidden md:flex items-center gap-1 flex-1 justify-center">
+          <div className="hidden md:flex items-center gap-0.5 flex-1 justify-center">
             {menuItems.map(({ icon: Icon, label, href }) => (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-tl-cream transition-all"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-tl-cream transition-all whitespace-nowrap"
               >
-                <Icon className="w-4 h-4 text-tl-red flex-shrink-0" />
+                <Icon className="w-3.5 h-3.5 text-tl-red flex-shrink-0" />
                 {label}
               </Link>
             ))}
