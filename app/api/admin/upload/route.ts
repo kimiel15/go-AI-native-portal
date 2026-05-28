@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BlobServiceClient } from '@azure/storage-blob';
 import { randomUUID } from 'crypto';
+import sharp from 'sharp';
+
+const BANNER_W = 1200;
+const BANNER_H = 250;
 
 // POST /api/admin/upload — upload an image to Azure Blob Storage
+// Resizes to 1200×250 before storing so banners are always pixel-perfect.
 // Body: multipart/form-data with a "file" field
 // Returns: { url: string }
 export async function POST(req: NextRequest) {
@@ -25,30 +30,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Only JPG, PNG, GIF, and WebP images are allowed.' }, { status: 400 });
     }
 
-    // Validate size (max 500 KB)
-    if (file.size > 500 * 1024) {
-      return NextResponse.json({ error: `File is ${Math.round(file.size / 1024)} KB — must be under 500 KB.` }, { status: 400 });
+    // Validate original size (max 10 MB before resize)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File must be under 10 MB.' }, { status: 400 });
     }
 
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const blobName = `${randomUUID()}.${ext}`;
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
+
+    // Resize to exact banner dimensions — cover crop, centre-anchored
+    // GIFs are flattened to a static frame (sharp doesn't animate)
+    const resizedBuffer = await sharp(rawBuffer)
+      .resize(BANNER_W, BANNER_H, { fit: 'cover', position: 'centre' })
+      .jpeg({ quality: 90, mozjpeg: true })
+      .toBuffer();
+
+    const blobName = `${randomUUID()}.jpg`;
 
     const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
     const containerClient = blobServiceClient.getContainerClient('announcements');
 
-    // Ensure container exists (public access is configured at the storage account level)
+    // Ensure container exists (public access configured at the storage account level)
     await containerClient.createIfNotExists();
 
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-    const buffer = Buffer.from(await file.arrayBuffer());
 
-    await blockBlobClient.uploadData(buffer, {
-      blobHTTPHeaders: { blobContentType: file.type },
+    await blockBlobClient.uploadData(resizedBuffer, {
+      blobHTTPHeaders: { blobContentType: 'image/jpeg' },
     });
 
     return NextResponse.json({ url: blockBlobClient.url }, { status: 201 });
   } catch (err: unknown) {
-    console.error('[upload] Azure Blob error:', err);
+    console.error('[upload] Error:', err);
     const message = err instanceof Error ? err.message : 'Upload failed.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
