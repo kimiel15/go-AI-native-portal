@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
     const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
     const containerClient = blobServiceClient.getContainerClient('announcements');
 
-    // Ensure container exists with public blob access
-    await containerClient.createIfNotExists({ access: 'blob' });
+    // Ensure container exists (public access is configured at the storage account level)
+    await containerClient.createIfNotExists();
 
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     const buffer = Buffer.from(await file.arrayBuffer());
