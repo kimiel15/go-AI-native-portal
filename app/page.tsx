@@ -35,14 +35,6 @@ const menuItems = [
     color: 'from-tl-orange to-tl-red',
     badge: 'Individual',
   },
-  {
-    icon: BookOpen,
-    label: 'Team Roster',
-    desc: 'See all registered teams and members',
-    href: '/teams',
-    color: 'from-tl-teal to-tl-sky',
-    badge: 'Roster',
-  },
 ];
 
 export default function Home() {
@@ -68,6 +60,13 @@ export default function Home() {
                 {label}
               </Link>
             ))}
+            <Link
+              href="/teams"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-tl-cream transition-all whitespace-nowrap"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-tl-red flex-shrink-0" />
+              Team Roster
+            </Link>
           </div>
 
           <div className="flex-shrink-0 flex items-center gap-3">
@@ -94,6 +93,13 @@ export default function Home() {
               {label}
             </Link>
           ))}
+          <Link
+            href="/teams"
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-tl-cream border border-gray-200 transition-all"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-tl-red" />
+            Team Roster
+          </Link>
         </div>
       </nav>
 
@@ -192,7 +198,7 @@ export default function Home() {
         </div>
 
         {/* Steps 01–03 */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {menuItems.map(({ icon: Icon, label, desc, href, color, badge }, i) => (
             <Link key={href} href={href} className="group block">
               <div className="bg-white border border-gray-200 rounded-2xl p-8 h-full hover:border-gray-300 hover:shadow-md transition-all">
