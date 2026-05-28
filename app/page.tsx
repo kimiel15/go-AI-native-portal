@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Calendar, ClipboardList } from 'lucide-react';
+import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Calendar, ClipboardList, BookOpen } from 'lucide-react';
 import GetStartedModal from '@/components/GetStartedModal';
 
 function TLMark({ className }: { className?: string }) {
@@ -34,6 +34,14 @@ const menuItems = [
     href: '/assessment',
     color: 'from-tl-orange to-tl-red',
     badge: 'Individual',
+  },
+  {
+    icon: BookOpen,
+    label: 'Team Roster',
+    desc: 'See all registered teams and members',
+    href: '/teams',
+    color: 'from-tl-teal to-tl-sky',
+    badge: 'Roster',
   },
 ];
 
@@ -184,7 +192,7 @@ export default function Home() {
         </div>
 
         {/* Steps 01–03 */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {menuItems.map(({ icon: Icon, label, desc, href, color, badge }, i) => (
             <Link key={href} href={href} className="group block">
               <div className="bg-white border border-gray-200 rounded-2xl p-8 h-full hover:border-gray-300 hover:shadow-md transition-all">

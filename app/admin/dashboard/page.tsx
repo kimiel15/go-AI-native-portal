@@ -1490,6 +1490,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [submissionsOpen, setSubmissionsOpen] = useState(true);
   const [togglingSubmissions, setTogglingSubmissions] = useState(false);
+  const [assessmentOpen, setAssessmentOpen] = useState(false);
+  const [togglingAssessment, setTogglingAssessment] = useState(false);
 
   const existingSquadNames = useMemo(
     () => Array.from(new Set(participants.map(p => p.teamName).filter(Boolean) as string[])).sort(),
@@ -1569,6 +1571,7 @@ export default function AdminDashboard() {
       ]);
       setTeams(t); setSubmissions(s); setAssessments(a); setParticipants(p); setUsageMeta(u);
       setSubmissionsOpen(settings.submissionsOpen ?? true);
+      setAssessmentOpen(settings.assessmentOpen ?? false);
     } finally { setLoading(false); }
   }, []);
 
@@ -1587,6 +1590,19 @@ export default function AdminDashboard() {
       const data = await res.json();
       setSubmissionsOpen(data.submissionsOpen);
     } finally { setTogglingSubmissions(false); }
+  };
+
+  const toggleAssessment = async () => {
+    setTogglingAssessment(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentOpen: !assessmentOpen }),
+      });
+      const data = await res.json();
+      setAssessmentOpen(data.assessmentOpen);
+    } finally { setTogglingAssessment(false); }
   };
 
   const pendingValidation = assessments.filter(a => !a.validation).length;
@@ -1729,20 +1745,38 @@ export default function AdminDashboard() {
             {/* Portal Controls */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6">
               <h2 className="text-slate-900 font-semibold text-sm uppercase tracking-widest mb-4">Portal Controls</h2>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-900 font-medium text-sm">Project Submissions</p>
-                  <p className="text-slate-400 text-xs mt-0.5">
-                    {submissionsOpen ? 'Teams can currently submit their projects.' : 'Submissions are closed — teams cannot submit or edit.'}
-                  </p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-900 font-medium text-sm">Project Submissions</p>
+                    <p className="text-slate-400 text-xs mt-0.5">
+                      {submissionsOpen ? 'Teams can currently submit their projects.' : 'Submissions are closed — teams cannot submit or edit.'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={toggleSubmissions}
+                    disabled={togglingSubmissions}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${submissionsOpen ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${submissionsOpen ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
                 </div>
-                <button
-                  onClick={toggleSubmissions}
-                  disabled={togglingSubmissions}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${submissionsOpen ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                >
-                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${submissionsOpen ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
+
+                <div className="border-t border-gray-100 pt-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-900 font-medium text-sm">AI Proficiency Assessment</p>
+                    <p className="text-slate-400 text-xs mt-0.5">
+                      {assessmentOpen ? 'Assessment is open — engineers can take it now.' : 'Assessment is closed — engineers cannot access it yet.'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={toggleAssessment}
+                    disabled={togglingAssessment}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${assessmentOpen ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${assessmentOpen ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
               </div>
             </div>
 
