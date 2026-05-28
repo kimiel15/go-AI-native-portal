@@ -439,6 +439,9 @@ command 3
                 <label className="block text-slate-900 font-semibold text-sm">
                   Git Repository URL <span className="text-red-400">*</span>
                 </label>
+                <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+                  README must include: <span className="text-slate-500 font-medium">Problem Statement · Solution · Production Evidence &amp; Results · Contribution · Claude Usage · Usage Instructions</span>
+                </p>
               </div>
             </div>
             <input
