@@ -64,6 +64,21 @@ model Setting {
   value String
 }
 
+model Announcement {
+  id        String  @id
+  type      String  // 'tip' | 'reminder' | 'update'
+  tag       String
+  title     String
+  body      String
+  date      String
+  link      String?
+  linkLabel String?
+  external  Boolean @default(false)
+  active    Boolean @default(true)
+  order     Int     @default(0)
+  createdAt String
+}
+
 model Assessment {
   id                     String  @id
   teamId                 String?

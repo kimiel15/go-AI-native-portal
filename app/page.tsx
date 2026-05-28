@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Users, FileText, Brain, LayoutDashboard, ArrowRight, Calendar, ClipboardList, BookOpen } from 'lucide-react';
 import GetStartedModal from '@/components/GetStartedModal';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
+import { getActiveAnnouncements } from '@/lib/data';
 
 function TLMark({ className }: { className?: string }) {
   return (
@@ -38,7 +39,8 @@ const menuItems = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const announcements = await getActiveAnnouncements().catch(() => []);
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, var(--tl-cream) 0%, #ffffff 60%, #f0f8fa 100%)' }}>
       {/* Nav */}
@@ -138,7 +140,7 @@ export default function Home() {
       </section>
 
       {/* Announcements */}
-      <AnnouncementsCarousel />
+      {announcements.length > 0 && <AnnouncementsCarousel initialAnnouncements={announcements} />}
 
       {/* Menu Cards */}
       <section className="max-w-6xl mx-auto px-6 pb-16">

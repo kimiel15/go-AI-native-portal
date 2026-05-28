@@ -1,6 +1,21 @@
 import prisma from '@/lib/prisma';
 import { Team, ProjectSubmission, Assessment, Participant, AIUsageRow, AIUsageSummary, USAGE_THRESHOLDS } from '@/types';
 
+export interface AnnouncementRow {
+  id: string;
+  type: string;
+  tag: string;
+  title: string;
+  body: string;
+  date: string;
+  link: string | null;
+  linkLabel: string | null;
+  external: boolean;
+  active: boolean;
+  order: number;
+  createdAt: string;
+}
+
 // ── Participants ─────────────────────────────────────────────────────────────
 
 export async function getParticipants(): Promise<Participant[]> {
@@ -217,6 +232,31 @@ export async function getUsageSummaryBySiebelId(siebelId: string): Promise<AIUsa
 export async function getUsageLastUploadedAt(): Promise<string | null> {
   const row = await prisma.aIUsage.findFirst({ orderBy: { uploadedAt: 'desc' } });
   return row?.uploadedAt ?? null;
+}
+
+// ── Announcements ─────────────────────────────────────────────────────────────
+
+export async function getAnnouncements(): Promise<AnnouncementRow[]> {
+  return prisma.announcement.findMany({ orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] });
+}
+
+export async function getActiveAnnouncements(): Promise<AnnouncementRow[]> {
+  return prisma.announcement.findMany({
+    where: { active: true },
+    orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+  });
+}
+
+export async function saveAnnouncement(a: AnnouncementRow): Promise<AnnouncementRow> {
+  return prisma.announcement.create({ data: a });
+}
+
+export async function updateAnnouncement(id: string, updates: Partial<AnnouncementRow>): Promise<AnnouncementRow> {
+  return prisma.announcement.update({ where: { id }, data: updates });
+}
+
+export async function deleteAnnouncement(id: string): Promise<void> {
+  await prisma.announcement.delete({ where: { id } });
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

@@ -17,8 +17,24 @@ import {
   CheckCircle2, ShieldCheck, AlertTriangle, Sparkles,
   ThumbsUp, ArrowUp, ArrowDown, Loader2, Flag,
   Plus, Pencil, Trash2, X, UserPlus, Save, LayoutDashboard,
-  Upload, Download, CheckCircle, AlertCircle, Activity
+  Upload, Download, CheckCircle, AlertCircle, Activity,
+  Megaphone, Eye, EyeOff
 } from 'lucide-react';
+
+interface AnnouncementRow {
+  id: string;
+  type: string;
+  tag: string;
+  title: string;
+  body: string;
+  date: string;
+  link: string | null;
+  linkLabel: string | null;
+  external: boolean;
+  active: boolean;
+  order: number;
+  createdAt: string;
+}
 import * as XLSX from 'xlsx';
 
 type Tab = 'overview' | 'teams' | 'submissions' | 'assessments' | 'validation' | 'participants' | 'aiUsage';
@@ -1493,6 +1509,15 @@ export default function AdminDashboard() {
   const [assessmentOpen, setAssessmentOpen] = useState(false);
   const [togglingAssessment, setTogglingAssessment] = useState(false);
 
+  // Announcements
+  const [announcements, setAnnouncements] = useState<AnnouncementRow[]>([]);
+  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
+  const [newAnn, setNewAnn] = useState({ type: 'reminder', tag: 'Reminder', title: '', body: '', link: '', linkLabel: '', external: false });
+  const [savingAnn, setSavingAnn] = useState(false);
+  const [annError, setAnnError] = useState('');
+  const [togglingAnn, setTogglingAnn] = useState<string | null>(null);
+  const [deletingAnn, setDeletingAnn] = useState<string | null>(null);
+
   const existingSquadNames = useMemo(
     () => Array.from(new Set(participants.map(p => p.teamName).filter(Boolean) as string[])).sort(),
     [participants]
@@ -1558,6 +1583,11 @@ export default function AdminDashboard() {
     XLSX.writeFile(wb, `assessments-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
+  const fetchAnnouncements = useCallback(async () => {
+    const data = await fetch('/api/admin/announcements').then(r => r.json()).catch(() => []);
+    setAnnouncements(Array.isArray(data) ? data : []);
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -1573,7 +1603,8 @@ export default function AdminDashboard() {
       setSubmissionsOpen(settings.submissionsOpen ?? true);
       setAssessmentOpen(settings.assessmentOpen ?? false);
     } finally { setLoading(false); }
-  }, []);
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
 
   useEffect(() => {
     fetchData();
@@ -1606,6 +1637,55 @@ export default function AdminDashboard() {
   };
 
   const pendingValidation = assessments.filter(a => !a.validation).length;
+
+  const toggleAnnouncement = async (id: string, active: boolean) => {
+    setTogglingAnn(id);
+    try {
+      const res = await fetch(`/api/admin/announcements/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active }),
+      });
+      if (res.ok) setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, active } : a));
+    } finally { setTogglingAnn(null); }
+  };
+
+  const deleteAnnouncementById = async (id: string) => {
+    setDeletingAnn(id);
+    try {
+      await fetch(`/api/admin/announcements/${id}`, { method: 'DELETE' });
+      setAnnouncements(prev => prev.filter(a => a.id !== id));
+    } finally { setDeletingAnn(null); }
+  };
+
+  const saveNewAnnouncement = async () => {
+    if (!newAnn.title.trim() || !newAnn.body.trim()) {
+      setAnnError('Title and body are required.');
+      return;
+    }
+    setSavingAnn(true);
+    setAnnError('');
+    try {
+      const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      const res = await fetch('/api/admin/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newAnn,
+          date: `Posted ${today}`,
+          link: newAnn.link.trim() || null,
+          linkLabel: newAnn.linkLabel.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save.');
+      setAnnouncements(prev => [...prev, data]);
+      setNewAnn({ type: 'reminder', tag: 'Reminder', title: '', body: '', link: '', linkLabel: '', external: false });
+      setShowAnnouncementForm(false);
+    } catch (err: unknown) {
+      setAnnError(err instanceof Error ? err.message : 'Failed to save.');
+    } finally { setSavingAnn(false); }
+  };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
     { id: 'overview',     label: 'Overview',     icon: LayoutDashboard },
@@ -1778,6 +1858,176 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Announcements Manager */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="w-4 h-4 text-tl-red" />
+                  <h2 className="text-slate-900 font-semibold text-sm uppercase tracking-widest">Announcements</h2>
+                  <span className="text-xs text-slate-400 bg-gray-100 px-2 py-0.5 rounded-full">{announcements.filter(a => a.active).length} active</span>
+                </div>
+                <button
+                  onClick={() => { setShowAnnouncementForm(v => !v); setAnnError(''); }}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-tl-red hover:text-tl-burgundy transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />Add
+                </button>
+              </div>
+
+              {/* Add form */}
+              {showAnnouncementForm && (
+                <div className="mb-4 bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-500 text-xs mb-1">Type</label>
+                      <select
+                        value={newAnn.type}
+                        onChange={e => {
+                          const t = e.target.value;
+                          const tagMap: Record<string, string> = { tip: 'Build Guide', reminder: 'Reminder', update: 'Update' };
+                          setNewAnn(p => ({ ...p, type: t, tag: tagMap[t] ?? t }));
+                        }}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:border-tl-teal"
+                      >
+                        <option value="tip">Tip / Build Guide</option>
+                        <option value="reminder">Reminder</option>
+                        <option value="update">Update</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-slate-500 text-xs mb-1">Tag label</label>
+                      <input
+                        type="text"
+                        value={newAnn.tag}
+                        onChange={e => setNewAnn(p => ({ ...p, tag: e.target.value }))}
+                        placeholder="e.g. Reminder"
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 text-xs mb-1">Title <span className="text-red-400">*</span></label>
+                    <input
+                      type="text"
+                      value={newAnn.title}
+                      onChange={e => setNewAnn(p => ({ ...p, title: e.target.value }))}
+                      placeholder="Announcement title"
+                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 text-xs mb-1">Body <span className="text-red-400">*</span></label>
+                    <textarea
+                      rows={3}
+                      value={newAnn.body}
+                      onChange={e => setNewAnn(p => ({ ...p, body: e.target.value }))}
+                      placeholder="Announcement message..."
+                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal resize-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-500 text-xs mb-1">Link URL <span className="text-slate-300">(optional)</span></label>
+                      <input
+                        type="text"
+                        value={newAnn.link}
+                        onChange={e => setNewAnn(p => ({ ...p, link: e.target.value }))}
+                        placeholder="/register or https://..."
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-500 text-xs mb-1">Button label</label>
+                      <input
+                        type="text"
+                        value={newAnn.linkLabel}
+                        onChange={e => setNewAnn(p => ({ ...p, linkLabel: e.target.value }))}
+                        placeholder="e.g. Register Now"
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-tl-teal"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="ann-external"
+                      checked={newAnn.external}
+                      onChange={e => setNewAnn(p => ({ ...p, external: e.target.checked }))}
+                      className="w-4 h-4 accent-tl-red"
+                    />
+                    <label htmlFor="ann-external" className="text-slate-500 text-xs">Open link in new tab</label>
+                  </div>
+                  {annError && <p className="text-red-500 text-xs">{annError}</p>}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => { setShowAnnouncementForm(false); setAnnError(''); }}
+                      className="flex-1 py-2 rounded-lg border border-gray-200 text-slate-500 text-sm hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveNewAnnouncement}
+                      disabled={savingAnn}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-tl-red hover:bg-tl-burgundy disabled:opacity-50 text-white text-sm font-semibold py-2 rounded-lg transition-all"
+                    >
+                      {savingAnn ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                      Add to Slider
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* List */}
+              {announcements.length === 0 ? (
+                <p className="text-slate-300 text-sm text-center py-4">No announcements yet. Add one above.</p>
+              ) : (
+                <div className="space-y-2">
+                  {announcements.map(a => (
+                    <div key={a.id} className={`flex items-start gap-3 px-4 py-3 rounded-xl border transition-colors ${a.active ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                            a.type === 'tip' ? 'text-tl-teal bg-teal-50 border-teal-200' :
+                            a.type === 'update' ? 'text-tl-red bg-red-50 border-red-200' :
+                            'text-amber-700 bg-amber-50 border-amber-200'
+                          }`}>{a.tag}</span>
+                          {!a.active && <span className="text-[9px] text-slate-400 font-medium">hidden</span>}
+                        </div>
+                        <p className="text-slate-900 text-sm font-semibold truncate">{a.title}</p>
+                        <p className="text-slate-400 text-xs leading-relaxed line-clamp-1">{a.body}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+                        {/* Toggle visible */}
+                        <button
+                          onClick={() => toggleAnnouncement(a.id, !a.active)}
+                          disabled={togglingAnn === a.id}
+                          title={a.active ? 'Hide from slider' : 'Show in slider'}
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-tl-teal hover:bg-tl-teal-light/20 transition-colors disabled:opacity-40"
+                        >
+                          {togglingAnn === a.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : a.active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />
+                          }
+                        </button>
+                        {/* Delete */}
+                        <button
+                          onClick={() => deleteAnnouncementById(a.id)}
+                          disabled={deletingAnn === a.id}
+                          title="Remove announcement"
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-tl-red hover:bg-red-50 transition-colors disabled:opacity-40"
+                        >
+                          {deletingAnn === a.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Trash2 className="w-3.5 h-3.5" />
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid sm:grid-cols-4 gap-4">
