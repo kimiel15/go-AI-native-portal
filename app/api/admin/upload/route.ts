@@ -41,10 +41,10 @@ export async function POST(req: NextRequest) {
     // GIFs are flattened to a static frame (sharp doesn't animate)
     const resizedBuffer = await sharp(rawBuffer)
       .resize(BANNER_W, BANNER_H, { fit: 'cover', position: 'centre' })
-      .jpeg({ quality: 100 })
+      .png()
       .toBuffer();
 
-    const blobName = `${randomUUID()}.jpg`;
+    const blobName = `${randomUUID()}.png`;
 
     const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
     const containerClient = blobServiceClient.getContainerClient('announcements');
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await blockBlobClient.uploadData(resizedBuffer, {
-      blobHTTPHeaders: { blobContentType: 'image/jpeg' },
+      blobHTTPHeaders: { blobContentType: 'image/png' },
     });
 
     return NextResponse.json({ url: blockBlobClient.url }, { status: 201 });
